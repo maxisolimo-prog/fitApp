@@ -166,3 +166,36 @@ test('login attempts are rate limited per email and IP', async () => {
   assert.deepEqual(statuses.slice(0, 10), Array(10).fill(401));
   assert.equal(statuses[10], 429);
 });
+
+test('ids that differ only in case, accents or trailing spaces are distinct rows', async () => {
+  const client = new Client();
+  await client.call('POST', '/api/auth/register', { email: email(), password: 'una-clave-larga' });
+  const state = createInitialState();
+  const base = state.routines[0];
+  state.routines.push({ ...base, id: base.id.toUpperCase(), name: 'Mayúsculas' }, { ...base, id: base.id + ' ', name: 'Con espacio' });
+  state.weights = [{ id: 'ss', date: '2026-11-15', weight: 70 }, { id: 'ß', date: '2026-11-16', weight: 71 }];
+  state.schedule = [{ id: 'p', date: '2026-11-17', routineId: base.id }, { id: 'P', date: '2026-11-18', routineId: base.id }];
+  assert.equal((await client.call('PUT', '/api/state', { baseRevision: 0, state })).status, 200);
+  assert.deepEqual((await client.call('GET', '/api/state')).data.state, state);
+});
+
+test('emails compare exactly after lowercase normalisation; login returns the stored email', async () => {
+  const address = `acento-${Date.now()}@example.com`;
+  assert.equal((await new Client().call('POST', '/api/auth/register', { email: address, password: 'una-clave-larga' })).status, 201);
+  assert.equal((await new Client().call('POST', '/api/auth/register', { email: address.replace('acento', 'acentó'), password: 'una-clave-larga' })).status, 201);
+  const login = await new Client().call('POST', '/api/auth/login', { email: address.toUpperCase(), password: 'una-clave-larga' });
+  assert.equal(login.data.email, address);
+});
+
+test('bodies are size-limited per route and parser errors keep their 4xx status', async () => {
+  const huge = 'x'.repeat(20_000);
+  assert.equal((await new Client().call('POST', '/api/auth/login', { email: huge, password: 'x' })).status, 413);
+  const client = new Client();
+  await client.call('POST', '/api/auth/register', { email: email(), password: 'una-clave-larga' });
+  const big = createInitialState();
+  big.routines[0].description = 'y'.repeat(2000);
+  const tooBig = { baseRevision: 0, state: big, padding: 'z'.repeat(6_100_000) };
+  assert.equal((await client.call('PUT', '/api/state', tooBig)).status, 413);
+  const charset = await fetch(base + '/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json; charset=utf-16' }, body: '{}' });
+  assert.ok(charset.status >= 400 && charset.status < 500, `status ${charset.status}`);
+});

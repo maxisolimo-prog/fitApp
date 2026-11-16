@@ -6,7 +6,7 @@ import type { DbConfig } from './config.ts';
  * dates never shift through the server's time zone.
  */
 export function createPool(db: DbConfig): Pool {
-  return mysql.createPool({
+  const pool = mysql.createPool({
     ...db,
     connectionLimit: 5,
     timezone: 'Z',
@@ -14,6 +14,11 @@ export function createPool(db: DbConfig): Pool {
     charset: 'utf8mb4_unicode_ci',
     multipleStatements: false,
   });
+  // Strict mode on every connection: an out-of-range value must fail, never be truncated silently.
+  pool.on('connection', (connection) => {
+    connection.query("SET SESSION sql_mode = 'STRICT_ALL_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION'");
+  });
+  return pool;
 }
 
 export async function transaction<T>(pool: Pool, run: (connection: PoolConnection) => Promise<T>): Promise<T> {

@@ -47,13 +47,19 @@ export function createApp(pool: Pool, options: AppOptions = {}) {
     }
     next();
   });
-  app.use(express.json({ limit: config.maxBodyBytes }));
+  // Only the state snapshot may be large; everything else is a few fields.
+  app.use('/api/state', express.json({ limit: config.maxStateBytes }));
+  app.use(express.json({ limit: '16kb' }));
 
   const auth = requireAuth(pool);
   const byIp = (req: Request) => req.ip ?? 'unknown';
-  const loginLimit = rateLimit(10 * scale, 15 * 60_000, (req) => `${byIp(req)}|${String(body(req)['email'] ?? '').trim().toLowerCase()}`);
+  const byUser = (req: Request) => `user:${(req as AuthedRequest).userId}`;
+  const loginLimit = rateLimit(10 * scale, 15 * 60_000, (req) => `${byIp(req)}|${credentials(req)?.email ?? 'invalid'}`);
   const loginIpLimit = rateLimit(50 * scale, 15 * 60_000, byIp);
   const registerLimit = rateLimit(5 * scale, 60 * 60_000, byIp);
+  // A real session pushes at most every 1.5 s of inactivity; this only stops loops.
+  const stateLimit = rateLimit(120 * scale, 10 * 60_000, byUser);
+  const accountLimit = rateLimit(5 * scale, 15 * 60_000, byUser);
 
   app.get('/api/health', handle(async (_req, res) => {
     await pool.query('SELECT 1');
@@ -81,12 +87,12 @@ export function createApp(pool: Pool, options: AppOptions = {}) {
   app.post('/api/auth/login', loginIpLimit, loginLimit, handle(async (req, res) => {
     const input = credentials(req);
     if (!input) { res.status(400).json({ error: 'Ingresá tu email y tu contraseña.' }); return; }
-    const [rows] = await pool.query('SELECT id, password_hash, revision FROM users WHERE email = ?', [input.email]);
-    const user = (rows as { id: number; password_hash: string; revision: number }[])[0];
+    const [rows] = await pool.query('SELECT id, email, password_hash, revision FROM users WHERE email = ?', [input.email]);
+    const user = (rows as { id: number; email: string; password_hash: string; revision: number }[])[0];
     const valid = await verifyPassword(input.password, user?.password_hash ?? dummyPasswordHash);
     if (!user || !valid) { res.status(401).json({ error: 'El email o la contraseña no coinciden.' }); return; }
     await createSession(pool, res, Number(user.id));
-    res.json({ email: input.email, revision: Number(user.revision) });
+    res.json({ email: user.email, revision: Number(user.revision) });
   }));
 
   app.post('/api/auth/logout', handle(async (req, res) => {
@@ -104,7 +110,7 @@ export function createApp(pool: Pool, options: AppOptions = {}) {
     res.json(await loadState(pool, req.userId!));
   }));
 
-  app.put('/api/state', auth, handle(async (req, res) => {
+  app.put('/api/state', auth, stateLimit, handle(async (req, res) => {
     const { baseRevision, state } = body(req);
     if (typeof baseRevision !== 'number' || !Number.isInteger(baseRevision) || baseRevision < 0) {
       res.status(400).json({ error: 'Falta la revisión de los datos.' });
@@ -116,7 +122,7 @@ export function createApp(pool: Pool, options: AppOptions = {}) {
     else res.status(422).json({ error: 'Los datos no tienen un formato FitApp válido.' });
   }));
 
-  app.delete('/api/account', auth, handle(async (req, res) => {
+  app.delete('/api/account', auth, accountLimit, handle(async (req, res) => {
     const { password } = body(req);
     const [rows] = await pool.query('SELECT password_hash FROM users WHERE id = ?', [req.userId]);
     const user = (rows as { password_hash: string }[])[0];
@@ -135,6 +141,7 @@ export function createApp(pool: Pool, options: AppOptions = {}) {
     const status = (error as { status?: number; type?: string }).status;
     if (status === 413) { res.status(413).json({ error: 'Los datos superan el tamaño máximo.' }); return; }
     if (status === 400) { res.status(400).json({ error: 'El cuerpo de la solicitud no es JSON válido.' }); return; }
+    if (typeof status === 'number' && status >= 400 && status < 500) { res.status(status).json({ error: 'La solicitud no es válida.' }); return; }
     console.error(error);
     res.status(500).json({ error: 'Ocurrió un error en el servidor. Probá de nuevo en un rato.' });
   });

@@ -26,6 +26,6 @@ export const config = {
   port: Number(process.env['PORT'] ?? 3401),
   cookieSecure: process.env['COOKIE_SECURE'] === 'true',
   sessionDays: 30,
-  /** Same upper bound the frontend applies to backups. */
-  maxBodyBytes: 20_000_000,
+  /** The frontend imports backups up to 5 MB; the snapshot plus its wrapper fits in 6 MB. */
+  maxStateBytes: 6_000_000,
 };

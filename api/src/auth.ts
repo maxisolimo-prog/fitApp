@@ -79,6 +79,8 @@ export function rateLimit(limit: number, windowMs: number, key: (req: Request) =
   return (req: Request, res: Response, next: NextFunction): void => {
     const now = Date.now();
     if (hits.size > 10_000) for (const [entry, value] of hits) if (value.reset <= now) hits.delete(entry);
+    // Hard cap: under a flood of distinct keys, forget the oldest instead of growing without bound.
+    while (hits.size > 50_000) hits.delete(hits.keys().next().value as string);
     const id = key(req);
     const current = hits.get(id);
     if (!current || current.reset <= now) hits.set(id, { count: 1, reset: now + windowMs });

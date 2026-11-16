@@ -17,9 +17,16 @@ export async function migrate(pool: Pool, log: (message: string) => void = () =>
     if (applied.has(file)) continue;
     const sql = await readFile(migrationsDir + file, 'utf8');
     // DDL commits implicitly in MySQL, so statements run one by one; a failure stops before recording the file.
+    // One connection per file, so session settings such as FOREIGN_KEY_CHECKS apply to every statement.
     const statements = sql.split(/;\s*(?:\r?\n|$)/).map((part) => part.replace(/^\s*--.*$/gm, '').trim()).filter(Boolean);
-    for (const statement of statements) await pool.query(statement);
-    await pool.query('INSERT INTO schema_migrations (name) VALUES (?)', [file]);
+    const connection = await pool.getConnection();
+    try {
+      for (const statement of statements) await connection.query(statement);
+      await connection.query('INSERT INTO schema_migrations (name) VALUES (?)', [file]);
+    } finally {
+      await connection.query('SET FOREIGN_KEY_CHECKS = 1').catch(() => undefined);
+      connection.release();
+    }
     log(`Migración aplicada: ${file}`);
     done.push(file);
   }
