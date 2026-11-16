@@ -1,0 +1,200 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import '@angular/compiler';
+import { WorkoutStore } from '../src/app/core/workout-store';
+import {
+  buildWorkout, completeWorkout, createInitialState, deserializeState, localDate,
+  parseLocalDate, removeRoutine, serializeState, startOfWeek, validateState,
+  STORAGE_KEY, validSetValues, weekDates, workoutDurationMinutes, workoutVolume,
+} from '../src/app/core/workout-utils';
+
+function withStorage(run: (storage: Storage) => void): void {
+  const original = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+  const data = new Map<string, string>();
+  const storage: Storage = {
+    get length() { return data.size; },
+    clear() { data.clear(); },
+    getItem(key) { return data.get(key) ?? null; },
+    key(index) { return [...data.keys()][index] ?? null; },
+    removeItem(key) { data.delete(key); },
+    setItem(key, value) { data.set(key, value); },
+  };
+  Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: storage });
+  try { run(storage); } finally {
+    if (original) Object.defineProperty(globalThis, 'localStorage', original);
+    else Reflect.deleteProperty(globalThis, 'localStorage');
+  }
+}
+
+test('calendar dates and weeks use the local calendar across a year boundary', () => {
+  const sunday = new Date(2027, 0, 3, 23, 59);
+  assert.equal(localDate(sunday), '2027-01-03');
+  assert.equal(localDate(startOfWeek(sunday)), '2026-12-28');
+  assert.deepEqual(weekDates(sunday), [
+    '2026-12-28', '2026-12-29', '2026-12-30', '2026-12-31',
+    '2027-01-01', '2027-01-02', '2027-01-03',
+  ]);
+  assert.equal(parseLocalDate('2026-02-30'), null);
+  assert.equal(parseLocalDate('2026-13-01'), null);
+  assert.equal(parseLocalDate('2026-1-01'), null);
+  assert.equal(localDate(parseLocalDate('2028-02-29')!), '2028-02-29');
+});
+
+test('volume counts completed sets and excludes bodyweight and pending sets', () => {
+  const workout = buildWorkout(createInitialState().routines[0], 'test');
+  workout.sets = [
+    { exerciseId: 'bench-press', exerciseName: 'Press', setNumber: 1, reps: 10, weight: 25, completed: true },
+    { exerciseId: 'bench-press', exerciseName: 'Press', setNumber: 2, reps: 12, weight: 50, completed: false },
+    { exerciseId: 'push-up', exerciseName: 'Flexiones', setNumber: 1, reps: 15, weight: 0, completed: true },
+  ];
+  assert.equal(workoutVolume(workout), 250);
+});
+
+test('new sessions copy templates without marking any set complete', () => {
+  const state = createInitialState();
+  const routine = state.routines[0];
+  const active = buildWorkout(routine, 'active', '2026-11-16T12:00:00.000Z');
+  assert.equal(active.sets.length, routine.exercises.reduce((total, entry) => total + entry.sets, 0));
+  assert.equal(active.sets.some((entry) => entry.completed), false);
+  active.sets[0].weight = 42;
+  assert.equal(routine.exercises[0].weight, 0);
+  assert.equal(completeWorkout(active), null);
+});
+
+test('finishing saves only explicitly completed sets and retains the start timestamp', () => {
+  const active = buildWorkout(createInitialState().routines[0], 'active', '2026-11-16T12:00:00.000Z');
+  active.sets[0].completed = true;
+  const finished = completeWorkout(active, '2026-11-16T12:12:00.000Z')!;
+  assert.equal(finished.sets.length, 1);
+  assert.equal(finished.startedAt, '2026-11-16T12:00:00.000Z');
+  assert.equal(workoutDurationMinutes(finished), 12);
+  assert.equal(active.finishedAt, null);
+});
+
+test('state round trips with an active session, profile, plan and weight', () => {
+  const state = createInitialState();
+  state.activeWorkout = buildWorkout(state.routines[0], 'active');
+  state.profile.name = 'María';
+  state.schedule = [{ id: 'plan', date: '2026-11-16', routineId: state.routines[0].id }];
+  state.weights = [{ id: 'weight', date: '2026-11-16', weight: 68.5 }];
+  assert.deepEqual(deserializeState(serializeState(state)), state);
+  assert.equal(state.history.length, 0);
+});
+
+test('corrupt, mismatched or invalid imports are rejected', () => {
+  assert.equal(deserializeState('{broken'), null);
+  assert.equal(deserializeState('null'), null);
+  assert.equal(deserializeState('{}'), null);
+  assert.equal(validateState({ ...createInitialState(), version: 2 }), null);
+  const invalid = createInitialState();
+  invalid.routines[0].exercises[0].weight = Number.NaN;
+  assert.equal(validateState(invalid), null);
+  const unknown = createInitialState();
+  unknown.routines[0].exercises[0].exerciseId = 'missing';
+  assert.equal(validateState(unknown), null);
+  const duplicate = createInitialState();
+  duplicate.schedule = [
+    { id: 'a', date: '2026-11-16', routineId: 'upper-body' },
+    { id: 'b', date: '2026-11-16', routineId: 'lower-body' },
+  ];
+  assert.equal(validateState(duplicate), null);
+});
+
+test('imports reconstruct known fields and do not carry prototype-like properties', () => {
+  const parsed = JSON.parse(serializeState(createInitialState()));
+  parsed.profile.__proto__ = { privileged: true };
+  parsed.profile.admin = true;
+  parsed.untrusted = 'ignored';
+  const sanitized = validateState(parsed)!;
+  assert.equal(Object.hasOwn(sanitized, 'untrusted'), false);
+  assert.equal(Object.hasOwn(sanitized.profile, 'admin'), false);
+  assert.equal(Object.hasOwn(sanitized.profile, 'privileged'), false);
+  assert.equal(Object.getPrototypeOf(sanitized.profile), Object.prototype);
+});
+
+test('deleting a routine preserves history and active work but removes today and future plans', () => {
+  const state = createInitialState();
+  const routine = state.routines[0];
+  const workout = buildWorkout(routine, 'past', '2026-11-15T12:00:00.000Z');
+  workout.sets[0].completed = true;
+  state.history = [completeWorkout(workout, '2026-11-15T12:20:00.000Z')!];
+  state.activeWorkout = buildWorkout(routine, 'active');
+  state.schedule = [
+    { id: 'past', date: '2026-11-15', routineId: routine.id },
+    { id: 'today', date: '2026-11-16', routineId: routine.id },
+    { id: 'future', date: '2026-11-17', routineId: routine.id },
+    { id: 'other', date: '2026-11-18', routineId: 'lower-body' },
+  ];
+  const result = removeRoutine(state, routine.id, '2026-11-16');
+  assert.equal(result.routines.some((entry) => entry.id === routine.id), false);
+  assert.deepEqual(result.history, state.history);
+  assert.deepEqual(result.activeWorkout, state.activeWorkout);
+  assert.deepEqual(result.schedule.map((entry) => entry.id), ['past', 'other']);
+  assert.ok(deserializeState(serializeState(result)));
+});
+
+test('set values reject nonfinite, fractional repetitions and invalid bounds', () => {
+  assert.equal(validSetValues(8, 22.5), true);
+  assert.equal(validSetValues(0, 0), false);
+  assert.equal(validSetValues(1, 0), true);
+  assert.equal(validSetValues(8.5, 10), false);
+  assert.equal(validSetValues(-1, 10), false);
+  assert.equal(validSetValues(1000, 10), false);
+  assert.equal(validSetValues(8, Infinity), false);
+  assert.equal(validSetValues(8, -1), false);
+  assert.equal(validSetValues(8, 2001), false);
+});
+
+test('store persists an in-progress session, prevents replacing it and restores completed work', () => {
+  withStorage(() => {
+    const store = new WorkoutStore();
+    assert.equal(store.startWorkout('upper-body'), true);
+    const activeId = store.activeWorkout()!.id;
+    assert.equal(store.updateSet(0, 8, 25), true);
+    assert.equal(store.toggleSet(0), true);
+    assert.equal(store.startWorkout('lower-body'), false);
+    assert.equal(store.activeWorkout()!.id, activeId);
+    assert.equal(store.updateSet(0, 8.5, 25), false);
+
+    const restored = new WorkoutStore();
+    assert.equal(restored.activeWorkout()!.id, activeId);
+    assert.equal(restored.activeWorkout()!.sets[0].reps, 8);
+    const saved = restored.finishWorkout()!;
+    assert.equal(saved.sets.length, 1);
+    assert.equal(workoutVolume(saved), 200);
+    assert.equal(restored.activeWorkout(), null);
+    assert.equal(new WorkoutStore().history()[0].id, activeId);
+  });
+});
+
+test('store handles corrupt storage and invalid imports without throwing or mutating current data', () => {
+  withStorage((storage) => {
+    storage.setItem(STORAGE_KEY, '{broken');
+    const store = new WorkoutStore();
+    assert.ok(store.storageError());
+    assert.equal(store.history().length, 0);
+    const before = store.exportJson();
+    assert.equal(store.importJson('{"version":1}'), false);
+    assert.equal(store.exportJson(), before);
+    assert.ok(store.actionError());
+    assert.equal(storage.getItem(STORAGE_KEY), '{broken');
+  });
+});
+
+test('storage failures are visible and calendar/weight updates retain one entry per date', () => {
+  withStorage((storage) => {
+    const store = new WorkoutStore();
+    assert.equal(store.scheduleRoutine('2026-11-16', 'upper-body'), true);
+    assert.equal(store.scheduleRoutine('2026-11-16', 'lower-body'), true);
+    assert.equal(store.schedule().length, 1);
+    assert.equal(store.schedule()[0].routineId, 'lower-body');
+    assert.equal(store.addWeight(70, '2026-11-16'), true);
+    assert.equal(store.addWeight(71, '2026-11-16'), true);
+    assert.equal(store.weights().length, 1);
+    assert.equal(store.profile().weight, 71);
+    storage.setItem = () => { throw new Error('QuotaExceededError'); };
+    assert.equal(store.updateProfile({ name: 'María' }), true);
+    assert.equal(store.profile().name, 'María');
+    assert.ok(store.storageError());
+  });
+});

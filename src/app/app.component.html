@@ -1,0 +1,618 @@
+<a class="skip-link" href="#contenido">Saltar al contenido</a>
+
+<div class="shell">
+  <!-- Escritorio: barra lateral -->
+  <aside class="sidebar">
+    <button type="button" class="brand" (click)="navigate('home')" aria-label="FitApp, ir a Mi espacio">
+      <img src="icons/icon.svg" alt="" width="36" height="36"><span>FitApp</span>
+    </button>
+    <nav class="side-nav" aria-label="Navegación principal">
+      @for (item of nav; track item.id) {
+        <button type="button" class="side-link"
+          [class.is-active]="view() === item.id || (item.id === 'routines' && view() === 'editor')"
+          [attr.aria-current]="view() === item.id ? 'page' : null" (click)="navigate(item.id)">
+          <app-icon [name]="item.icon" />{{ item.label }}
+        </button>
+      }
+    </nav>
+    @if (store.activeWorkout(); as active) {
+      <button type="button" class="side-session" [class.is-active]="view() === 'workout'" (click)="navigate('workout')">
+        <span class="pulse" aria-hidden="true"></span>
+        <span><small>Sesión en curso</small><strong>{{ active.routineName }}</strong></span>
+        <span class="tabular">{{ clock(elapsed()) }}</span>
+      </button>
+    }
+    <div class="side-foot">
+      <button type="button" class="side-link" [class.is-active]="view() === 'profile'"
+        [attr.aria-current]="view() === 'profile' ? 'page' : null" (click)="navigate('profile')">
+        <app-icon name="settings" />Perfil y datos
+      </button>
+    </div>
+  </aside>
+
+  <!-- Móvil: barra superior -->
+  <header class="topbar">
+    <button type="button" class="brand" (click)="navigate('home')" aria-label="FitApp, ir a Mi espacio">
+      <img src="icons/icon.svg" alt="" width="32" height="32"><span>FitApp</span>
+    </button>
+    <button type="button" class="icon-button" (click)="navigate('profile')" aria-label="Perfil y datos"
+      [attr.aria-current]="view() === 'profile' ? 'page' : null">
+      <app-icon name="settings" />
+    </button>
+  </header>
+
+  <main id="contenido" class="main" tabindex="-1">
+    @if (store.storageError(); as storageError) {
+      <div class="banner banner-error" role="alert"><app-icon name="info" /><p>{{ storageError }}</p>
+        <button type="button" class="link" (click)="navigate('profile')">Ir a mis datos</button></div>
+    }
+    @if (!online()) {
+      <div class="banner" role="status"><app-icon name="info" /><p>Estás sin conexión. Podés seguir registrando: tus datos se guardan en este dispositivo.</p></div>
+    }
+
+    @switch (view()) {
+      @case ('home') {
+        <section class="page" aria-labelledby="home-title">
+          <header class="page-head">
+            <p class="eyebrow">{{ todayLabel }}</p>
+            <h1 id="home-title">Hola, {{ store.profile().name }}</h1>
+            <p class="lead">Tu espacio para planificar, registrar cada serie y ver cómo avanzás.</p>
+          </header>
+
+          @if (store.activeWorkout(); as active) {
+            <article class="resume-card">
+              <div>
+                <p class="eyebrow">Sesión en curso</p>
+                <h2>{{ active.routineName }}</h2>
+                <p class="tabular">{{ completedSets() }} de {{ active.sets.length }} series · {{ clock(elapsed()) }}</p>
+              </div>
+              <button type="button" class="btn btn-primary" (click)="navigate('workout')">Continuar <app-icon name="arrow" /></button>
+            </article>
+          }
+
+          @if (suggestedRoutine(); as routine) {
+            <article class="hero">
+              <img class="hero-img" src="images/gym-hero.jpg" alt="" width="1400" height="820">
+              <div class="hero-body">
+                <p class="eyebrow">{{ scheduled(today) ? 'Agendada para hoy' : 'Rutina para empezar' }}</p>
+                <h2>{{ routine.name }}</h2>
+                <p>{{ routine.description }}</p>
+                <ul class="meta-list">
+                  <li><app-icon name="clock" />{{ routine.duration }} min</li>
+                  <li><app-icon name="dumbbell" />{{ routine.exercises.length }} ejercicios</li>
+                  <li><app-icon name="target" />{{ routine.level }}</li>
+                </ul>
+                <div class="actions">
+                  <button type="button" class="btn btn-primary" (click)="start(routine)"><app-icon name="play" />{{ store.activeWorkout() ? 'Ir a la sesión' : 'Empezar' }}</button>
+                  <button type="button" class="btn btn-outline-light" (click)="openRoutine(routine)">Ver rutina</button>
+                </div>
+              </div>
+            </article>
+          }
+
+          <div class="grid-2">
+            <article class="card" aria-labelledby="week-title">
+              <div class="card-head">
+                <h2 id="week-title">Tu semana</h2>
+                <button type="button" class="link" (click)="navigate('calendar')">Calendario <app-icon name="chevron" /></button>
+              </div>
+              <p class="big-number tabular">{{ weekCount() }}<span> de {{ store.profile().weeklyGoal }} entrenamientos</span></p>
+              <div class="meter" role="progressbar" aria-label="Objetivo semanal" aria-valuemin="0" aria-valuemax="100"
+                [attr.aria-valuenow]="goalPercent()" [attr.aria-valuetext]="goalPercent() + ' % del objetivo semanal'">
+                <span [style.width.%]="goalPercent()"></span>
+              </div>
+              <ol class="week-strip">
+                @for (date of thisWeek; track date) {
+                  <li [class.is-today]="date === today" [class.is-done]="doneOn(date)" [class.is-planned]="!!scheduled(date)">
+                    <span class="dow" aria-hidden="true">{{ dateLabel(date, { weekday: 'narrow' }) }}</span>
+                    <span class="dot" aria-hidden="true">@if (doneOn(date)) { <app-icon name="check" /> } @else { {{ dateLabel(date, { day: 'numeric' }) }} }</span>
+                    <span class="sr-only">{{ dateLabel(date, { weekday: 'long', day: 'numeric' }) }}: {{ doneOn(date) ? 'entrenaste' : scheduled(date) ? 'planificado' : 'libre' }}</span>
+                  </li>
+                }
+              </ol>
+              <p class="muted small">{{ weekMinutes() }} min entrenados · {{ plannedCount() }} {{ plannedCount() === 1 ? 'día planificado' : 'días planificados' }}</p>
+            </article>
+
+            <article class="card" aria-labelledby="last-title">
+              <div class="card-head">
+                <h2 id="last-title">Último entrenamiento</h2>
+                @if (lastWorkout()) { <button type="button" class="link" (click)="navigate('progress')">Mi progreso <app-icon name="chevron" /></button> }
+              </div>
+              @if (lastWorkout(); as last) {
+                <p class="strong">{{ last.routineName }}</p>
+                <p class="muted small">{{ sessionDate(last) }}</p>
+                <dl class="stat-row">
+                  <div><dt>Duración</dt><dd class="tabular">{{ duration(last) }} min</dd></div>
+                  <div><dt>Series</dt><dd class="tabular">{{ last.sets.length }}</dd></div>
+                  <div><dt>Volumen</dt><dd class="tabular">{{ fmt(volume(last)) }} kg</dd></div>
+                </dl>
+              } @else {
+                <div class="empty">
+                  <app-icon name="flame" />
+                  <p class="strong">Tu primera sesión está por venir.</p>
+                  <p class="muted small">Cuando termines un entrenamiento, vas a ver acá su resumen.</p>
+                </div>
+              }
+            </article>
+          </div>
+
+          <div class="quick-actions">
+            <button type="button" class="quick" (click)="editRoutine(null)"><app-icon name="plus" /><span><strong>Creá tu rutina</strong><small>Elegí ejercicios y series</small></span></button>
+            <button type="button" class="quick" (click)="openSchedule()"><app-icon name="calendar" /><span><strong>Agendá un día</strong><small>Planificá tu semana</small></span></button>
+            <button type="button" class="quick" (click)="navigate('library')"><app-icon name="book" /><span><strong>Biblioteca</strong><small>Técnica de cada ejercicio</small></span></button>
+          </div>
+        </section>
+      }
+
+      @case ('routines') {
+        @if (selectedRoutine(); as routine) {
+          <section class="page" aria-labelledby="routine-title">
+            <button type="button" class="back" (click)="selectedRoutine.set(null)"><app-icon name="left" />Mis rutinas</button>
+            <article class="routine-detail">
+              <img class="routine-cover" [src]="imageFor(routine.id)" alt="" width="640" height="440">
+              <div class="routine-info">
+                <p class="eyebrow">{{ routine.custom ? 'Mi creación' : 'Plantilla inicial' }} · {{ routine.category }}</p>
+                <h1 id="routine-title">{{ routine.name }}</h1>
+                @if (routine.description) { <p class="lead">{{ routine.description }}</p> }
+                <ul class="meta-list meta-dark">
+                  <li><app-icon name="clock" />{{ routine.duration }} min</li>
+                  <li><app-icon name="dumbbell" />{{ routine.exercises.length }} ejercicios</li>
+                  <li><app-icon name="target" />{{ routine.level }}</li>
+                </ul>
+                <div class="actions">
+                  <button type="button" class="btn btn-primary" (click)="start(routine)"><app-icon name="play" />Empezar</button>
+                  <button type="button" class="btn btn-secondary" (click)="planRoutine(routine)"><app-icon name="calendar" />Agendar</button>
+                  <button type="button" class="btn btn-secondary" (click)="editRoutine(routine)"><app-icon name="edit" />{{ routine.custom ? 'Editar' : 'Personalizar' }}</button>
+                </div>
+              </div>
+            </article>
+
+            <h2 class="section-title">Ejercicios</h2>
+            <ol class="plan-list">
+              @for (entry of routine.exercises; track entry.exerciseId; let i = $index) {
+                <li>
+                  <span class="plan-index tabular" aria-hidden="true">{{ i + 1 }}</span>
+                  <span class="plan-name"><strong>{{ exercise(entry.exerciseId).name }}</strong><small>{{ exercise(entry.exerciseId).muscle }} · {{ exercise(entry.exerciseId).equipment }}</small></span>
+                  <span class="plan-numbers tabular">{{ entry.sets }} × {{ entry.reps }}<small>{{ entry.weight ? fmt(entry.weight) + ' kg' : 'sin carga' }} · {{ entry.restSeconds }} s</small></span>
+                </li>
+              }
+            </ol>
+            @if (!routine.custom) { <p class="muted small note">Las cargas de las plantillas empiezan en 0: anotá tu carga real al registrar cada serie.</p> }
+            <div class="danger-zone">
+              <button type="button" class="btn btn-danger-ghost" (click)="confirmation.set('delete')"><app-icon name="trash" />Eliminar rutina</button>
+            </div>
+          </section>
+        } @else {
+          <section class="page" aria-labelledby="routines-title">
+            <header class="page-head page-head-row">
+              <div>
+                <p class="eyebrow">Planificá</p>
+                <h1 id="routines-title">Mis rutinas</h1>
+                <p class="lead">Empezá con una plantilla o armá la tuya.</p>
+              </div>
+              <button type="button" class="btn btn-primary" (click)="editRoutine(null)"><app-icon name="plus" />Crear rutina</button>
+            </header>
+            <div class="chips" role="group" aria-label="Filtrar rutinas">
+              @for (filter of routineFilters; track filter) {
+                <button type="button" class="chip" [class.is-active]="routineFilter === filter" [attr.aria-pressed]="routineFilter === filter" (click)="routineFilter = filter">{{ filter }}</button>
+              }
+            </div>
+            <div class="routine-grid">
+              @for (routine of filteredRoutines; track routine.id) {
+                <button type="button" class="routine-card" (click)="selectedRoutine.set(routine)">
+                  <img [src]="imageFor(routine.id)" alt="" width="640" height="440" loading="lazy">
+                  <span class="routine-card-body">
+                    <span class="tag">{{ routine.custom ? 'Mi creación' : routine.level }}</span>
+                    <strong>{{ routine.name }}</strong>
+                    <small>{{ routine.duration }} min · {{ routine.exercises.length }} ejercicios · {{ routine.category }}</small>
+                  </span>
+                </button>
+              } @empty {
+                <div class="empty card">
+                  <app-icon name="dumbbell" />
+                  <p class="strong">{{ routineFilter === 'Mis creaciones' ? 'Todavía no creaste rutinas.' : 'No hay rutinas con ese filtro.' }}</p>
+                  @if (routineFilter === 'Mis creaciones') { <button type="button" class="btn btn-primary" (click)="editRoutine(null)">Crear mi primera rutina</button> }
+                </div>
+              }
+            </div>
+          </section>
+        }
+      }
+
+      @case ('editor') {
+        <section class="page">
+          <app-routine-editor [routine]="editingRoutine" (saved)="routineSaved()" (cancelled)="navigate('routines')" />
+        </section>
+      }
+
+      @case ('workout') {
+        @if (store.activeWorkout(); as active) {
+          <section class="page workout" aria-labelledby="workout-title">
+            <header class="workout-head">
+              <div>
+                <p class="eyebrow">Sesión en curso</p>
+                <h1 id="workout-title">{{ active.routineName }}</h1>
+              </div>
+              <dl class="workout-stats">
+                <div><dt>Tiempo</dt><dd class="tabular">{{ clock(elapsed()) }}</dd></div>
+                <div><dt>Series</dt><dd class="tabular">{{ completedSets() }}/{{ active.sets.length }}</dd></div>
+              </dl>
+            </header>
+            <div class="meter meter-dark" role="progressbar" aria-label="Series completadas" aria-valuemin="0"
+              [attr.aria-valuemax]="active.sets.length" [attr.aria-valuenow]="completedSets()">
+              <span [style.width.%]="completedSets() / active.sets.length * 100"></span>
+            </div>
+
+            @if (restSeconds() > 0) {
+              <div class="rest-bar" role="timer" aria-label="Descanso">
+                <app-icon name="clock" />
+                <div class="rest-time"><small>Descanso</small><strong class="tabular">{{ clock(restSeconds()) }}</strong></div>
+                <button type="button" class="btn btn-small btn-outline-light" (click)="startRest(restSeconds() + 15)" aria-label="Sumar 15 segundos de descanso">+15 s</button>
+                <button type="button" class="btn btn-small btn-primary" (click)="skipRest()">Saltar</button>
+              </div>
+            }
+
+            @for (group of workoutGroups(); track group.id) {
+              <article class="exercise-block" [attr.aria-labelledby]="'block-' + group.id">
+                <header>
+                  <h2 [id]="'block-' + group.id">{{ group.exercise.name }}</h2>
+                  <p>{{ group.exercise.muscle }} · {{ group.exercise.equipment }}</p>
+                </header>
+                <table class="sets-table">
+                  <caption class="sr-only">Series de {{ group.exercise.name }}</caption>
+                  <thead><tr><th scope="col">Serie</th><th scope="col">Kg</th><th scope="col">Reps</th><th scope="col"><span class="sr-only">Estado</span></th></tr></thead>
+                  <tbody>
+                    @for (row of group.sets; track row.index) {
+                      <tr [class.is-done]="row.set.completed">
+                        <th scope="row" class="tabular">{{ row.set.setNumber }}</th>
+                        <td><input #weightInput type="number" inputmode="decimal" min="0" max="2000" step="0.5" [value]="row.set.weight"
+                          (change)="updateSet(row.index, 'weight', weightInput.value, $event)" (focus)="weightInput.select()"
+                          [attr.aria-label]="'Carga en kg, serie ' + row.set.setNumber + ' de ' + group.exercise.name"></td>
+                        <td><input #repsInput type="number" inputmode="numeric" min="1" max="999" step="1" [value]="row.set.reps"
+                          (change)="updateSet(row.index, 'reps', repsInput.value, $event)" (focus)="repsInput.select()"
+                          [attr.aria-label]="'Repeticiones, serie ' + row.set.setNumber + ' de ' + group.exercise.name"></td>
+                        <td>
+                          <button type="button" class="set-check" [attr.aria-pressed]="row.set.completed" (click)="toggleSet(row.index)"
+                            [attr.aria-label]="'Serie ' + row.set.setNumber + ' de ' + group.exercise.name + (row.set.completed ? ', completada' : ', marcar como completada')">
+                            <app-icon name="check" />
+                          </button>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </article>
+            }
+
+            <footer class="workout-foot">
+              <button type="button" class="btn btn-primary btn-wide" (click)="finish()"><app-icon name="check" />Terminar y guardar</button>
+              <button type="button" class="btn btn-danger-ghost-dark" (click)="confirmation.set('discard')">Descartar sesión</button>
+              <p class="small">Se guardan sólo las series marcadas como completas.</p>
+            </footer>
+          </section>
+        } @else {
+          <section class="page" aria-labelledby="no-workout-title">
+            <div class="empty card">
+              <app-icon name="play" />
+              <h1 id="no-workout-title" class="strong">No hay una sesión en curso.</h1>
+              <p class="muted small">Elegí una rutina y empezá cuando quieras.</p>
+              <button type="button" class="btn btn-primary" (click)="navigate('routines')">Ver mis rutinas</button>
+            </div>
+          </section>
+        }
+      }
+
+      @case ('calendar') {
+        <section class="page" aria-labelledby="calendar-title">
+          <header class="page-head page-head-row">
+            <div>
+              <p class="eyebrow">Planificá</p>
+              <h1 id="calendar-title">Calendario</h1>
+              <p class="lead">Una rutina por día. Agendá, cambiá o quitá cuando quieras.</p>
+            </div>
+            @if (!calendarForm) { <button type="button" class="btn btn-primary" (click)="openSchedule()"><app-icon name="plus" />Agendar</button> }
+          </header>
+
+          @if (calendarForm) {
+            <form class="card schedule-form" (ngSubmit)="saveSchedule()" aria-labelledby="schedule-form-title">
+              <h2 id="schedule-form-title">Agendar entrenamiento</h2>
+              <div class="form-grid">
+                <label class="field"><span>Fecha</span><input type="date" name="calendarDate" [(ngModel)]="calendarDate" required></label>
+                <label class="field"><span>Rutina</span>
+                  <select name="calendarRoutine" [(ngModel)]="calendarRoutine" required>
+                    @for (routine of store.routines(); track routine.id) { <option [value]="routine.id">{{ routine.name }}</option> }
+                  </select>
+                </label>
+              </div>
+              <div class="actions">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+                <button type="button" class="btn btn-secondary" (click)="calendarForm = false">Cancelar</button>
+              </div>
+            </form>
+          }
+
+          <div class="week-nav">
+            <button type="button" class="icon-button" (click)="weekOffset.set(weekOffset() - 1)" aria-label="Semana anterior"><app-icon name="left" /></button>
+            <p class="strong" aria-live="polite">{{ weekLabel }}</p>
+            <button type="button" class="icon-button" (click)="weekOffset.set(weekOffset() + 1)" aria-label="Semana siguiente"><app-icon name="chevron" /></button>
+            @if (weekOffset() !== 0) { <button type="button" class="link" (click)="weekOffset.set(0)">Hoy</button> }
+          </div>
+
+          <ol class="day-list">
+            @for (date of weeks(); track date) {
+              <li class="day" [class.is-today]="date === today">
+                <div class="day-date">
+                  <span class="dow">{{ dateLabel(date, { weekday: 'short' }) }}</span>
+                  <span class="dnum tabular">{{ dateLabel(date, { day: 'numeric' }) }}</span>
+                </div>
+                <div class="day-body">
+                  @if (planned(date)) { <p class="strong">{{ planned(date) }}</p> } @else { <p class="muted">Libre</p> }
+                  @if (doneOn(date)) { <p class="badge"><app-icon name="check" />Entrenaste</p> }
+                  @else if (date === today) { <p class="badge badge-soft">Hoy</p> }
+                </div>
+                <div class="day-actions">
+                  @if (date === today && scheduled(date); as entry) {
+                    @if (routine(entry.routineId); as todayRoutine) { <button type="button" class="btn btn-small btn-primary" (click)="start(todayRoutine)">Empezar</button> }
+                  }
+                  <button type="button" class="btn btn-small btn-secondary" (click)="openSchedule(date)"
+                    [attr.aria-label]="(scheduled(date) ? 'Cambiar rutina del ' : 'Agendar el ') + dateLabel(date, { weekday: 'long', day: 'numeric', month: 'long' })">{{ scheduled(date) ? 'Cambiar' : 'Agendar' }}</button>
+                  @if (scheduled(date)) {
+                    <button type="button" class="icon-button" (click)="removeSchedule(date)"
+                      [attr.aria-label]="'Quitar entrenamiento del ' + dateLabel(date, { weekday: 'long', day: 'numeric', month: 'long' })"><app-icon name="close" /></button>
+                  }
+                </div>
+              </li>
+            }
+          </ol>
+        </section>
+      }
+
+      @case ('progress') {
+        @if (selectedHistory(); as workout) {
+          <section class="page" aria-labelledby="session-title">
+            <button type="button" class="back" (click)="selectedHistory.set(null)"><app-icon name="left" />Mi progreso</button>
+            <header class="page-head">
+              <p class="eyebrow">{{ sessionDate(workout) }}</p>
+              <h1 id="session-title">{{ workout.routineName }}</h1>
+            </header>
+            <dl class="stat-tiles">
+              <div><dt>Duración</dt><dd class="tabular">{{ duration(workout) }} <small>min</small></dd></div>
+              <div><dt>Series completas</dt><dd class="tabular">{{ workout.sets.length }}</dd></div>
+              <div><dt>Volumen</dt><dd class="tabular">{{ fmt(volume(workout)) }} <small>kg</small></dd></div>
+            </dl>
+            <div class="card table-card">
+              <table class="data-table">
+                <caption class="sr-only">Series registradas</caption>
+                <thead><tr><th scope="col">Ejercicio</th><th scope="col">Serie</th><th scope="col">Reps</th><th scope="col">Kg</th></tr></thead>
+                <tbody>
+                  @for (set of workout.sets; track $index) {
+                    <tr><th scope="row">{{ set.exerciseName }}</th><td class="tabular">{{ set.setNumber }}</td><td class="tabular">{{ set.reps }}</td><td class="tabular">{{ fmt(set.weight) }}</td></tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </section>
+        } @else {
+          <section class="page" aria-labelledby="progress-title">
+            <header class="page-head">
+              <p class="eyebrow">Sesión a sesión</p>
+              <h1 id="progress-title">Mi progreso</h1>
+              <p class="lead">Todo se calcula con las series que marcaste como completas.</p>
+            </header>
+
+            <dl class="stat-tiles">
+              <div><dt>Entrenamientos</dt><dd class="tabular">{{ store.history().length }}</dd></div>
+              <div><dt>Esta semana</dt><dd class="tabular">{{ weekCount() }} <small>de {{ store.profile().weeklyGoal }}</small></dd></div>
+              <div><dt>Minutos esta semana</dt><dd class="tabular">{{ weekMinutes() }}</dd></div>
+              <div><dt>Volumen total</dt><dd class="tabular">{{ fmt(totalVolume()) }} <small>kg</small></dd></div>
+            </dl>
+
+            <div class="grid-2">
+              <article class="card" aria-labelledby="bars-title">
+                <div class="card-head"><h2 id="bars-title">Volumen de esta semana</h2></div>
+                <div class="bars" aria-hidden="true">
+                  @for (date of thisWeek; track date) {
+                    <div class="bar-col" [class.is-today]="date === today">
+                      <div class="bar-track"><div class="bar" [style.height.%]="weeklyBar(date) / maxBar * 100"></div></div>
+                      <span>{{ dateLabel(date, { weekday: 'narrow' }) }}</span>
+                    </div>
+                  }
+                </div>
+                <ul class="sr-only">
+                  @for (date of thisWeek; track date) { <li>{{ dateLabel(date, { weekday: 'long', day: 'numeric' }) }}: {{ fmt(weeklyBar(date)) }} kg</li> }
+                </ul>
+                <p class="muted small">Carga × repeticiones de las series completas. Los ejercicios sin carga suman 0 kg.</p>
+              </article>
+
+              <article class="card" aria-labelledby="weight-title">
+                <div class="card-head"><h2 id="weight-title">Peso corporal</h2>
+                  @if (store.profile().weight !== null) { <p class="strong tabular">{{ fmt(store.profile().weight!) }} kg</p> }
+                </div>
+                <form class="weight-form" (ngSubmit)="addWeight()">
+                  <label class="field"><span>Peso (kg)</span><input type="number" name="weightValue" [(ngModel)]="weightValue" min="1" max="500" step="0.1" inputmode="decimal" required></label>
+                  <label class="field"><span>Fecha</span><input type="date" name="weightDate" [(ngModel)]="weightDate" required></label>
+                  <button type="submit" class="btn btn-primary">Guardar</button>
+                </form>
+                @if (weightError) { <p class="form-error" role="alert">{{ weightError }}</p> }
+                @if (recentWeights().length) {
+                  <ul class="weight-list">
+                    @for (record of recentWeights(); track record.id) { <li><span>{{ dateLabel(record.date, { day: 'numeric', month: 'short', year: 'numeric' }) }}</span><strong class="tabular">{{ fmt(record.weight) }} kg</strong></li> }
+                  </ul>
+                } @else {
+                  <p class="muted small">Es opcional. Si lo registrás, vas a ver tus mediciones acá.</p>
+                }
+              </article>
+            </div>
+
+            <h2 class="section-title">Historial</h2>
+            @if (store.history().length) {
+              <ul class="history-list">
+                @for (workout of store.history(); track workout.id) {
+                  <li>
+                    <button type="button" class="history-item" (click)="selectedHistory.set(workout)">
+                      <span><strong>{{ workout.routineName }}</strong><small>{{ sessionDate(workout) }}</small></span>
+                      <span class="history-numbers tabular">{{ workout.sets.length }} series · {{ fmt(volume(workout)) }} kg</span>
+                      <app-icon name="chevron" />
+                    </button>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <div class="empty card">
+                <app-icon name="chart" />
+                <p class="strong">Todavía no hay entrenamientos guardados.</p>
+                <p class="muted small">Terminá tu primera sesión y tu progreso empieza a aparecer acá.</p>
+                <button type="button" class="btn btn-primary" (click)="navigate('routines')">Elegir una rutina</button>
+              </div>
+            }
+          </section>
+        }
+      }
+
+      @case ('library') {
+        @if (selectedExercise(); as selected) {
+          <section class="page">
+            <app-exercise-detail [exercise]="selected" (closed)="selectedExercise.set(null)" />
+          </section>
+        } @else {
+          <section class="page" aria-labelledby="library-title">
+            <header class="page-head">
+              <p class="eyebrow">Técnica</p>
+              <h1 id="library-title">Biblioteca</h1>
+              <p class="lead">{{ store.exercises().length }} ejercicios con indicaciones paso a paso.</p>
+            </header>
+            <label class="search">
+              <app-icon name="search" />
+              <span class="sr-only">Buscar ejercicio</span>
+              <input type="search" name="search" [(ngModel)]="search" placeholder="Buscá por nombre, músculo o equipo" autocomplete="off">
+            </label>
+            <div class="chips" role="group" aria-label="Filtrar por grupo muscular">
+              @for (option of muscles; track option) {
+                <button type="button" class="chip" [class.is-active]="muscle === option" [attr.aria-pressed]="muscle === option" (click)="muscle = option">{{ option }}</button>
+              }
+            </div>
+            <ul class="exercise-list">
+              @for (item of filteredExercises; track item.id) {
+                <li>
+                  <button type="button" class="exercise-item" (click)="selectedExercise.set(item)">
+                    <span class="exercise-initial" aria-hidden="true">{{ item.name.charAt(0) }}</span>
+                    <span class="exercise-text"><strong>{{ item.name }}</strong><small>{{ item.muscle }} · {{ item.equipment }}</small></span>
+                    @if (recordFor(item.id) > 0) { <span class="exercise-record tabular"><small>Mejor</small>{{ fmt(recordFor(item.id)) }} kg</span> }
+                    <app-icon name="chevron" />
+                  </button>
+                </li>
+              } @empty {
+                <li class="empty card"><p class="strong">No encontramos ejercicios con esa búsqueda.</p>
+                  <button type="button" class="link" (click)="search = ''; muscle = 'Todos'">Limpiar filtros</button></li>
+              }
+            </ul>
+          </section>
+        }
+      }
+
+      @case ('profile') {
+        <section class="page" aria-labelledby="profile-title">
+          <header class="page-head">
+            <p class="eyebrow">Tu cuenta local</p>
+            <h1 id="profile-title">Perfil y datos</h1>
+            <p class="lead">Todo se guarda en este navegador. Nada se envía a un servidor.</p>
+          </header>
+
+          <div class="grid-2">
+            <form class="card" (ngSubmit)="saveProfile()" aria-labelledby="profile-form-title">
+              <h2 id="profile-form-title">Perfil</h2>
+              <div class="form-stack">
+                <label class="field"><span>Nombre</span><input name="name" [(ngModel)]="profileDraft.name" maxlength="80" required autocomplete="given-name"></label>
+                <label class="field"><span>Objetivo</span><input name="goal" [(ngModel)]="profileDraft.goal" maxlength="200" required placeholder="Por ejemplo, ganar fuerza"></label>
+                <div class="form-grid">
+                  <label class="field"><span>Nivel</span>
+                    <select name="level" [(ngModel)]="profileDraft.level">
+                      @for (level of levels; track level) { <option [ngValue]="level">{{ level }}</option> }
+                    </select>
+                  </label>
+                  <label class="field"><span>Entrenamientos por semana</span><input type="number" name="weeklyGoal" [(ngModel)]="profileDraft.weeklyGoal" min="1" max="7" step="1" inputmode="numeric" required></label>
+                </div>
+              </div>
+              @if (profileError) { <p class="form-error" role="alert">{{ profileError }}</p> }
+              <button type="submit" class="btn btn-primary">Guardar perfil</button>
+            </form>
+
+            <div class="stack">
+              <article class="card" aria-labelledby="data-title">
+                <h2 id="data-title">Tus datos</h2>
+                @if (store.storageError(); as storageError) {
+                  <p class="status status-error"><app-icon name="info" />{{ storageError }}</p>
+                } @else {
+                  <p class="status"><app-icon name="check" />Guardado en este dispositivo.</p>
+                }
+                <ul class="data-counts small">
+                  <li><strong class="tabular">{{ store.history().length }}</strong> entrenamientos</li>
+                  <li><strong class="tabular">{{ store.routines().length }}</strong> rutinas</li>
+                  <li><strong class="tabular">{{ store.schedule().length }}</strong> días agendados</li>
+                  <li><strong class="tabular">{{ store.weights().length }}</strong> mediciones</li>
+                </ul>
+                <p class="muted small">Si borrás los datos del navegador, se pierden. Descargá una copia de vez en cuando.</p>
+                <div class="actions">
+                  <button type="button" class="btn btn-primary" (click)="exportData()"><app-icon name="download" />Descargar copia</button>
+                  <label class="btn btn-secondary file-button"><app-icon name="upload" />Importar copia
+                    <input type="file" accept="application/json,.json" (change)="importData($event)" class="sr-only"></label>
+                </div>
+                @if (importError()) { <p class="form-error" role="alert">{{ importError() }}</p> }
+              </article>
+
+              <article class="card" aria-labelledby="install-title">
+                <h2 id="install-title">Instalá FitApp</h2>
+                <p class="muted small">Abrila como una app desde tu pantalla de inicio. Funciona sin conexión después de la primera carga.</p>
+                <button type="button" class="btn btn-secondary" (click)="install()"><app-icon name="download" />Instalar</button>
+              </article>
+            </div>
+          </div>
+        </section>
+      }
+    }
+  </main>
+
+  @if (store.activeWorkout() && view() !== 'workout') {
+    <button type="button" class="session-pill" (click)="navigate('workout')">
+      <span class="pulse" aria-hidden="true"></span>Sesión en curso<span class="tabular">{{ clock(elapsed()) }}</span>
+    </button>
+  }
+
+  <!-- Móvil: navegación inferior -->
+  <nav class="bottom-nav" aria-label="Navegación principal">
+    @for (item of nav; track item.id) {
+      <button type="button" [class.is-active]="view() === item.id || (item.id === 'routines' && view() === 'editor')"
+        [attr.aria-current]="view() === item.id ? 'page' : null" (click)="navigate(item.id)">
+        <app-icon [name]="item.icon" /><span>{{ item.label }}</span>
+      </button>
+    }
+  </nav>
+</div>
+
+<div class="toast-region" role="status" aria-live="polite">
+  @if (toast()) { <div class="toast">{{ toast() }}</div> }
+</div>
+
+@if (confirmation(); as action) {
+  <div class="overlay" (click)="cancelConfirmation()" aria-hidden="true"></div>
+  <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="dialog-title" aria-describedby="dialog-desc" (keydown.escape)="cancelConfirmation()">
+    @switch (action) {
+      @case ('discard') {
+        <h2 id="dialog-title">¿Descartar la sesión?</h2>
+        <p id="dialog-desc">Se pierden las series de esta sesión. Tu historial no cambia.</p>
+      }
+      @case ('delete') {
+        <h2 id="dialog-title">¿Eliminar «{{ selectedRoutine()?.name }}»?</h2>
+        <p id="dialog-desc">Se quita de tus rutinas y del calendario desde hoy. Tu historial se conserva.</p>
+      }
+      @case ('import') {
+        <h2 id="dialog-title">¿Reemplazar tus datos?</h2>
+        <p id="dialog-desc">La copia reemplaza tu perfil, rutinas, historial y calendario actuales. Si dudás, descargá antes una copia.</p>
+      }
+    }
+    <div class="actions">
+      <button type="button" id="dialog-cancel" class="btn btn-secondary" (click)="cancelConfirmation()">Cancelar</button>
+      <button type="button" class="btn btn-danger" (click)="confirmAction()">{{ action === 'discard' ? 'Descartar' : action === 'delete' ? 'Eliminar' : 'Reemplazar' }}</button>
+    </div>
+  </div>
+}
