@@ -15,4 +15,5 @@ const server = createServer(async (req,res) => {
     res.writeHead(200, {'Content-Type':types[extname(file)] || 'application/octet-stream', 'Cache-Control':'no-cache'}).end(body);
   } catch { res.writeHead(500).end('Preview error'); }
 });
-server.listen(4200, '127.0.0.1', () => console.log('FitApp: http://localhost:4200'));
+const port = Number(process.env.PORT) || 4200;
+server.listen(port, '127.0.0.1', () => console.log(`FitApp: http://localhost:${port}`));
