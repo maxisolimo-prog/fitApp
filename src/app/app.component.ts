@@ -81,7 +81,12 @@ export class AppComponent implements OnDestroy {
   weightValue: number|null=null; weightDate=this.today; weightError='';
   editingRoutine: Routine|null=null;
   pendingImport=''; readonly importError=signal('');
-  installPrompt: any=null;
+  /** Chrome/Edge (Android, desktop) hand us this event so a button can open the native install dialog. */
+  readonly installPrompt = signal<{ prompt(): Promise<unknown>; userChoice: Promise<{ outcome: string }> } | null>(null);
+  readonly installed = signal(typeof window !== 'undefined' && (window.matchMedia?.('(display-mode: standalone)').matches || (navigator as { standalone?: boolean }).standalone === true));
+  /** iPhone/iPad: Apple only allows installing from the Share menu, never from a button. */
+  readonly isIos = typeof navigator !== 'undefined' && (/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+  readonly installHelp = signal(false);
   private interval = setInterval(()=>this.now.set(Date.now()),1000);
   private toastTimer: ReturnType<typeof setTimeout>|undefined;
 
@@ -156,7 +161,8 @@ export class AppComponent implements OnDestroy {
   @HostListener('window:hashchange') hashChanged(){this.view.set(this.initialView());}
   @HostListener('window:online') wentOnline(){this.online.set(true);if(this.sync.account())void this.sync.syncNow();}
   @HostListener('window:offline') wentOffline(){this.online.set(false);}
-  @HostListener('window:beforeinstallprompt', ['$event']) installReady(event:Event){event.preventDefault();this.installPrompt=event;}
+  @HostListener('window:beforeinstallprompt', ['$event']) installReady(event:Event){event.preventDefault();this.installPrompt.set(event as unknown as { prompt(): Promise<unknown>; userChoice: Promise<{ outcome: string }> });}
+  @HostListener('window:appinstalled') appInstalled(){this.installed.set(true);this.installPrompt.set(null);this.notify('Listo, FitApp quedó instalada.');}
   ngOnDestroy(){clearInterval(this.interval);clearTimeout(this.toastTimer);}
   navigate(view:View){this.view.set(view);location.hash=view; this.selectedRoutine.set(null);this.selectedExercise.set(null);this.selectedHistory.set(null);if(view==='profile') this.profileDraft={...this.store.profile()}; window.scrollTo({top:0,behavior:'instant'});}
   notify(message:string){this.toast.set(message);clearTimeout(this.toastTimer);this.toastTimer=setTimeout(()=>this.toast.set(''),4500);}
@@ -189,7 +195,7 @@ export class AppComponent implements OnDestroy {
   addWeight(){this.weightError='';if(this.weightValue!==null&&this.store.addWeight(Number(this.weightValue),this.weightDate)){this.weightValue=null;this.notify('Medición guardada.');}else this.weightError=this.store.actionError()??'Ingresá un peso válido.';}
   exportData(){const blob=new Blob([this.store.exportJson()],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`fitapp-${this.today}.json`;a.click();URL.revokeObjectURL(url);this.notify('Copia de seguridad descargada.');}
   async importData(event:Event){const input=event.target as HTMLInputElement;const file=input.files?.[0];if(!file)return;this.importError.set('');if(file.size>5000000){this.importError.set('El archivo supera el límite de 5 MB.');input.value='';return;}try{this.pendingImport=await file.text();JSON.parse(this.pendingImport);this.confirmation.set('import');}catch{this.importError.set('No se pudo leer el archivo JSON.');}input.value='';}
-  async install(){if(this.installPrompt){await this.installPrompt.prompt();this.installPrompt=null;}else this.notify('Usá “Instalar aplicación” o “Agregar a inicio” en el menú de tu navegador.');}
+  async install(){const prompt=this.installPrompt();if(prompt){await prompt.prompt();const choice=await prompt.userChoice.catch(()=>null);this.installPrompt.set(null);if(choice?.outcome==='accepted')this.installed.set(true);return;}this.installHelp.set(true);}
   volume(w:Workout){return workoutVolume(w);}
   duration(w:Workout){return workoutDurationMinutes(w);}
   sessionDate(w:Workout){return new Intl.DateTimeFormat('es-AR',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'}).format(new Date(w.finishedAt!));}

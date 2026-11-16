@@ -492,3 +492,10 @@ img { max-width: 100%; }
   .day { grid-template-columns: 48px 1fr auto; gap: 4px 10px; padding: 10px 12px; }
   .day-actions { grid-column: auto; flex-wrap: nowrap; }
 }
+
+/* ---------- Instalar ---------- */
+.install-steps { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px; }
+.install-steps li { display: flex; align-items: flex-start; gap: 12px; font-size: 14px; line-height: 1.5; }
+.step-badge { display: grid; place-items: center; flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; background: var(--bosque); color: var(--lima); font-size: 13px; font-weight: 700; }
+.share-glyph { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 6px; background: var(--hueso); vertical-align: middle; }
+.share-glyph app-icon { width: 16px; height: 16px; }

@@ -683,9 +683,32 @@
               </article>
 
               <article class="card" aria-labelledby="install-title">
-                <h2 id="install-title">Instalá FitApp</h2>
-                <p class="muted small">Abrila como una app desde tu pantalla de inicio. Funciona sin conexión después de la primera carga.</p>
-                <button type="button" class="btn btn-secondary" (click)="install()"><app-icon name="download" />Instalar</button>
+                @if (installed()) {
+                  <h2 id="install-title">FitApp está instalada</h2>
+                  <p class="status"><app-icon name="check" />La estás usando como app. Abrila desde el ícono de tu pantalla de inicio.</p>
+                } @else {
+                  <h2 id="install-title">Instalá FitApp</h2>
+                  <p class="muted small">Queda como una app en tu pantalla de inicio, a pantalla completa. Funciona sin conexión después de la primera carga.</p>
+                  @if (installPrompt() || !installHelp()) {
+                    <button type="button" class="btn btn-primary" (click)="install()"><app-icon name="download" />Instalar</button>
+                  }
+                  @if (installHelp()) {
+                    @if (isIos) {
+                      <ol class="install-steps" aria-label="Pasos para instalar en iPhone">
+                        <li><span class="step-badge">1</span><span>Tocá <strong>Compartir</strong> <span class="share-glyph" aria-hidden="true"><app-icon name="share" /></span> — en Safari está abajo; en Chrome, junto a la dirección.</span></li>
+                        <li><span class="step-badge">2</span><span>Elegí <strong>Agregar a inicio</strong>. Si no la ves, deslizá la lista hacia abajo.</span></li>
+                        <li><span class="step-badge">3</span><span>Tocá <strong>Agregar</strong>. Listo: aparece el ícono de FitApp.</span></li>
+                      </ol>
+                      <p class="muted small">En iPhone, Apple solo permite instalar apps web desde el menú Compartir.</p>
+                    } @else {
+                      <ol class="install-steps" aria-label="Pasos para instalar">
+                        <li><span class="step-badge">1</span><span>Abrí el menú del navegador <strong>⋮</strong> (o el ícono de instalar en la barra de direcciones).</span></li>
+                        <li><span class="step-badge">2</span><span>Elegí <strong>Instalar app</strong> o <strong>Agregar a la pantalla principal</strong>.</span></li>
+                      </ol>
+                      <p class="muted small">Si no aparece la opción, probá desde Chrome o Edge.</p>
+                    }
+                  }
+                }
               </article>
             </div>
           </div>
