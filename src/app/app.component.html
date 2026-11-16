@@ -25,7 +25,7 @@
     <div class="side-foot">
       <button type="button" class="side-link" [class.is-active]="view() === 'profile'"
         [attr.aria-current]="view() === 'profile' ? 'page' : null" (click)="navigate('profile')">
-        <app-icon name="settings" />Perfil y datos
+        <app-icon name="user" />Perfil y datos
       </button>
     </div>
   </aside>
@@ -37,7 +37,7 @@
     </button>
     <button type="button" class="icon-button" (click)="navigate('profile')" aria-label="Perfil y datos"
       [attr.aria-current]="view() === 'profile' ? 'page' : null">
-      <app-icon name="settings" />
+      <app-icon name="user" />
     </button>
   </header>
 
@@ -56,7 +56,7 @@
           <header class="page-head">
             <p class="eyebrow">{{ todayLabel }}</p>
             <h1 id="home-title">Hola, {{ store.profile().name }}</h1>
-            <p class="lead">Tu espacio para planificar, registrar cada serie y ver cómo avanzás.</p>
+            <p class="lead hide-mobile">Tu espacio para planificar, registrar cada serie y ver cómo avanzás.</p>
           </header>
 
           @if (store.activeWorkout(); as active) {
@@ -89,6 +89,12 @@
               </div>
             </article>
           }
+
+          <div class="quick-actions">
+            <button type="button" class="quick" (click)="editRoutine(null)"><app-icon name="plus" /><span><strong>Creá tu rutina</strong><small>Elegí ejercicios y series</small></span></button>
+            <button type="button" class="quick" (click)="openSchedule()"><app-icon name="calendar" /><span><strong>Agendá un día</strong><small>Planificá tu semana</small></span></button>
+            <button type="button" class="quick" (click)="navigate('library')"><app-icon name="book" /><span><strong>Biblioteca</strong><small>Técnica de cada ejercicio</small></span></button>
+          </div>
 
           <div class="grid-2">
             <article class="card" aria-labelledby="week-title">
@@ -127,19 +133,13 @@
                   <div><dt>Volumen</dt><dd class="tabular">{{ fmt(volume(last)) }} kg</dd></div>
                 </dl>
               } @else {
-                <div class="empty">
+                <div class="empty empty-compact">
                   <app-icon name="flame" />
-                  <p class="strong">Tu primera sesión está por venir.</p>
-                  <p class="muted small">Cuando termines un entrenamiento, vas a ver acá su resumen.</p>
+                  <div><p class="strong">Tu primera sesión está por venir.</p>
+                  <p class="muted small">Cuando termines un entrenamiento, vas a ver acá su resumen.</p></div>
                 </div>
               }
             </article>
-          </div>
-
-          <div class="quick-actions">
-            <button type="button" class="quick" (click)="editRoutine(null)"><app-icon name="plus" /><span><strong>Creá tu rutina</strong><small>Elegí ejercicios y series</small></span></button>
-            <button type="button" class="quick" (click)="openSchedule()"><app-icon name="calendar" /><span><strong>Agendá un día</strong><small>Planificá tu semana</small></span></button>
-            <button type="button" class="quick" (click)="navigate('library')"><app-icon name="book" /><span><strong>Biblioteca</strong><small>Técnica de cada ejercicio</small></span></button>
           </div>
         </section>
       }

@@ -425,3 +425,27 @@ img { max-width: 100%; }
 .conflict-option small { font-size: 13px; color: var(--ink-2); }
 .dialog > .muted { margin: 0; }
 .card-top { align-self: start; }
+
+/* ---------- Celular: foto a todo el ancho, accesos grandes, menos texto ---------- */
+.topbar { border-bottom: 3px solid var(--lima); }
+.quick > app-icon { background: var(--bosque); color: var(--lima); }
+.empty-compact { flex-direction: row; text-align: left; align-items: center; gap: 14px; padding: 4px 0; }
+.empty-compact > app-icon { flex-shrink: 0; width: 44px; height: 44px; padding: 10px; margin: 0; border-radius: 12px; background: var(--hueso); }
+.empty-compact > div { display: flex; flex-direction: column; gap: 2px; }
+
+@media (max-width: 759px) {
+  .hide-mobile { display: none; }
+  .page-head h1 { font-size: 28px; }
+  .hero { margin-inline: -16px; border-radius: 0; }
+  .hero-body { padding: 200px 20px 24px; gap: 8px; }
+  .hero::after { background: linear-gradient(180deg, rgba(14, 24, 17, 0) 0%, rgba(14, 24, 17, 0.25) 30%, rgba(14, 24, 17, 0.94) 72%); }
+  .hero-body h2 { font-size: 30px; letter-spacing: -0.03em; }
+  .hero-body > p:not(.eyebrow) { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .hero .actions { display: grid; grid-template-columns: 1.4fr 1fr; }
+  .hero .actions .btn { min-height: 52px; font-size: 15px; }
+  .quick { min-height: 76px; padding: 14px; gap: 16px; }
+  .quick > app-icon { width: 48px; height: 48px; padding: 12px; border-radius: 12px; }
+  .quick strong { font-size: 16px; }
+  .quick small { font-size: 13px; }
+  .resume-card { margin-inline: -16px; border-radius: 0; padding: 16px; }
+}

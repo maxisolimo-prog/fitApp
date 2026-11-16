@@ -26,6 +26,7 @@ const paths: Record<string, string> = {
   info: 'M12 11v6m0-10h.01M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0',
   medal: 'm8 14-2 8 6-3 6 3-2-8M19 8A7 7 0 1 1 5 8a7 7 0 0 1 14 0',
   menu: 'M4 6h16M4 12h16M4 18h16',
+  user: 'M20 21a8 8 0 0 0-16 0M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0',
 };
 @Component({
   selector: 'app-icon', standalone: true,
