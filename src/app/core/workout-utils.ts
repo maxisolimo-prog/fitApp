@@ -1,17 +1,21 @@
 import type {
-  FitnessLevel, Profile, Routine, RoutineCategory, ScheduledWorkout,
+  FitnessLevel, Profile, Routine, RoutineCategory, ScheduledWorkout, WeeklyPlan,
   WeightRecord, Workout, WorkoutSet,
 } from './models';
 import { defaultProfile, seedExercises, seedRoutines } from './seed';
 
 export const STORAGE_KEY = 'fitapp-state-v1';
 
+/** Current format. v1 had no weeklyPlan; validateState upgrades it. */
 export interface FitAppState {
-  version: 1;
+  version: 2;
   profile: Profile;
   routines: Routine[];
   history: Workout[];
+  /** One-off plans for a specific date; they take precedence over weeklyPlan. */
   schedule: ScheduledWorkout[];
+  /** Repeating plan: index 0 = lunes … 6 = domingo; null = descanso. */
+  weeklyPlan: WeeklyPlan;
   weights: WeightRecord[];
   activeWorkout: Workout | null;
 }
@@ -58,13 +62,29 @@ export function workoutDurationMinutes(workout: Pick<Workout, 'startedAt' | 'fin
   return Number.isFinite(difference) ? Math.max(0, Math.round(difference / 60_000)) : 0;
 }
 
+export function emptyWeeklyPlan(): WeeklyPlan {
+  return [null, null, null, null, null, null, null];
+}
+
+/** 0 = lunes … 6 = domingo, for a local YYYY-MM-DD date. */
+export function weekdayIndex(date: string): number {
+  const parsed = parseLocalDate(date);
+  return parsed ? (parsed.getDay() + 6) % 7 : 0;
+}
+
+/** What is planned for a date: a one-off plan wins over the weekly plan. */
+export function plannedRoutineId(state: Pick<FitAppState, 'schedule' | 'weeklyPlan'>, date: string): string | null {
+  return state.schedule.find((entry) => entry.date === date)?.routineId ?? state.weeklyPlan[weekdayIndex(date)] ?? null;
+}
+
 export function createInitialState(): FitAppState {
   return {
-    version: 1,
+    version: 2,
     profile: { ...defaultProfile },
     routines: seedRoutines.map((routine) => ({ ...routine, exercises: routine.exercises.map((exercise) => ({ ...exercise })) })),
     history: [],
     schedule: [],
+    weeklyPlan: emptyWeeklyPlan(),
     weights: [],
     activeWorkout: null,
   };
@@ -162,7 +182,7 @@ export function validateWorkout(value: unknown, active: boolean): Workout | null
 
 /** Strictly reconstruct known fields: imported objects are never assigned to app state. */
 export function validateState(value: unknown): FitAppState | null {
-  if (!record(value) || value['version'] !== 1 || !Array.isArray(value['routines'])
+  if (!record(value) || (value['version'] !== 1 && value['version'] !== 2) || !Array.isArray(value['routines'])
     || !Array.isArray(value['history']) || !Array.isArray(value['schedule']) || !Array.isArray(value['weights'])
     || value['routines'].length < 1 || value['routines'].length > 200 || value['history'].length > 10_000
     || value['schedule'].length > 5000 || value['weights'].length > 10_000) return null;
@@ -192,6 +212,13 @@ export function validateState(value: unknown): FitAppState | null {
       || !parseLocalDate(candidate['date']) || !number(candidate['weight'], 1, 500)) return null;
     weights.push({ id: candidate['id'], date: candidate['date'], weight: candidate['weight'] });
   }
+  // v1 → v2: no weekly plan yet. v2 requires exactly seven slots.
+  let weeklyPlan = emptyWeeklyPlan();
+  if (value['version'] === 2) {
+    const plan = value['weeklyPlan'];
+    if (!Array.isArray(plan) || plan.length !== 7 || !plan.every((slot) => slot === null || text(slot, 100))) return null;
+    weeklyPlan = plan.map((slot) => slot as string | null);
+  }
   const activeWorkout = value['activeWorkout'] === null ? null : validateWorkout(value['activeWorkout'], true);
   if (value['activeWorkout'] !== null && !activeWorkout) return null;
   if (![routines, history, schedule, weights].every(uniqueIds)
@@ -201,7 +228,7 @@ export function validateState(value: unknown): FitAppState | null {
   // Calendar and weights are kept in date order everywhere (store and API).
   schedule.sort((a, b) => a.date.localeCompare(b.date));
   weights.sort((a, b) => a.date.localeCompare(b.date));
-  return { version: 1, profile, routines, history, schedule, weights, activeWorkout };
+  return { version: 2, profile, routines, history, schedule, weeklyPlan, weights, activeWorkout };
 }
 
 export function serializeState(value: FitAppState): string {
@@ -219,6 +246,7 @@ export function removeRoutine(state: FitAppState, id: string, today = localDate(
     ...state,
     routines: state.routines.filter((routine) => routine.id !== id),
     schedule: state.schedule.filter((entry) => entry.routineId !== id || entry.date < today),
+    weeklyPlan: state.weeklyPlan.map((slot) => slot === id ? null : slot),
   };
 }
 

@@ -3,7 +3,7 @@ import test from 'node:test';
 import '@angular/compiler';
 import { WorkoutStore } from '../src/app/core/workout-store';
 import {
-  buildWorkout, completeWorkout, createInitialState, deserializeState, localDate,
+  buildWorkout, completeWorkout, createInitialState, deserializeState, localDate, plannedRoutineId,
   parseLocalDate, removeRoutine, serializeState, startOfWeek, validateState,
   STORAGE_KEY, validSetValues, weekDates, workoutDurationMinutes, workoutVolume,
 } from '../src/app/core/workout-utils';
@@ -85,7 +85,7 @@ test('corrupt, mismatched or invalid imports are rejected', () => {
   assert.equal(deserializeState('{broken'), null);
   assert.equal(deserializeState('null'), null);
   assert.equal(deserializeState('{}'), null);
-  assert.equal(validateState({ ...createInitialState(), version: 2 }), null);
+  assert.equal(validateState({ ...createInitialState(), version: 3 }), null);
   const invalid = createInitialState();
   invalid.routines[0].exercises[0].weight = Number.NaN;
   assert.equal(validateState(invalid), null);
@@ -196,5 +196,46 @@ test('storage failures are visible and calendar/weight updates retain one entry 
     assert.equal(store.updateProfile({ name: 'María' }), true);
     assert.equal(store.profile().name, 'María');
     assert.ok(store.storageError());
+  });
+});
+
+test('v1 data (before the weekly plan) upgrades to v2 with every day free', () => {
+  const v1 = JSON.parse(serializeState(createInitialState()));
+  v1.version = 1;
+  delete v1.weeklyPlan;
+  const upgraded = validateState(v1)!;
+  assert.equal(upgraded.version, 2);
+  assert.deepEqual(upgraded.weeklyPlan, [null, null, null, null, null, null, null]);
+});
+
+test('weekly plan must have seven slots of routine ids or null', () => {
+  const bad = createInitialState() as unknown as { weeklyPlan: unknown };
+  bad.weeklyPlan = ['upper-body'];
+  assert.equal(validateState(bad), null);
+  bad.weeklyPlan = [1, null, null, null, null, null, null];
+  assert.equal(validateState(bad), null);
+});
+
+test('a one-off plan wins over the weekly plan; deleting a routine frees its weekdays', () => {
+  const state = createInitialState();
+  state.weeklyPlan = ['upper-body', null, 'lower-body', null, null, null, null];
+  assert.equal(plannedRoutineId(state, '2026-11-16'), 'upper-body', 'lunes');
+  assert.equal(plannedRoutineId(state, '2026-11-17'), null, 'martes libre');
+  state.schedule = [{ id: 'p', date: '2026-11-16', routineId: 'at-home' }];
+  assert.equal(plannedRoutineId(state, '2026-11-16'), 'at-home');
+  assert.equal(plannedRoutineId(state, '2026-11-23'), 'upper-body', 'el lunes siguiente vuelve a la semana tipo');
+  const removed = removeRoutine(state, 'upper-body', '2026-11-16');
+  assert.deepEqual(removed.weeklyPlan, [null, null, 'lower-body', null, null, null, null]);
+});
+
+test('store sets weekly plan slots and rejects unknown routines', () => {
+  withStorage(() => {
+    const store = new WorkoutStore();
+    assert.equal(store.setWeeklyPlan(0, 'upper-body'), true);
+    assert.equal(store.setWeeklyPlan(7, 'upper-body'), false);
+    assert.equal(store.setWeeklyPlan(1, 'no-existe'), false);
+    assert.equal(store.setWeeklyPlan(0, null), true);
+    assert.equal(store.setWeeklyPlan(2, 'lower-body'), true);
+    assert.deepEqual(new WorkoutStore().weeklyPlan(), [null, null, 'lower-body', null, null, null, null]);
   });
 });

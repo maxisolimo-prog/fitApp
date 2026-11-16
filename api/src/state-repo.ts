@@ -23,7 +23,7 @@ async function insertMany(db: PoolConnection, table: string, columns: string[], 
 
 export interface StoredState { revision: number; state: FitAppState | null }
 
-/** Rebuilds FitAppState v1 from the relational rows. revision 0 means the account has no data yet. */
+/** Rebuilds FitAppState v2 from the relational rows. revision 0 means the account has no data yet. */
 export async function loadState(db: Executor, userId: number): Promise<StoredState> {
   const [user] = await rows(db, 'SELECT name, goal, level, weekly_goal, weight, revision FROM users WHERE id = ?', [userId]);
   if (!user) throw new Error('Usuario inexistente');
@@ -36,6 +36,7 @@ export async function loadState(db: Executor, userId: number): Promise<StoredSta
   const setRows = await rows(db, 'SELECT workout_id, exercise_id, exercise_name, set_number, reps, weight, completed FROM workout_sets WHERE user_id = ? ORDER BY workout_id, position', [userId]);
   const scheduleRows = await rows(db, 'SELECT id, date, routine_id FROM scheduled_workouts WHERE user_id = ? ORDER BY date', [userId]);
   const weightRows = await rows(db, 'SELECT id, date, weight FROM weight_records WHERE user_id = ? ORDER BY date', [userId]);
+  const planRows = await rows(db, 'SELECT weekday, routine_id FROM weekly_plan WHERE user_id = ?', [userId]);
 
   const exercisesByRoutine = new Map<string, Routine['exercises']>();
   for (const row of exerciseRows) {
@@ -69,12 +70,14 @@ export async function loadState(db: Executor, userId: number): Promise<StoredSta
     if (Number(row['is_active']) === 1) activeWorkout = workout; else history.push(workout);
   }
   const schedule: ScheduledWorkout[] = scheduleRows.map((row) => ({ id: String(row['id']), date: String(row['date']), routineId: String(row['routine_id']) }));
+  const weeklyPlan: (string | null)[] = [null, null, null, null, null, null, null];
+  for (const row of planRows) weeklyPlan[Number(row['weekday'])] = String(row['routine_id']);
   const weights: WeightRecord[] = weightRows.map((row) => ({ id: String(row['id']), date: String(row['date']), weight: Number(row['weight']) }));
 
   const state: FitAppState = {
-    version: 1,
+    version: 2,
     profile: { name: String(user['name']), goal: String(user['goal']), level: user['level'] as FitnessLevel, weeklyGoal: Number(user['weekly_goal']), weight: user['weight'] === null ? null : Number(user['weight']) },
-    routines, history, schedule, weights, activeWorkout,
+    routines, history, schedule, weeklyPlan, weights, activeWorkout,
   };
   return { revision, state };
 }
@@ -100,7 +103,7 @@ export async function saveState(pool: Pool, userId: number, baseRevision: number
     if (current !== baseRevision) return { ok: false, conflict: await loadState(db, userId) };
 
     // Children go with ON DELETE CASCADE.
-    for (const table of ['routines', 'workouts', 'scheduled_workouts', 'weight_records']) {
+    for (const table of ['routines', 'workouts', 'scheduled_workouts', 'weekly_plan', 'weight_records']) {
       await db.query(`DELETE FROM ${table} WHERE user_id = ?`, [userId]);
     }
     const { profile } = state;
@@ -120,6 +123,8 @@ export async function saveState(pool: Pool, userId: number, baseRevision: number
 
     await insertMany(db, 'scheduled_workouts', ['user_id', 'id', 'date', 'routine_id'], state.schedule.map((s) => [userId, s.id, s.date, s.routineId]));
     await insertMany(db, 'weight_records', ['user_id', 'id', 'date', 'weight'], state.weights.map((w) => [userId, w.id, w.date, w.weight]));
+    await insertMany(db, 'weekly_plan', ['user_id', 'weekday', 'routine_id'],
+      state.weeklyPlan.flatMap((routineId, weekday) => routineId === null ? [] : [[userId, weekday, routineId]]));
     return { ok: true, revision: current + 1 };
   });
 }

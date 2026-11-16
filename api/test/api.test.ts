@@ -60,6 +60,7 @@ function sampleState() {
   state.activeWorkout = buildWorkout(state.routines[1], 'workout-active', '2026-11-16T13:00:00.000Z');
   state.activeWorkout.sets[1].completed = true;
   state.schedule = [{ id: 'plan-1', date: '2026-11-17', routineId: 'lower-body' }];
+  state.weeklyPlan = ['upper-body', null, 'lower-body', null, 'full-body', null, null];
   state.weights = [{ id: 'weight-1', date: '2026-11-16', weight: 68.5 }];
   state.routines.push({ ...state.routines[0], id: 'custom-1', name: 'Mi rutina', custom: true, exercises: state.routines[0].exercises.map((e) => ({ ...e, weight: 12.5 })) });
   return state;

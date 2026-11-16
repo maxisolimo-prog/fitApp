@@ -62,6 +62,9 @@ export interface Profile {
   weight: number | null;
 }
 
+/** Repeating weekly plan: index 0 = lunes … 6 = domingo; each slot is a routine id or null (descanso). */
+export type WeeklyPlan = (string | null)[];
+
 export interface ScheduledWorkout {
   id: string;
   /** Local calendar date, YYYY-MM-DD; do not convert through UTC. */

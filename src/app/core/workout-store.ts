@@ -1,5 +1,5 @@
 import { computed, Injectable, signal } from '@angular/core';
-import type { Profile, Routine, ScheduledWorkout, WeightRecord, Workout } from './models';
+import type { Profile, Routine, ScheduledWorkout, WeeklyPlan, WeightRecord, Workout } from './models';
 import { seedExercises } from './seed';
 import {
   buildWorkout, completeWorkout, createInitialState, deserializeState, FitAppState,
@@ -48,6 +48,7 @@ export class WorkoutStore {
   readonly exercises = signal(seedExercises);
   readonly history = signal<Workout[]>([]);
   readonly schedule = signal<ScheduledWorkout[]>([]);
+  readonly weeklyPlan = signal<WeeklyPlan>(createInitialState().weeklyPlan);
   readonly weights = signal<WeightRecord[]>([]);
   readonly activeWorkout = signal<Workout | null>(null);
   readonly storageError = signal<string | null>(null);
@@ -107,6 +108,7 @@ export class WorkoutStore {
     const next = removeRoutine(this.state(), id);
     this.routines.set(next.routines);
     this.schedule.set(next.schedule);
+    this.weeklyPlan.set(next.weeklyPlan);
     this.persist();
     return true;
   }
@@ -124,6 +126,15 @@ export class WorkoutStore {
   unschedule(date: string): void {
     this.schedule.update((entries) => entries.filter((entry) => entry.date !== date));
     this.persist();
+  }
+
+  /** weekday: 0 = lunes … 6 = domingo; routineId null = descanso. */
+  setWeeklyPlan(weekday: number, routineId: string | null): boolean {
+    if (!Number.isInteger(weekday) || weekday < 0 || weekday > 6
+      || (routineId !== null && !this.routines().some((routine) => routine.id === routineId))) return this.fail('Elegí un día y una rutina válidos.');
+    this.weeklyPlan.update((plan) => plan.map((slot, index) => index === weekday ? routineId : slot));
+    this.persist();
+    return true;
   }
 
   startWorkout(routineId: string): boolean {
@@ -241,8 +252,8 @@ export class WorkoutStore {
 
   private state(): FitAppState {
     return {
-      version: 1, profile: this.profile(), routines: this.routines(), history: this.history(),
-      schedule: this.schedule(), weights: this.weights(), activeWorkout: this.activeWorkout(),
+      version: 2, profile: this.profile(), routines: this.routines(), history: this.history(),
+      schedule: this.schedule(), weeklyPlan: this.weeklyPlan(), weights: this.weights(), activeWorkout: this.activeWorkout(),
     };
   }
 
@@ -251,6 +262,7 @@ export class WorkoutStore {
     this.routines.set(state.routines);
     this.history.set(state.history);
     this.schedule.set(state.schedule);
+    this.weeklyPlan.set(state.weeklyPlan);
     this.weights.set(state.weights);
     this.activeWorkout.set(state.activeWorkout);
   }

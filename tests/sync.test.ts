@@ -195,7 +195,7 @@ test('unreadable local data never overwrites the account (review #2)', () => wit
   sync.flush();
   await sync.syncNow();
   const stored = JSON.parse(storage.getItem(STORAGE_KEY)!);
-  storage.setItem(STORAGE_KEY, JSON.stringify({ ...stored, version: 2 }));
+  storage.setItem(STORAGE_KEY, JSON.stringify({ ...stored, version: 99 }));
   const reloaded = new WorkoutStore();
   assert.ok(reloaded.storageError());
   const reloadedSync = new SyncService(reloaded, server.fetch);
