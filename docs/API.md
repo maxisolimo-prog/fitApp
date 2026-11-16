@@ -42,11 +42,17 @@ Escrituras sólo con `Content-Type: application/json` (si no, 415): junto con `S
   `Path=/api`, 30 días); en la base sólo se guarda su SHA-256. Cerrar sesión la invalida de verdad.
 - **Contraseñas** con `crypto.scrypt` (N=16384, r=8, p=1, sal de 16 bytes); los parámetros quedan en el hash para
   poder subirlos. Un email inexistente cuesta lo mismo que una contraseña errónea.
-- **Límites**: login 10 intentos por email+IP y 50 por IP cada 15 min; registro 5 por IP por hora. En memoria (un
+- **Límites**: login 10 intentos por email+IP y 50 por IP cada 15 min; registro 5 por IP por hora; `PUT /api/state`
+  120 por usuario cada 10 min; borrar cuenta 5 por usuario cada 15 min. Cuerpos de 16 KB salvo `/api/state` (6 MB,
+  coherente con el límite de 5 MB de las copias del front). En memoria, con tope de claves (un
   solo proceso). `trust proxy` sólo para loopback (preview/ngrok).
 - **Sincronización por foto completa**: `PUT /api/state` reemplaza los datos del usuario en una transacción con
   `SELECT … FOR UPDATE` sobre su fila, sólo si `baseRevision` coincide. Simple y suficiente para un alumno con
   pocos dispositivos; si crece, pasar a cambios por entidad.
+- **Ids exactos**: los ids generados por el cliente son `VARBINARY` (mayúsculas, acentos y espacios cuentan, como en
+  el front); el email es `utf8mb4_bin` y se guarda en minúsculas. `sql_mode` estricto en cada conexión.
+- **Front**: datos y metadatos de sincronización viven en una sola entrada de `localStorage`; cerrar sesión envía lo
+  pendiente y limpia el dispositivo.
 - **Catálogo de ejercicios** en código (`seed.ts`), no en tabla: los `exercise_id` se validan contra él.
 - **Fechas**: `DATE` para calendario y peso (sin zona horaria, `dateStrings`), `DATETIME(3)` en UTC para sesiones.
 
