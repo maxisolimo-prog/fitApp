@@ -1,18 +1,8 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { WorkoutStore } from './workout-store';
+import { WorkoutStore, type SyncMeta } from './workout-store';
 import { createInitialState, serializeState, type FitAppState } from './workout-utils';
 
-export const SYNC_KEY = 'fitapp-sync-v1';
-
 export type SyncStatus = 'local' | 'checking' | 'syncing' | 'synced' | 'offline' | 'error' | 'conflict';
-
-/** Persisted beside the data: which account this device follows and whether it has unsent changes. */
-interface SyncMeta {
-  email: string;
-  /** Server revision the local data is based on; null until the first pull after login. */
-  revision: number | null;
-  dirty: boolean;
-}
 
 export interface SyncConflict {
   revision: number;
@@ -25,12 +15,18 @@ type Fetch = typeof fetch;
 interface ApiResult { status: number; data: Record<string, unknown> | null }
 
 const DEBOUNCE_MS = 1500;
+const EXPIRED = 'Tu sesión venció. Ingresá de nuevo para sincronizar.';
 
 /**
  * Optional account sync. The device keeps working with localStorage; when signed in, every local
  * change is pushed as a full snapshot with the revision it was based on. A different revision on
  * the server means another device wrote first: if this device has unsent changes the user chooses
  * which copy to keep, otherwise the server copy is applied.
+ *
+ * Invariants:
+ * - Data and sync metadata are persisted together by WorkoutStore (one localStorage write).
+ * - Pulls and pushes never overlap (one queue), so a pull cannot judge a conflict mid-push.
+ * - Nothing replaces local data while it has unsent changes, except an explicit user choice.
  */
 @Injectable({ providedIn: 'root', useFactory: () => new SyncService(inject(WorkoutStore)) })
 export class SyncService {
@@ -40,163 +36,205 @@ export class SyncService {
   readonly conflict = signal<SyncConflict | null>(null);
   readonly busy = computed(() => this.status() === 'checking' || this.status() === 'syncing');
 
-  private meta: SyncMeta | null = this.readMeta();
   private timer: ReturnType<typeof setTimeout> | undefined;
-  private pushing = false;
-  private pushAgain = false;
-  /** Bumped on every local change, so a change made while a push is in flight stays dirty. */
+  private queue: Promise<unknown> = Promise.resolve();
+  /** Bumped on every local change, so a change made while a push is in flight is pushed again. */
   private changeCounter = 0;
 
   constructor(private readonly store: WorkoutStore, private readonly http: Fetch = (...args) => fetch(...args)) {
     store.onChange = () => this.localChanged();
-    if (this.meta) this.account.set(this.meta.email);
+    store.onExternalChange = () => this.refreshAccount();
+    this.refreshAccount();
   }
 
+  private get meta(): SyncMeta | null { return this.store.syncMeta(); }
+  private set meta(value: SyncMeta | null) { this.store.setSyncMeta(value); this.refreshAccount(); }
+
   /** On startup: confirm the session and catch up with the server. */
-  async init(): Promise<void> {
-    if (!this.meta) return;
-    this.status.set('checking');
-    const me = await this.request('GET', '/api/auth/me');
-    if (!me) return;
-    if (me.status === 401) { this.signedOut('Tu sesión venció. Ingresá de nuevo para sincronizar.'); return; }
-    if (me.status !== 200) { this.fail(me); return; }
-    await this.pull();
+  init(): Promise<void> {
+    return this.exclusive(async () => {
+      if (!this.meta?.signedIn) return;
+      this.status.set('checking');
+      const me = await this.request('GET', '/api/auth/me');
+      if (!me) return;
+      if (me.status === 401) { this.expired(); return; }
+      if (me.status !== 200) { this.fail(me); return; }
+      await this.pull();
+    });
   }
 
   login(email: string, password: string): Promise<boolean> { return this.authenticate('/api/auth/login', email, password); }
   register(email: string, password: string): Promise<boolean> { return this.authenticate('/api/auth/register', email, password); }
 
-  async logout(): Promise<void> {
-    clearTimeout(this.timer);
-    await this.request('POST', '/api/auth/logout', {});
-    this.signedOut(null);
+  /**
+   * Signing out sends pending changes first and then clears this device: the data stays in the
+   * account, and the next person to use the device does not inherit it.
+   */
+  logout(): Promise<boolean> {
+    return this.exclusive(async () => {
+      clearTimeout(this.timer);
+      const meta = this.meta;
+      // Without an active session nothing can be sent, so nothing is erased.
+      if (!meta?.signedIn) { this.reset(null); return true; }
+      if (this.status() === 'conflict') { this.error.set('Elegí qué datos conservar antes de cerrar sesión.'); return false; }
+      if (meta.dirty || meta.revision === null) {
+        await this.pushNow();
+        if (this.meta?.dirty || this.meta?.revision === null || !this.meta?.signedIn) {
+          this.error.set('Todavía hay cambios sin guardar en tu cuenta. Conectate a internet y volvé a intentar.');
+          return false;
+        }
+      }
+      await this.request('POST', '/api/auth/logout', {});
+      this.store.replaceState(createInitialState(), null);
+      this.reset(null);
+      return true;
+    });
   }
 
-  async deleteAccount(password: string): Promise<boolean> {
-    const result = await this.request('DELETE', '/api/account', { password });
-    if (!result) return false;
-    if (result.status !== 204) { this.error.set(this.message(result, 'No pudimos eliminar la cuenta.')); return false; }
-    this.signedOut(null);
-    return true;
+  /** The account is removed on the server; this device keeps its data, unlinked from any account. */
+  deleteAccount(password: string): Promise<boolean> {
+    return this.exclusive(async () => {
+      const result = await this.request('DELETE', '/api/account', { password });
+      if (!result) return false;
+      if (result.status !== 204) { this.error.set(this.message(result, 'No pudimos eliminar la cuenta.')); return false; }
+      clearTimeout(this.timer);
+      this.meta = null;
+      this.reset(null);
+      return true;
+    });
   }
 
-  /** Manual "Sincronizar ahora". */
-  async syncNow(): Promise<void> {
-    if (!this.meta) return;
+  /** Manual "Sincronizar ahora" and the browser coming back online. */
+  syncNow(): Promise<void> {
     clearTimeout(this.timer);
-    await this.pull();
+    return this.exclusive(() => this.pull());
   }
 
   /** The user decided which copy wins after a conflict. */
-  async resolveConflict(keep: 'server' | 'local'): Promise<void> {
-    const conflict = this.conflict();
-    if (!conflict || !this.meta) return;
-    this.conflict.set(null);
-    if (keep === 'server') {
-      if (this.store.replaceState(conflict.server)) this.saveMeta({ ...this.meta, revision: conflict.revision, dirty: false });
-      this.status.set('synced');
-      return;
-    }
-    this.saveMeta({ ...this.meta, revision: conflict.revision, dirty: true });
-    await this.push();
+  resolveConflict(keep: 'server' | 'local'): Promise<void> {
+    return this.exclusive(async () => {
+      const conflict = this.conflict();
+      const meta = this.meta;
+      if (!conflict || !meta) return;
+      this.conflict.set(null);
+      this.status.set('checking');
+      if (keep === 'server') {
+        if (this.store.replaceState(conflict.server, { ...meta, revision: conflict.revision, dirty: false })) this.status.set('synced');
+        else this.fail({ status: 0, data: { error: this.store.actionError() } });
+        return;
+      }
+      this.meta = { ...meta, revision: conflict.revision, dirty: true };
+      await this.pushNow();
+    });
   }
 
-  /** Immediately sends pending changes; the app calls it when the page is about to be hidden. */
+  /** Sends pending changes right away; the app calls it when the page is being hidden. */
   flush(): void {
-    if (this.meta?.dirty && this.timer !== undefined) { clearTimeout(this.timer); this.timer = undefined; void this.push(); }
+    if (this.timer === undefined) return;
+    clearTimeout(this.timer);
+    this.timer = undefined;
+    void this.exclusive(() => this.pushNow());
   }
 
   private localChanged(): void {
     this.changeCounter++;
-    if (!this.meta) return;
-    if (!this.meta.dirty) this.saveMeta({ ...this.meta, dirty: true });
-    if (this.status() === 'conflict') return;
+    if (!this.meta?.signedIn || this.status() === 'conflict') return;
+    this.schedulePush();
+  }
+
+  private schedulePush(): void {
     clearTimeout(this.timer);
-    this.timer = setTimeout(() => { this.timer = undefined; void this.push(); }, DEBOUNCE_MS);
+    this.timer = setTimeout(() => { this.timer = undefined; void this.exclusive(() => this.pushNow()); }, DEBOUNCE_MS);
   }
 
-  private async authenticate(path: string, email: string, password: string): Promise<boolean> {
-    this.error.set(null);
-    this.status.set('checking');
-    const result = await this.request('POST', path, { email, password });
-    if (!result) return false;
-    if (result.status !== 200 && result.status !== 201) {
-      this.status.set('local');
-      this.error.set(this.message(result, 'No pudimos ingresar. Probá de nuevo.'));
-      return false;
-    }
-    const serverEmail = typeof result.data?.['email'] === 'string' ? result.data['email'] as string : email.trim().toLowerCase();
-    // A device with its own data must not be silently replaced by the account's copy.
-    this.saveMeta({ email: serverEmail, revision: null, dirty: !this.isPristine() });
-    this.account.set(serverEmail);
-    await this.pull();
-    return true;
+  private authenticate(path: string, email: string, password: string): Promise<boolean> {
+    return this.exclusive(async () => {
+      this.error.set(null);
+      this.status.set('checking');
+      const result = await this.request('POST', path, { email, password });
+      if (!result) return false;
+      if (result.status !== 200 && result.status !== 201) {
+        this.status.set('local');
+        this.error.set(this.message(result, 'No pudimos ingresar. Probá de nuevo.'));
+        return false;
+      }
+      const serverEmail = typeof result.data?.['email'] === 'string' ? result.data['email'] as string : email.trim().toLowerCase();
+      const previous = this.meta;
+      this.meta = previous && previous.email === serverEmail
+        // Same account again (e.g. after the session expired): keep where we were, no false conflict.
+        ? { ...previous, signedIn: true }
+        // Data on this device that is not from this account must not be silently merged or replaced.
+        : { email: serverEmail, revision: null, dirty: !this.isPristine(), signedIn: true };
+      await this.pull();
+      return true;
+    });
   }
 
+  /** Must run inside exclusive(). */
   private async pull(): Promise<void> {
-    if (!this.meta) return;
+    const meta = this.meta;
+    if (!meta?.signedIn) return;
     this.status.set('checking');
     const result = await this.request('GET', '/api/state');
     if (!result) return;
-    if (result.status === 401) { this.signedOut('Tu sesión venció. Ingresá de nuevo para sincronizar.'); return; }
+    if (result.status === 401) { this.expired(); return; }
     if (result.status !== 200 || !result.data) { this.fail(result); return; }
     const revision = Number(result.data['revision']);
     const server = result.data['state'] as FitAppState | null;
     if (server === null) {
       // Empty account: this device's data becomes the account's data.
-      this.saveMeta({ ...this.meta, revision: 0, dirty: true });
-      await this.push();
+      this.meta = { ...meta, revision: 0, dirty: true };
+      await this.pushNow();
       return;
     }
-    if (revision === this.meta.revision) {
-      if (this.meta.dirty) await this.push(); else this.status.set('synced');
+    if (revision === meta.revision) {
+      if (meta.dirty) await this.pushNow(); else this.status.set('synced');
       return;
     }
     this.serverIsNewer(revision, server);
   }
 
   private serverIsNewer(revision: number, server: FitAppState): void {
-    if (!this.meta) return;
-    if (this.meta.dirty && serializeState(server) !== serializeState(this.store.snapshot())) {
+    const meta = this.meta;
+    if (!meta) return;
+    if (meta.dirty && serializeState(server) !== serializeState(this.store.snapshot())) {
       this.conflict.set({ revision, server, serverWorkouts: server.history.length, localWorkouts: this.store.history().length });
       this.status.set('conflict');
       return;
     }
-    if (this.store.replaceState(server)) {
-      this.saveMeta({ ...this.meta, revision, dirty: false });
+    if (this.store.replaceState(server, { ...meta, revision, dirty: false })) this.status.set('synced');
+    else this.fail({ status: 0, data: { error: this.store.actionError() } });
+  }
+
+  /** Must run inside exclusive(). */
+  private async pushNow(): Promise<void> {
+    const meta = this.meta;
+    if (!meta?.signedIn || meta.revision === null || this.status() === 'conflict') return;
+    this.status.set('syncing');
+    const sentAt = this.changeCounter;
+    const result = await this.request('PUT', '/api/state', { baseRevision: meta.revision, state: this.store.snapshot() });
+    if (!result) return;
+    const current = this.meta;
+    if (!current) return;
+    if (result.status === 200 && result.data) {
+      const changedMeanwhile = this.changeCounter !== sentAt;
+      this.meta = { ...current, revision: Number(result.data['revision']), dirty: changedMeanwhile };
       this.status.set('synced');
+      if (changedMeanwhile) this.schedulePush();
+    } else if (result.status === 409 && result.data) {
+      this.serverIsNewer(Number(result.data['revision']), result.data['state'] as FitAppState);
+    } else if (result.status === 401) {
+      this.expired();
     } else {
-      this.status.set('error');
-      this.error.set(this.store.actionError());
+      this.fail(result);
     }
   }
 
-  private async push(): Promise<void> {
-    if (!this.meta || this.meta.revision === null) return;
-    if (this.pushing) { this.pushAgain = true; return; }
-    this.pushing = true;
-    this.status.set('syncing');
-    const sentAt = this.changeCounter;
-    try {
-      const result = await this.request('PUT', '/api/state', { baseRevision: this.meta.revision, state: this.store.snapshot() });
-      if (!result || !this.meta) return;
-      if (result.status === 200 && result.data) {
-        const dirty = this.changeCounter !== sentAt;
-        this.saveMeta({ ...this.meta, revision: Number(result.data['revision']), dirty });
-        this.status.set('synced');
-        if (dirty) this.pushAgain = true;
-      } else if (result.status === 409 && result.data) {
-        this.serverIsNewer(Number(result.data['revision']), result.data['state'] as FitAppState);
-      } else if (result.status === 401) {
-        this.signedOut('Tu sesión venció. Ingresá de nuevo para sincronizar.');
-      } else {
-        this.fail(result);
-      }
-    } finally {
-      this.pushing = false;
-      if (this.pushAgain && this.status() === 'synced') { this.pushAgain = false; void this.push(); }
-      this.pushAgain = false;
-    }
+  /** Runs tasks one after another; a failing task does not block the next. */
+  private exclusive<T>(task: () => Promise<T>): Promise<T> {
+    const run = this.queue.then(task, task);
+    this.queue = run.catch(() => undefined);
+    return run;
   }
 
   /** null means the request never reached the server; status is then 'offline'. */
@@ -227,35 +265,27 @@ export class SyncService {
     return typeof result.data?.['error'] === 'string' ? result.data['error'] as string : fallback;
   }
 
-  private signedOut(message: string | null): void {
+  /** Session expired: keep revision and pending flag so signing in again resumes without a conflict. */
+  private expired(): void {
     clearTimeout(this.timer);
-    this.saveMeta(null);
-    this.account.set(null);
+    const meta = this.meta;
+    if (meta) this.meta = { ...meta, signedIn: false };
+    this.reset(EXPIRED);
+  }
+
+  private reset(message: string | null): void {
+    this.refreshAccount();
     this.conflict.set(null);
     this.status.set('local');
     this.error.set(message);
   }
 
+  private refreshAccount(): void {
+    const meta = this.store.syncMeta();
+    this.account.set(meta?.signedIn ? meta.email : null);
+  }
+
   private isPristine(): boolean {
     return serializeState(this.store.snapshot()) === serializeState(createInitialState());
-  }
-
-  private readMeta(): SyncMeta | null {
-    try {
-      const raw = typeof localStorage === 'undefined' ? null : localStorage.getItem(SYNC_KEY);
-      if (!raw) return null;
-      const value = JSON.parse(raw) as Partial<SyncMeta>;
-      if (typeof value.email !== 'string' || typeof value.dirty !== 'boolean'
-        || !(value.revision === null || (typeof value.revision === 'number' && Number.isInteger(value.revision) && value.revision >= 0))) return null;
-      return { email: value.email, revision: value.revision, dirty: value.dirty };
-    } catch { return null; }
-  }
-
-  private saveMeta(meta: SyncMeta | null): void {
-    this.meta = meta;
-    try {
-      if (meta) localStorage.setItem(SYNC_KEY, JSON.stringify(meta));
-      else localStorage.removeItem(SYNC_KEY);
-    } catch { /* storage errors are already surfaced by WorkoutStore */ }
   }
 }

@@ -83,7 +83,10 @@ function number(value: unknown, min: number, max: number, integer = false): valu
 }
 
 function timestamp(value: unknown): value is string {
-  return typeof value === 'string' && value.length <= 40 && /^\d{4}-\d{2}-\d{2}T/.test(value) && Number.isFinite(Date.parse(value));
+  if (typeof value !== 'string' || value.length > 40 || !/^\d{4}-\d{2}-\d{2}T/.test(value)) return false;
+  // 1970–9999: what the API's DATETIME column stores; anything else is not a real session.
+  const time = Date.parse(value);
+  return Number.isFinite(time) && time >= 0 && time < Date.UTC(10000, 0, 1);
 }
 
 function uniqueIds(values: { id: string }[]): boolean {
@@ -150,7 +153,9 @@ export function validateWorkout(value: unknown, active: boolean): Workout | null
   }
   return {
     id: value['id'], routineId: value['routineId'], routineName: value['routineName'],
-    startedAt: value['startedAt'], finishedAt: value['finishedAt'] as string | null, sets,
+    // Canonical ISO form (UTC, milliseconds): the same value the API returns, so copies compare equal.
+    startedAt: new Date(value['startedAt']).toISOString(),
+    finishedAt: value['finishedAt'] === null ? null : new Date(value['finishedAt'] as string).toISOString(), sets,
     ...(value['notes'] === undefined ? {} : { notes: value['notes'] as string }),
   };
 }
@@ -193,6 +198,9 @@ export function validateState(value: unknown): FitAppState | null {
     || new Set(schedule.map((entry) => entry.date)).size !== schedule.length
     || new Set(weights.map((entry) => entry.date)).size !== weights.length
     || (activeWorkout && history.some((workout) => workout.id === activeWorkout.id))) return null;
+  // Calendar and weights are kept in date order everywhere (store and API).
+  schedule.sort((a, b) => a.date.localeCompare(b.date));
+  weights.sort((a, b) => a.date.localeCompare(b.date));
   return { version: 1, profile, routines, history, schedule, weights, activeWorkout };
 }
 

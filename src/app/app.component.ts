@@ -94,7 +94,7 @@ export class AppComponent implements OnDestroy {
     this.accountPassword=''; this.profileDraft={...this.store.profile()};
     this.notify(this.accountMode()==='register' ? 'Cuenta creada. Tus datos se guardan también en el servidor.' : 'Ingresaste a tu cuenta.');
   }
-  async logout(){await this.sync.logout();this.notify('Cerraste sesión. Tus datos siguen en este dispositivo.');}
+  async logout(){if(await this.sync.logout()){this.profileDraft={...this.store.profile()};this.notify('Cerraste sesión. Tus datos quedan guardados en tu cuenta.');}}
   async deleteAccount(){const ok=await this.sync.deleteAccount(this.deletePassword);this.deletePassword='';if(ok)this.notify('Cuenta eliminada. Tus datos siguen en este dispositivo.');}
   async resolveConflict(keep:'server'|'local'){await this.sync.resolveConflict(keep);this.profileDraft={...this.store.profile()};this.notify(keep==='server'?'Usás los datos de tu cuenta.':'Tu cuenta ahora tiene los datos de este dispositivo.');}
   @HostListener('document:visibilitychange') visibilityChanged(){if(document.visibilityState==='hidden')this.sync.flush();}

@@ -550,6 +550,7 @@
                     <button type="button" class="btn btn-secondary" (click)="sync.syncNow()" [disabled]="sync.busy()">Sincronizar ahora</button>
                     <button type="button" class="btn btn-secondary" (click)="logout()">Cerrar sesión</button>
                   </div>
+                  <p class="muted small">Al cerrar sesión, tus datos quedan en tu cuenta y se borran de este dispositivo.</p>
                   <details class="danger-details">
                     <summary>Eliminar cuenta</summary>
                     <form class="form-stack" (ngSubmit)="deleteAccount()">

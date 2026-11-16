@@ -13,5 +13,5 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src/**/*.ts", "test/**/*.ts", "../src/app/core/*.ts"]
+  "include": ["src/**/*.ts", "test/**/*.ts", "../src/app/core/models.ts", "../src/app/core/seed.ts", "../src/app/core/workout-utils.ts"]
 }

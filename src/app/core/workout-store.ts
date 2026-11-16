@@ -7,6 +7,40 @@ import {
   validateProfile, validateRoutine, validateState, validSetValues, weekDates,
 } from './workout-utils';
 
+/** Written by an earlier build in its own key; now part of STORAGE_KEY. */
+const LEGACY_SYNC_KEY = 'fitapp-sync-v1';
+
+export interface SyncMeta {
+  email: string;
+  /** Server revision the local data is based on; null until the first pull after signing in. */
+  revision: number | null;
+  /** Local changes not yet accepted by the server. */
+  dirty: boolean;
+  /** false after the session expired: revision and dirty are kept so signing in again does not conflict. */
+  signedIn: boolean;
+}
+
+function parseSyncMeta(value: unknown): SyncMeta | null {
+  if (value === null || typeof value !== 'object') return null;
+  const meta = value as Record<string, unknown>;
+  const revision = meta['revision'];
+  if (typeof meta['email'] !== 'string' || meta['email'].length > 254 || typeof meta['dirty'] !== 'boolean'
+    || typeof meta['signedIn'] !== 'boolean'
+    || !(revision === null || (typeof revision === 'number' && Number.isInteger(revision) && revision >= 0))) return null;
+  return { email: meta['email'], revision, dirty: meta['dirty'], signedIn: meta['signedIn'] };
+}
+
+/** The stored entry is FitAppState v1 plus an optional `sync` field that validateState ignores. */
+function parseStored(raw: string): { state: FitAppState; sync: SyncMeta | null } | null {
+  if (raw.length > 20_000_000) return null;
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    const state = validateState(parsed);
+    if (!state) return null;
+    return { state, sync: parseSyncMeta((parsed as Record<string, unknown>)['sync']) };
+  } catch { return null; }
+}
+
 @Injectable({ providedIn: 'root' })
 export class WorkoutStore {
   readonly profile = signal<Profile>(createInitialState().profile);
@@ -23,16 +57,24 @@ export class WorkoutStore {
     return this.history().filter((workout) => workout.finishedAt && dates.has(localDate(new Date(workout.finishedAt)))).length;
   });
 
+  /** Account sync bookkeeping; null when this device does not follow an account (or its data could not be read). */
+  private sync: SyncMeta | null = null;
+
   constructor() {
     try {
       const saved = typeof localStorage === 'undefined' ? null : localStorage.getItem(STORAGE_KEY);
       if (saved !== null) {
-        const restored = deserializeState(saved);
-        if (restored) this.applyState(restored);
-        else this.storageError.set('No pudimos recuperar los datos guardados: el archivo local no es válido. Podés importar una copia de seguridad.');
+        const restored = parseStored(saved);
+        if (restored) { this.applyState(restored.state); this.sync = restored.sync; }
+        // Without valid data the sync metadata is not trusted either: the account copy must not be overwritten.
+        else this.storageError.set('No pudimos recuperar los datos guardados: el archivo local no es válido. Podés importar una copia de seguridad o ingresar a tu cuenta.');
       }
+      if (typeof localStorage !== 'undefined') localStorage.removeItem(LEGACY_SYNC_KEY);
     } catch {
       this.storageError.set('El navegador no permite leer tus datos guardados. Los cambios de esta sesión podrían perderse al cerrar.');
+    }
+    if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+      window.addEventListener('storage', (event) => { if (event.key === STORAGE_KEY) this.reloadFrom(event.newValue); });
     }
   }
 
@@ -156,19 +198,45 @@ export class WorkoutStore {
 
   /** Called after every user change is persisted locally (not for replaceState). Used by SyncService. */
   onChange: (() => void) | null = null;
+  /** Called when another tab changed the stored data and this tab reloaded it. */
+  onExternalChange: (() => void) | null = null;
 
   /** Current data as a FitAppState v1 snapshot. */
   snapshot(): FitAppState {
     return this.state();
   }
 
-  /** Applies data that already lives on the server: validated again, saved locally, no change notification. */
-  replaceState(state: unknown): boolean {
+  /**
+   * Sync bookkeeping lives in the same localStorage entry as the data, so both are written in one
+   * setItem: they can never disagree after a quota error or a crash between two writes.
+   */
+  syncMeta(): SyncMeta | null {
+    return this.sync ? { ...this.sync } : null;
+  }
+
+  setSyncMeta(meta: SyncMeta | null): void {
+    this.sync = meta ? { ...meta } : null;
+    this.persist(false);
+  }
+
+  /** Applies data that already lives on the server (or a reset) together with its sync metadata, in one write. */
+  replaceState(state: unknown, meta: SyncMeta | null): boolean {
     const validated = validateState(state);
     if (!validated) return this.fail('Los datos de tu cuenta no tienen un formato válido. Tus datos locales siguen intactos.');
     this.applyState(validated);
+    this.sync = meta ? { ...meta } : null;
     this.persist(false);
     return true;
+  }
+
+  /** Another tab wrote STORAGE_KEY: adopt its data and metadata without writing back. */
+  private reloadFrom(raw: string | null): void {
+    if (raw === null) return;
+    const parsed = parseStored(raw);
+    if (!parsed) return;
+    this.applyState(parsed.state);
+    this.sync = parsed.sync;
+    this.onExternalChange?.();
   }
 
   private state(): FitAppState {
@@ -187,11 +255,13 @@ export class WorkoutStore {
     this.activeWorkout.set(state.activeWorkout);
   }
 
+  /** notify = a user change: it is marked pending for sync in the same write. */
   private persist(notify = true): void {
     this.actionError.set(null);
+    if (notify && this.sync && !this.sync.dirty) this.sync = { ...this.sync, dirty: true };
     try {
       if (typeof localStorage === 'undefined') throw new Error('Storage unavailable');
-      localStorage.setItem(STORAGE_KEY, this.exportJson());
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.sync ? { ...this.state(), sync: this.sync } : this.state()));
       this.storageError.set(null);
     } catch {
       this.storageError.set('No se pudieron guardar los cambios en este navegador. Exportá una copia antes de cerrar la página.');
