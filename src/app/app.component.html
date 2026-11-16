@@ -513,13 +513,13 @@
       @case ('profile') {
         <section class="page" aria-labelledby="profile-title">
           <header class="page-head">
-            <p class="eyebrow">Tu cuenta local</p>
+            <p class="eyebrow">{{ sync.account() ? 'Tu cuenta' : 'Sin cuenta' }}</p>
             <h1 id="profile-title">Perfil y datos</h1>
-            <p class="lead">Todo se guarda en este navegador. Nada se envía a un servidor.</p>
+            <p class="lead">{{ sync.account() ? 'Tus datos se guardan en este dispositivo y en tu cuenta.' : 'Todo se guarda en este navegador. Hasta que crees una cuenta, nada se envía a un servidor.' }}</p>
           </header>
 
           <div class="grid-2">
-            <form class="card" (ngSubmit)="saveProfile()" aria-labelledby="profile-form-title">
+            <form class="card card-top" (ngSubmit)="saveProfile()" aria-labelledby="profile-form-title">
               <h2 id="profile-form-title">Perfil</h2>
               <div class="form-stack">
                 <label class="field"><span>Nombre</span><input name="name" [(ngModel)]="profileDraft.name" maxlength="80" required autocomplete="given-name"></label>
@@ -538,6 +538,43 @@
             </form>
 
             <div class="stack">
+              <article class="card" aria-labelledby="account-title">
+                <h2 id="account-title">Cuenta</h2>
+                @if (sync.account(); as email) {
+                  <p class="account-email"><app-icon name="check" /><span><strong>{{ email }}</strong><small>Tus datos se guardan en este dispositivo y en tu cuenta.</small></span></p>
+                  <p class="status" [class.status-error]="sync.status() === 'error' || sync.status() === 'offline'" role="status">
+                    <app-icon [name]="sync.status() === 'synced' ? 'check' : sync.busy() ? 'clock' : 'info'" />{{ syncLabels[sync.status()] }}
+                  </p>
+                  @if (sync.error() && sync.status() !== 'synced') { <p class="muted small">{{ sync.error() }}</p> }
+                  <div class="actions">
+                    <button type="button" class="btn btn-secondary" (click)="sync.syncNow()" [disabled]="sync.busy()">Sincronizar ahora</button>
+                    <button type="button" class="btn btn-secondary" (click)="logout()">Cerrar sesión</button>
+                  </div>
+                  <details class="danger-details">
+                    <summary>Eliminar cuenta</summary>
+                    <form class="form-stack" (ngSubmit)="deleteAccount()">
+                      <p class="muted small">Se borran tus datos del servidor. Los de este dispositivo se conservan.</p>
+                      <label class="field"><span>Contraseña</span><input type="password" name="deletePassword" [(ngModel)]="deletePassword" autocomplete="current-password" required></label>
+                      <button type="submit" class="btn btn-danger" [disabled]="!deletePassword">Eliminar mi cuenta</button>
+                    </form>
+                  </details>
+                } @else {
+                  <p class="muted small">Opcional. Con una cuenta, tus datos quedan guardados en el servidor y podés usarlos en otros dispositivos.</p>
+                  <div class="segmented" role="group" aria-label="Tipo de acceso">
+                    <button type="button" [class.is-active]="accountMode() === 'login'" [attr.aria-pressed]="accountMode() === 'login'" (click)="accountMode.set('login')">Ingresar</button>
+                    <button type="button" [class.is-active]="accountMode() === 'register'" [attr.aria-pressed]="accountMode() === 'register'" (click)="accountMode.set('register')">Crear cuenta</button>
+                  </div>
+                  <form class="form-stack" (ngSubmit)="submitAccount()">
+                    <label class="field"><span>Email</span><input type="email" name="accountEmail" [(ngModel)]="accountEmail" autocomplete="email" inputmode="email" required maxlength="254"></label>
+                    <label class="field"><span>Contraseña</span><input type="password" name="accountPassword" [(ngModel)]="accountPassword" required maxlength="200"
+                      [attr.autocomplete]="accountMode() === 'register' ? 'new-password' : 'current-password'" [attr.aria-describedby]="accountMode() === 'register' ? 'password-hint' : null"></label>
+                    @if (accountMode() === 'register') { <p id="password-hint" class="muted small">Al menos 10 caracteres. Tus datos actuales se suben a la cuenta nueva.</p> }
+                    @if (sync.error()) { <p class="form-error" role="alert">{{ sync.error() }}</p> }
+                    <button type="submit" class="btn btn-primary" [disabled]="sync.busy() || !accountEmail || !accountPassword">{{ accountMode() === 'register' ? 'Crear cuenta' : 'Ingresar' }}</button>
+                  </form>
+                }
+              </article>
+
               <article class="card" aria-labelledby="data-title">
                 <h2 id="data-title">Tus datos</h2>
                 @if (store.storageError(); as storageError) {
@@ -614,5 +651,24 @@
       <button type="button" id="dialog-cancel" class="btn btn-secondary" (click)="cancelConfirmation()">Cancelar</button>
       <button type="button" class="btn btn-danger" (click)="confirmAction()">{{ action === 'discard' ? 'Descartar' : action === 'delete' ? 'Eliminar' : 'Reemplazar' }}</button>
     </div>
+  </div>
+}
+
+@if (sync.conflict(); as conflict) {
+  <div class="overlay" aria-hidden="true"></div>
+  <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="conflict-title" aria-describedby="conflict-desc">
+    <h2 id="conflict-title">¿Qué datos querés conservar?</h2>
+    <p id="conflict-desc">Tu cuenta y este dispositivo tienen datos distintos. Elegí cuál copia usar; la otra se reemplaza.</p>
+    <div class="conflict-options">
+      <button type="button" class="conflict-option" (click)="resolveConflict('server')">
+        <strong>Los de mi cuenta</strong>
+        <small>{{ conflict.serverWorkouts }} {{ conflict.serverWorkouts === 1 ? 'entrenamiento' : 'entrenamientos' }} · {{ conflict.server.routines.length }} rutinas</small>
+      </button>
+      <button type="button" class="conflict-option" (click)="resolveConflict('local')">
+        <strong>Los de este dispositivo</strong>
+        <small>{{ conflict.localWorkouts }} {{ conflict.localWorkouts === 1 ? 'entrenamiento' : 'entrenamientos' }} · {{ store.routines().length }} rutinas</small>
+      </button>
+    </div>
+    <p class="muted small">Si dudás, descargá antes una copia desde Perfil.</p>
   </div>
 }

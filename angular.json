@@ -30,6 +30,7 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": { "proxyConfig": "proxy.conf.json" },
           "configurations": {
             "production": { "buildTarget": "fitapp:build:production" },
             "development": { "buildTarget": "fitapp:build:development" }

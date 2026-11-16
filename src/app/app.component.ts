@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IconComponent } from './icon.component';
 import { WorkoutStore } from './core/workout-store';
+import { SyncService, type SyncStatus } from './core/sync.service';
 import { localDate, weekDates, workoutVolume, workoutDurationMinutes } from './core/workout-utils';
 import { Routine, Profile, Workout, Exercise } from './core/models';
 import { RoutineEditorComponent } from './features/routine-editor.component';
@@ -69,13 +70,34 @@ export class AppComponent implements OnDestroy {
   readonly routineFilters = ['Todas','Principiante','Intermedio','Avanzado','Mis creaciones'];
   private readonly numberFormat = new Intl.NumberFormat('es-AR',{maximumFractionDigits:1});
 
+  readonly sync = inject(SyncService);
+  readonly accountMode = signal<'login'|'register'>('login');
+  accountEmail=''; accountPassword=''; deletePassword='';
+  readonly syncLabels: Record<SyncStatus,string> = {
+    local:'Sin cuenta', checking:'Conectando…', syncing:'Guardando en tu cuenta…', synced:'Sincronizado',
+    offline:'Sin conexión: se envía al volver', error:'No se pudo sincronizar', conflict:'Elegí qué datos conservar',
+  };
+
   constructor(){
-    // Zoneless: move focus into the confirmation dialog once it renders, and restore it afterwards.
+    // Zoneless: move focus into an open dialog once it renders, and restore it afterwards.
     effect(() => {
-      if (this.confirmation()) { this.lastFocus ??= document.activeElement as HTMLElement|null; setTimeout(() => document.getElementById('dialog-cancel')?.focus()); }
+      if (this.confirmation() || this.sync.conflict()) { this.lastFocus ??= document.activeElement as HTMLElement|null; setTimeout(() => (document.querySelector('.dialog button') as HTMLElement|null)?.focus()); }
       else if (this.lastFocus) { const el=this.lastFocus; this.lastFocus=null; setTimeout(() => { if (el.isConnected) el.focus(); }); }
     });
+    void this.sync.init();
   }
+
+  async submitAccount(){
+    const email=this.accountEmail.trim(), password=this.accountPassword;
+    const ok = this.accountMode()==='register' ? await this.sync.register(email,password) : await this.sync.login(email,password);
+    if(!ok) return;
+    this.accountPassword=''; this.profileDraft={...this.store.profile()};
+    this.notify(this.accountMode()==='register' ? 'Cuenta creada. Tus datos se guardan también en el servidor.' : 'Ingresaste a tu cuenta.');
+  }
+  async logout(){await this.sync.logout();this.notify('Cerraste sesión. Tus datos siguen en este dispositivo.');}
+  async deleteAccount(){const ok=await this.sync.deleteAccount(this.deletePassword);this.deletePassword='';if(ok)this.notify('Cuenta eliminada. Tus datos siguen en este dispositivo.');}
+  async resolveConflict(keep:'server'|'local'){await this.sync.resolveConflict(keep);this.profileDraft={...this.store.profile()};this.notify(keep==='server'?'Usás los datos de tu cuenta.':'Tu cuenta ahora tiene los datos de este dispositivo.');}
+  @HostListener('document:visibilitychange') visibilityChanged(){if(document.visibilityState==='hidden')this.sync.flush();}
 
   fmt(value:number){return this.numberFormat.format(value);}
   openRoutine(r:Routine){this.navigate('routines');this.selectedRoutine.set(r);}
@@ -87,7 +109,7 @@ export class AppComponent implements OnDestroy {
 
   initialView():View { const hash=location.hash.slice(1); return ['home','routines','calendar','progress','library','profile','workout','editor'].includes(hash)?hash as View:'home'; }
   @HostListener('window:hashchange') hashChanged(){this.view.set(this.initialView());}
-  @HostListener('window:online') wentOnline(){this.online.set(true);}
+  @HostListener('window:online') wentOnline(){this.online.set(true);if(this.sync.account())void this.sync.syncNow();}
   @HostListener('window:offline') wentOffline(){this.online.set(false);}
   @HostListener('window:beforeinstallprompt', ['$event']) installReady(event:Event){event.preventDefault();this.installPrompt=event;}
   ngOnDestroy(){clearInterval(this.interval);clearTimeout(this.toastTimer);}

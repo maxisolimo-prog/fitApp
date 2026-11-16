@@ -1,7 +1,7 @@
 # FitApp: contexto para Claude
 
 WebApp/PWA en español rioplatense para el **alumno** que registra sus entrenamientos. MVP 100 % local: un alumno por
-navegador, estado en `localStorage`, sin backend. Leer antes de tocar algo:
+navegador con `localStorage`, y cuenta opcional que sincroniza con la API Express + MySQL de `api/`. Leer antes de tocar algo:
 
 - [PRODUCT.md](PRODUCT.md): usuario, propósito, principios y anti-referencias.
 - [docs/DESIGN.md](docs/DESIGN.md): paleta Temacy, tipografía, componentes, tono.
@@ -22,8 +22,13 @@ $env:PATH = 'C:\Users\Usuario\AppData\Roaming\nvm\v24.22.2;' + $env:PATH
 npm test          # tests de dominio y store (rápido)
 npm run build     # build de producción con service worker (pesado)
 npm start         # ng serve en 127.0.0.1:4200
-npm run preview   # sirve dist/ en 4200 (detener ng serve antes)
+npm run preview   # sirve dist/ y hace proxy de /api (PORT=4201 si 4200 está ocupado)
+cd api; npm start # API Express en 127.0.0.1:3401 (MariaDB de XAMPP, config en api/.env)
+cd api; npm test  # tests de la API contra fitapp_test (la vacía entera)
 ```
+
+En esta PC el puerto 4200 suele estar ocupado por otro proyecto: usar 4201 y no matar ese servidor. Detalle de la
+API, endpoints y decisiones en [docs/API.md](docs/API.md).
 
 **Esta PC se cuelga con carga alta** (ver CLAUDE.md global). Nunca build + serve + tests a la vez; `NG_BUILD_MAX_WORKERS=2`
 ya está en el entorno. Procesos largos con afinidad `0xF` y prioridad `BelowNormal`. Commitear apenas algo funciona.
@@ -32,14 +37,17 @@ ya está en el entorno. Procesos largos con afinidad `0xF` y prioridad `BelowNor
 
 | Ruta | Qué hay |
 | --- | --- |
-| `src/app/core/models.ts` | Contratos de dominio (también serán los DTO de la futura API). |
+| `src/app/core/models.ts` | Contratos de dominio, compartidos con la API. |
+| `src/app/core/sync.service.ts` | Cuenta opcional y sincronización por revisión (conflicto → el alumno elige). |
+| `api/src/` | Express: `app.ts` rutas, `auth.ts` scrypt/sesiones/límites, `state-repo.ts` SQL ↔ `FitAppState`. |
+| `api/migrations/` | SQL versionado; nunca editar uno aplicado, agregar `00N_*.sql`. |
 | `src/app/core/seed.ts` | 16 ejercicios y 4 plantillas. Cargas en 0: nunca inventar pesos ni historial. |
 | `src/app/core/workout-utils.ts` | Funciones puras: fechas locales, volumen, validación estricta, serialización. |
 | `src/app/core/workout-store.ts` | Store con signals; toda mutación valida, persiste y deja `actionError`/`storageError`. |
 | `src/app/app.component.{ts,html}` | Shell, navegación por hash (`#home`, `#routines`, …) y vistas del alumno. |
 | `src/app/features/` | `routine-editor` (claro) y `exercise-detail` (oscuro, pestañas accesibles). |
 | `src/styles.css` | Tokens Temacy, `@font-face` Inter local y estilos globales del shell. |
-| `tests/store.test.ts` | Dominio, validación de importación, persistencia y store. |
+| `tests/` | Dominio, validación, store y sincronización (con API simulada). |
 
 ## Reglas del proyecto
 
@@ -57,7 +65,7 @@ ya está en el entorno. Procesos largos con afinidad `0xF` y prioridad `BelowNor
 - **Copy** en rioplatense con voseo y acciones concretas ("Guardá", "Agregá una serie"). Sin promesas de resultados.
 - **Licencias:** no descargar ni incrustar GIF/animaciones de Gym Visual u otros sin licencia. Registrar todo recurso
   nuevo en `docs/ASSETS.md`.
-- Fuera de alcance del MVP (no simular como si existiera): cuentas, backend, pagos, IA, portal de entrenador.
+- Fuera de alcance (no simular como si existiera): Google Login, recuperación de contraseña, pagos, IA, portal de entrenador.
 
 ## Agentes del proyecto (`.claude/agents/`)
 
@@ -68,6 +76,6 @@ ya está en el entorno. Procesos largos con afinidad `0xF` y prioridad `BelowNor
 | `ui-reviewer` | opus | Revisión adversarial de UI: Temacy, accesibilidad, móvil, copy. |
 | `test-runner` | sonnet | Correr `npm test` y/o `npm run build` de a uno y reportar. |
 | `copy-es` | sonnet | Textos de interfaz e instrucciones de ejercicios en rioplatense. |
-| `api-architect` | opus | Diseñar la fase NestJS + MySQL del roadmap (sin implementar sin pedido). |
+| `api-architect` | opus | Diseñar cambios grandes de la API o del esquema (sin implementar sin pedido). |
 
 Un agente por vez (la PC se cuelga con carga).

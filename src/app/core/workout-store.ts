@@ -4,7 +4,7 @@ import { seedExercises } from './seed';
 import {
   buildWorkout, completeWorkout, createInitialState, deserializeState, FitAppState,
   localDate, parseLocalDate, removeRoutine, serializeState, STORAGE_KEY,
-  validateProfile, validateRoutine, validSetValues, weekDates,
+  validateProfile, validateRoutine, validateState, validSetValues, weekDates,
 } from './workout-utils';
 
 @Injectable({ providedIn: 'root' })
@@ -154,6 +154,23 @@ export class WorkoutStore {
     return true;
   }
 
+  /** Called after every user change is persisted locally (not for replaceState). Used by SyncService. */
+  onChange: (() => void) | null = null;
+
+  /** Current data as a FitAppState v1 snapshot. */
+  snapshot(): FitAppState {
+    return this.state();
+  }
+
+  /** Applies data that already lives on the server: validated again, saved locally, no change notification. */
+  replaceState(state: unknown): boolean {
+    const validated = validateState(state);
+    if (!validated) return this.fail('Los datos de tu cuenta no tienen un formato válido. Tus datos locales siguen intactos.');
+    this.applyState(validated);
+    this.persist(false);
+    return true;
+  }
+
   private state(): FitAppState {
     return {
       version: 1, profile: this.profile(), routines: this.routines(), history: this.history(),
@@ -170,7 +187,7 @@ export class WorkoutStore {
     this.activeWorkout.set(state.activeWorkout);
   }
 
-  private persist(): void {
+  private persist(notify = true): void {
     this.actionError.set(null);
     try {
       if (typeof localStorage === 'undefined') throw new Error('Storage unavailable');
@@ -179,6 +196,7 @@ export class WorkoutStore {
     } catch {
       this.storageError.set('No se pudieron guardar los cambios en este navegador. Exportá una copia antes de cerrar la página.');
     }
+    if (notify) this.onChange?.();
   }
 
   private fail(message: string): false {
