@@ -113,8 +113,9 @@ export class WorkoutStore {
     return true;
   }
 
-  scheduleRoutine(date: string, routineId: string): boolean {
-    if (!parseLocalDate(date) || !this.routines().some((routine) => routine.id === routineId)) return this.fail('Elegí una fecha y una rutina válidas.');
+  /** routineId null = descanso ese día aunque la semana tipo tenga una rutina. */
+  scheduleRoutine(date: string, routineId: string | null): boolean {
+    if (!parseLocalDate(date) || (routineId !== null && !this.routines().some((routine) => routine.id === routineId))) return this.fail('Elegí una fecha y una rutina válidas.');
     const previous = this.schedule().find((entry) => entry.date === date);
     if (!previous && this.schedule().length >= 5000) return this.fail('Alcanzaste el límite de fechas planificadas.');
     const planned = { id: previous?.id ?? this.id('plan'), date, routineId };

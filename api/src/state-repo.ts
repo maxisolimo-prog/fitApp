@@ -69,7 +69,7 @@ export async function loadState(db: Executor, userId: number): Promise<StoredSta
     };
     if (Number(row['is_active']) === 1) activeWorkout = workout; else history.push(workout);
   }
-  const schedule: ScheduledWorkout[] = scheduleRows.map((row) => ({ id: String(row['id']), date: String(row['date']), routineId: String(row['routine_id']) }));
+  const schedule: ScheduledWorkout[] = scheduleRows.map((row) => ({ id: String(row['id']), date: String(row['date']), routineId: row['routine_id'] === null ? null : String(row['routine_id']) }));
   const weeklyPlan: (string | null)[] = [null, null, null, null, null, null, null];
   for (const row of planRows) weeklyPlan[Number(row['weekday'])] = String(row['routine_id']);
   const weights: WeightRecord[] = weightRows.map((row) => ({ id: String(row['id']), date: String(row['date']), weight: Number(row['weight']) }));

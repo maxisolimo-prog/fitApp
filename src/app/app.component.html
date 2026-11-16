@@ -78,7 +78,7 @@
             <article class="hero">
               <img class="hero-img" src="images/gym-hero.jpg" alt="" width="1400" height="820">
               <div class="hero-body">
-                <p class="eyebrow">{{ scheduled(today) ? 'Agendada para hoy' : 'Rutina para empezar' }}</p>
+                <p class="eyebrow">{{ todayPlan() === 'routine' ? 'Hoy te toca' : todayPlan() === 'rest' ? 'Hoy descansás · Si querés, entrená igual' : 'Rutina para empezar' }}</p>
                 <h2>{{ routine.name }}</h2>
                 <p>{{ routine.description }}</p>
                 <ul class="meta-list">
@@ -96,7 +96,7 @@
 
           <div class="quick-actions">
             <button type="button" class="quick" (click)="editRoutine(null)"><app-icon name="plus" /><span><strong>Creá tu rutina</strong><small>Elegí ejercicios y series</small></span></button>
-            <button type="button" class="quick" (click)="openSchedule()"><app-icon name="calendar" /><span><strong>Agendá un día</strong><small>Planificá tu semana</small></span></button>
+            <button type="button" class="quick" (click)="calendarMode.set('week'); navigate('calendar')"><app-icon name="calendar" /><span><strong>Armá tu semana</strong><small>Elegí qué hacés cada día</small></span></button>
             <button type="button" class="quick" (click)="navigate('library')"><app-icon name="book" /><span><strong>Biblioteca</strong><small>Técnica de cada ejercicio</small></span></button>
           </div>
 
@@ -113,10 +113,10 @@
               </div>
               <ol class="week-strip">
                 @for (date of thisWeek; track date) {
-                  <li [class.is-today]="date === today" [class.is-done]="doneOn(date)" [class.is-planned]="!!scheduled(date)">
+                  <li [class.is-today]="date === today" [class.is-done]="doneOn(date)" [class.is-planned]="!!plannedRoutine(date)">
                     <span class="dow" aria-hidden="true">{{ dateLabel(date, { weekday: 'narrow' }) }}</span>
                     <span class="dot" aria-hidden="true">@if (doneOn(date)) { <app-icon name="check" /> } @else { {{ dateLabel(date, { day: 'numeric' }) }} }</span>
-                    <span class="sr-only">{{ dateLabel(date, { weekday: 'long', day: 'numeric' }) }}: {{ doneOn(date) ? 'entrenaste' : scheduled(date) ? 'planificado' : 'libre' }}</span>
+                    <span class="sr-only">{{ dateLabel(date, { weekday: 'long', day: 'numeric' }) }}: {{ doneOn(date) ? 'entrenaste' : planned(date) ? planned(date) : 'descanso' }}</span>
                   </li>
                 }
               </ol>
@@ -308,22 +308,136 @@
 
       @case ('calendar') {
         <section class="page" aria-labelledby="calendar-title">
-          <header class="page-head page-head-row">
-            <div>
-              <p class="eyebrow">Planificá</p>
-              <h1 id="calendar-title">Calendario</h1>
-              <p class="lead">Una rutina por día. Agendá, cambiá o quitá cuando quieras.</p>
-            </div>
-            @if (!calendarForm) { <button type="button" class="btn btn-primary" (click)="openSchedule()"><app-icon name="plus" />Agendar</button> }
+          <header class="page-head">
+            <p class="eyebrow">Planificá</p>
+            <h1 id="calendar-title">Calendario</h1>
+            <p class="lead">Armá tu semana tipo una vez y se repite. Cambiá un día puntual cuando lo necesites.</p>
           </header>
+
+          <div class="segmented" role="group" aria-label="Vista del calendario">
+            <button type="button" [class.is-active]="calendarMode() === 'week'" [attr.aria-pressed]="calendarMode() === 'week'" (click)="calendarMode.set('week')">Semana</button>
+            <button type="button" [class.is-active]="calendarMode() === 'month'" [attr.aria-pressed]="calendarMode() === 'month'" (click)="calendarMode.set('month')">Mes</button>
+          </div>
+
+          @if (calendarMode() === 'week') {
+            <article class="card" aria-labelledby="weekly-title">
+              <div class="card-head"><h2 id="weekly-title">Tu semana tipo</h2></div>
+              <p class="muted small">Elegí qué hacés cada día. Se repite todas las semanas.</p>
+              <ul class="weekly-plan">
+                @for (name of weekdayNames; track name; let i = $index) {
+                  <li>
+                    <label class="weekly-row" [for]="'weekday-' + i">
+                      <span class="weekly-day">{{ name }}</span>
+                      <select [id]="'weekday-' + i" [value]="store.weeklyPlan()[i] ?? ''" (change)="setWeekday(i, $any($event.target).value)"
+                        [class.is-rest]="!store.weeklyPlan()[i]">
+                        <option value="">Descanso</option>
+                        @for (routine of store.routines(); track routine.id) { <option [value]="routine.id" [selected]="store.weeklyPlan()[i] === routine.id">{{ routine.name }}</option> }
+                      </select>
+                    </label>
+                  </li>
+                }
+              </ul>
+            </article>
+
+            <div class="week-nav">
+              <button type="button" class="icon-button" (click)="weekOffset.set(weekOffset() - 1)" aria-label="Semana anterior"><app-icon name="left" /></button>
+              <p class="strong" aria-live="polite">{{ weekLabel }}</p>
+              <button type="button" class="icon-button" (click)="weekOffset.set(weekOffset() + 1)" aria-label="Semana siguiente"><app-icon name="chevron" /></button>
+              @if (weekOffset() !== 0) { <button type="button" class="link" (click)="weekOffset.set(0)">Hoy</button> }
+            </div>
+            <ol class="day-list">
+              @for (date of weeks(); track date) {
+                <li class="day" [class.is-today]="date === today">
+                  <div class="day-date">
+                    <span class="dow">{{ dateLabel(date, { weekday: 'short' }) }}</span>
+                    <span class="dnum tabular">{{ dateLabel(date, { day: 'numeric' }) }}</span>
+                  </div>
+                  <div class="day-body">
+                    @if (planned(date)) { <p class="strong">{{ planned(date) }}</p> } @else { <p class="muted">Descanso</p> }
+                    @if (scheduled(date)) { <p class="badge badge-outline">Solo este día</p> }
+                    @if (doneOn(date)) { <p class="badge"><app-icon name="check" />Entrenaste</p> }
+                    @else if (date === today) { <p class="badge badge-soft">Hoy</p> }
+                  </div>
+                  <div class="day-actions">
+                    @if (date === today && plannedRoutine(date); as todayRoutine) {
+                      <button type="button" class="btn btn-small btn-primary" (click)="start(todayRoutine)">Empezar</button>
+                    }
+                    <button type="button" class="icon-button icon-button-outline" (click)="openSchedule(date)" title="Cambiar este día"
+                      [attr.aria-label]="'Cambiar el ' + dateLabel(date, { weekday: 'long', day: 'numeric', month: 'long' })"><app-icon name="edit" /></button>
+                    @if (scheduled(date)) {
+                      <button type="button" class="icon-button" (click)="removeSchedule(date)"
+                        [attr.aria-label]="'Volver a la semana tipo el ' + dateLabel(date, { weekday: 'long', day: 'numeric', month: 'long' })" title="Volver a la semana tipo"><app-icon name="close" /></button>
+                    }
+                  </div>
+                </li>
+              }
+            </ol>
+          } @else {
+            <div class="week-nav">
+              <button type="button" class="icon-button" (click)="monthStep(-1)" aria-label="Mes anterior"><app-icon name="left" /></button>
+              <p class="strong" aria-live="polite">{{ monthLabel() }}</p>
+              <button type="button" class="icon-button" (click)="monthStep(1)" aria-label="Mes siguiente"><app-icon name="chevron" /></button>
+              @if (monthOffset() !== 0) { <button type="button" class="link" (click)="monthOffset.set(0); selectDate(today)">Hoy</button> }
+            </div>
+            <div class="card month-card">
+              <div class="month-grid" role="grid" aria-label="Días del mes">
+                @for (name of weekdayNames; track name) { <span class="month-dow" aria-hidden="true">{{ name.charAt(0) }}</span> }
+                @for (date of monthCells(); track $index) {
+                  @if (date) {
+                    <button type="button" class="month-day" role="gridcell"
+                      [class.is-today]="date === today" [class.is-selected]="date === selectedDate()" [class.is-done]="doneOn(date)"
+                      [class.is-planned]="!!plannedRoutine(date)" [class.is-override]="!!scheduled(date)"
+                      [attr.aria-label]="dateLabel(date, { weekday: 'long', day: 'numeric', month: 'long' }) + ': ' + (doneOn(date) ? 'entrenaste' : planned(date) || 'descanso')"
+                      [attr.aria-pressed]="date === selectedDate()" (click)="selectDate(date)">
+                      <span class="tabular">{{ dateLabel(date, { day: 'numeric' }) }}</span>
+                      <span class="month-mark" aria-hidden="true">@if (doneOn(date)) { <app-icon name="check" /> }</span>
+                    </button>
+                  } @else { <span class="month-pad" aria-hidden="true"></span> }
+                }
+              </div>
+              <ul class="month-legend small" aria-hidden="true">
+                <li><span class="legend-dot legend-done"></span>Entrenaste</li>
+                <li><span class="legend-dot legend-planned"></span>Planificado</li>
+                <li><span class="legend-dot legend-override"></span>Cambiado ese día</li>
+              </ul>
+            </div>
+
+            <article class="card day-detail" aria-live="polite">
+              <p class="eyebrow">{{ dateLabel(selectedDate(), { weekday: 'long', day: 'numeric', month: 'long' }) }}</p>
+              @if (plannedRoutine(selectedDate()); as routine) {
+                <h2>{{ routine.name }}</h2>
+                <p class="muted small">{{ scheduled(selectedDate()) ? 'Planificado solo para este día.' : 'Según tu semana tipo.' }} {{ routine.duration }} min · {{ routine.exercises.length }} ejercicios</p>
+              } @else {
+                <h2>Descanso</h2>
+                <p class="muted small">{{ scheduled(selectedDate()) ? 'Marcaste este día como descanso.' : 'No hay nada planificado.' }}</p>
+              }
+              @for (workout of workoutsOn(selectedDate()); track workout.id) {
+                <button type="button" class="history-item compact" (click)="navigate('progress'); selectedHistory.set(workout)">
+                  <span><strong><app-icon name="check" /> {{ workout.routineName }}</strong><small>{{ workout.sets.length }} series · {{ fmt(volume(workout)) }} kg</small></span>
+                  <app-icon name="chevron" />
+                </button>
+              }
+              @if (!calendarForm) {
+                <div class="actions">
+                  @if (plannedRoutine(selectedDate()); as routine) {
+                    @if (selectedDate() === today) { <button type="button" class="btn btn-primary" (click)="start(routine)"><app-icon name="play" />Empezar</button> }
+                  }
+                  <button type="button" class="btn btn-secondary" (click)="openSchedule(selectedDate())"><app-icon name="edit" />Cambiar este día</button>
+                  @if (scheduled(selectedDate())) { <button type="button" class="btn btn-secondary" (click)="removeSchedule(selectedDate())">Volver a la semana tipo</button> }
+                </div>
+              }
+            </article>
+          }
 
           @if (calendarForm) {
             <form class="card schedule-form" (ngSubmit)="saveSchedule()" aria-labelledby="schedule-form-title">
-              <h2 id="schedule-form-title">Agendar entrenamiento</h2>
+              <h2 id="schedule-form-title">Cambiar el {{ dateLabel(calendarDate, { weekday: 'long', day: 'numeric', month: 'long' }) }}</h2>
+              <p class="muted small">Solo cambia ese día. Tu semana tipo sigue igual.</p>
               <div class="form-grid">
                 <label class="field"><span>Fecha</span><input type="date" name="calendarDate" [(ngModel)]="calendarDate" required></label>
-                <label class="field"><span>Rutina</span>
-                  <select name="calendarRoutine" [(ngModel)]="calendarRoutine" required>
+                <label class="field"><span>Ese día</span>
+                  <select name="calendarRoutine" [(ngModel)]="calendarRoutine">
+                    <option value="">Descanso</option>
                     @for (routine of store.routines(); track routine.id) { <option [value]="routine.id">{{ routine.name }}</option> }
                   </select>
                 </label>
@@ -334,40 +448,6 @@
               </div>
             </form>
           }
-
-          <div class="week-nav">
-            <button type="button" class="icon-button" (click)="weekOffset.set(weekOffset() - 1)" aria-label="Semana anterior"><app-icon name="left" /></button>
-            <p class="strong" aria-live="polite">{{ weekLabel }}</p>
-            <button type="button" class="icon-button" (click)="weekOffset.set(weekOffset() + 1)" aria-label="Semana siguiente"><app-icon name="chevron" /></button>
-            @if (weekOffset() !== 0) { <button type="button" class="link" (click)="weekOffset.set(0)">Hoy</button> }
-          </div>
-
-          <ol class="day-list">
-            @for (date of weeks(); track date) {
-              <li class="day" [class.is-today]="date === today">
-                <div class="day-date">
-                  <span class="dow">{{ dateLabel(date, { weekday: 'short' }) }}</span>
-                  <span class="dnum tabular">{{ dateLabel(date, { day: 'numeric' }) }}</span>
-                </div>
-                <div class="day-body">
-                  @if (planned(date)) { <p class="strong">{{ planned(date) }}</p> } @else { <p class="muted">Libre</p> }
-                  @if (doneOn(date)) { <p class="badge"><app-icon name="check" />Entrenaste</p> }
-                  @else if (date === today) { <p class="badge badge-soft">Hoy</p> }
-                </div>
-                <div class="day-actions">
-                  @if (date === today && scheduled(date); as entry) {
-                    @if (routine(entry.routineId); as todayRoutine) { <button type="button" class="btn btn-small btn-primary" (click)="start(todayRoutine)">Empezar</button> }
-                  }
-                  <button type="button" class="btn btn-small btn-secondary" (click)="openSchedule(date)"
-                    [attr.aria-label]="(scheduled(date) ? 'Cambiar rutina del ' : 'Agendar el ') + dateLabel(date, { weekday: 'long', day: 'numeric', month: 'long' })">{{ scheduled(date) ? 'Cambiar' : 'Agendar' }}</button>
-                  @if (scheduled(date)) {
-                    <button type="button" class="icon-button" (click)="removeSchedule(date)"
-                      [attr.aria-label]="'Quitar entrenamiento del ' + dateLabel(date, { weekday: 'long', day: 'numeric', month: 'long' })"><app-icon name="close" /></button>
-                  }
-                </div>
-              </li>
-            }
-          </ol>
         </section>
       }
 

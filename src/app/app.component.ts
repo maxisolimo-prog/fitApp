@@ -5,7 +5,7 @@ import { IconComponent } from './icon.component';
 import { WorkoutStore } from './core/workout-store';
 import { SyncService, type SyncStatus } from './core/sync.service';
 import { SwUpdate } from '@angular/service-worker';
-import { localDate, weekDates, workoutVolume, workoutDurationMinutes } from './core/workout-utils';
+import { localDate, parseLocalDate, plannedRoutineId, weekDates, workoutVolume, workoutDurationMinutes } from './core/workout-utils';
 import { Routine, Profile, Workout, Exercise } from './core/models';
 import { RoutineEditorComponent } from './features/routine-editor.component';
 import { ExerciseDetailComponent } from './features/exercise-detail.component';
@@ -44,9 +44,30 @@ export class AppComponent implements OnDestroy {
   readonly weekMinutes = computed(() => this.weekWorkouts().reduce((s,w) => s+workoutDurationMinutes(w),0));
   readonly totalVolume = computed(() => this.store.history().reduce((s,w) => s+workoutVolume(w),0));
   readonly goalPercent = computed(() => Math.min(100,Math.round(this.weekCount()/this.store.profile().weeklyGoal*100)));
-  readonly suggestedRoutine = computed(() => {
-    const scheduled = this.store.schedule().find(s => s.date === this.today);
-    return this.store.routines().find(r => r.id === scheduled?.routineId) ?? this.store.routines().find(r => r.id === 'full-body') ?? this.store.routines()[0];
+  /** What today holds: a planned routine, an explicit rest day, or nothing planned at all. */
+  readonly todayPlan = computed<'routine'|'rest'|'none'>(() => {
+    if (this.plannedRoutine(this.today)) return 'routine';
+    return this.hasAnyPlan() ? 'rest' : 'none';
+  });
+  readonly hasAnyPlan = computed(() => this.store.weeklyPlan().some(slot => slot !== null) || this.store.schedule().length > 0);
+  readonly suggestedRoutine = computed(() =>
+    this.plannedRoutine(this.today) ?? this.store.routines().find(r => r.id === 'full-body') ?? this.store.routines()[0]);
+  readonly calendarMode = signal<'week'|'month'>('week');
+  readonly monthOffset = signal(0);
+  readonly selectedDate = signal(localDate());
+  readonly weekdayNames = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+  /** Month grid starting on Monday; null cells pad the first week. */
+  readonly monthCells = computed(() => {
+    const now = new Date();
+    const first = new Date(now.getFullYear(), now.getMonth() + this.monthOffset(), 1, 12);
+    const days = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
+    const pad = (first.getDay() + 6) % 7;
+    return [...Array.from({ length: pad }, () => null), ...Array.from({ length: days }, (_, i) => localDate(new Date(first.getFullYear(), first.getMonth(), i + 1, 12)))];
+  });
+  readonly monthLabel = computed(() => {
+    const now = new Date();
+    const label = new Intl.DateTimeFormat('es-AR', { month: 'long', year: 'numeric' }).format(new Date(now.getFullYear(), now.getMonth() + this.monthOffset(), 1, 12));
+    return label.charAt(0).toUpperCase() + label.slice(1);
   });
   readonly completedSets = computed(() => this.store.activeWorkout()?.sets.filter(s=>s.completed).length ?? 0);
   readonly elapsed = computed(() => { const w=this.store.activeWorkout(); return w ? Math.max(0,Math.floor((this.now()-Date.parse(w.startedAt))/1000)) : 0; });
@@ -121,7 +142,13 @@ export class AppComponent implements OnDestroy {
   openRoutine(r:Routine){this.navigate('routines');this.selectedRoutine.set(r);}
   planRoutine(r:Routine){this.openSchedule();this.calendarRoutine=r.id;}
   cancelConfirmation(){if(this.confirmation()==='import')this.pendingImport='';this.confirmation.set(null);}
-  planned(date:string){const entry=this.scheduled(date);return entry?(this.routine(entry.routineId)?.name ?? 'Rutina eliminada'):'';}
+  /** Effective plan for a date: one-off plan, else weekly plan. */
+  plannedRoutine(date:string){const id=plannedRoutineId({schedule:this.store.schedule(),weeklyPlan:this.store.weeklyPlan()},date);return id?this.routine(id):undefined;}
+  planned(date:string){const id=plannedRoutineId({schedule:this.store.schedule(),weeklyPlan:this.store.weeklyPlan()},date);return id?(this.routine(id)?.name ?? 'Rutina eliminada'):'';}
+  workoutsOn(date:string){return this.store.history().filter(w=>localDate(new Date(w.finishedAt!))===date);}
+  selectDate(date:string){this.selectedDate.set(date);this.calendarDate=date;this.calendarForm=false;}
+  setWeekday(index:number,value:string){if(this.store.setWeeklyPlan(index,value||null))this.notify(value?`${this.weekdayNames[index]}: ${this.routine(value)?.name}.`:`${this.weekdayNames[index]}: descanso.`);else this.notify(this.store.actionError()??'No se pudo guardar.');}
+  monthStep(delta:number){this.monthOffset.update(v=>v+delta);this.calendarForm=false;}
 
   private savedRest(){try{return Number(localStorage.getItem('fitapp-rest-until'))||0;}catch{return 0;}}
 
@@ -144,10 +171,10 @@ export class AppComponent implements OnDestroy {
   get weekLabel(){const dates=this.weeks();return `${this.dateLabel(dates[0])} – ${this.dateLabel(dates[6],{day:'numeric',month:'short',year:'numeric'})}`;}
   scheduled(date:string){return this.store.schedule().find(s=>s.date===date);}
   doneOn(date:string){return this.store.history().some(w=>localDate(new Date(w.finishedAt!))===date);}
-  plannedCount(){return this.store.schedule().filter(s=>this.thisWeek.includes(s.date)).length;}
-  openSchedule(date=this.today){this.calendarDate=date;this.calendarRoutine=this.scheduled(date)?.routineId ?? this.suggestedRoutine()?.id ?? '';this.calendarForm=true;this.navigate('calendar');}
-  saveSchedule(){if(this.store.scheduleRoutine(this.calendarDate,this.calendarRoutine)){this.calendarForm=false;this.notify('Entrenamiento agendado.');}else this.notify(this.store.actionError()??'Revisá la fecha y la rutina.');}
-  removeSchedule(date:string){this.store.unschedule(date);this.notify('Entrenamiento quitado del calendario.');}
+  plannedCount(){return this.thisWeek.filter(d=>!!this.plannedRoutine(d)).length;}
+  openSchedule(date=this.today){const target=parseLocalDate(date)??new Date();const now=new Date();this.navigate('calendar');this.monthOffset.set((target.getFullYear()-now.getFullYear())*12+target.getMonth()-now.getMonth());this.selectedDate.set(date);this.calendarDate=date;this.calendarRoutine=this.plannedRoutine(date)?.id ?? this.suggestedRoutine()?.id ?? '';this.calendarForm=true;setTimeout(()=>document.querySelector('.schedule-form')?.scrollIntoView({behavior:'smooth',block:'center'}),50);}
+  saveSchedule(){if(this.store.scheduleRoutine(this.calendarDate,this.calendarRoutine||null)){this.calendarForm=false;this.notify(this.calendarRoutine?'Listo, quedó planificado ese día.':'Listo, ese día descansás.');}else this.notify(this.store.actionError()??'Revisá la fecha y la rutina.');}
+  removeSchedule(date:string){this.store.unschedule(date);this.notify('Ese día vuelve a tu semana tipo.');}
   start(r:Routine){if(this.store.activeWorkout()){this.navigate('workout');this.notify('Continuá tu sesión en curso antes de empezar otra.');return;}if(this.store.startWorkout(r.id)){this.navigate('workout');this.notify('Todo listo. Registrá cada serie a tu ritmo.');}else this.notify(this.store.actionError()??'No se pudo iniciar.');}
   updateSet(index:number,key:'reps'|'weight',value:string,event:Event){const set=this.store.activeWorkout()!.sets[index];const num=Number(value);if(value.trim()===''||!this.store.updateSet(index,key==='reps'?num:set.reps,key==='weight'?num:set.weight)){(event.target as HTMLInputElement).value=String(set[key]);this.notify('Usá repeticiones de 1 a 999 y una carga de 0 a 2000 kg.');}}
   toggleSet(index:number){const set=this.store.activeWorkout()!.sets[index];if(this.store.toggleSet(index)&&!set.completed){const routine=this.routine(this.store.activeWorkout()!.routineId);this.startRest(routine?.exercises.find(e=>e.exerciseId===set.exerciseId)?.restSeconds??60);}}

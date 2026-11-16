@@ -200,3 +200,13 @@ test('bodies are size-limited per route and parser errors keep their 4xx status'
   const charset = await fetch(base + '/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json; charset=utf-16' }, body: '{}' });
   assert.ok(charset.status >= 400 && charset.status < 500, `status ${charset.status}`);
 });
+
+test('weekly plan and one-off rest days are stored', async () => {
+  const client = new Client();
+  await client.call('POST', '/api/auth/register', { email: email(), password: 'una-clave-larga' });
+  const state = createInitialState();
+  state.weeklyPlan = ['upper-body', null, null, 'lower-body', null, null, 'at-home'];
+  state.schedule = [{ id: 'rest', date: '2026-11-16', routineId: null }, { id: 'extra', date: '2026-11-18', routineId: 'full-body' }];
+  assert.equal((await client.call('PUT', '/api/state', { baseRevision: 0, state })).status, 200);
+  assert.deepEqual((await client.call('GET', '/api/state')).data.state, state);
+});

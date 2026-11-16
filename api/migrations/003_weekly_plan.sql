@@ -9,3 +9,7 @@ CREATE TABLE weekly_plan (
   CONSTRAINT ck_weekly_plan_weekday CHECK (weekday <= 6),
   CONSTRAINT fk_weekly_plan_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB
+;
+
+-- Un día puntual puede ser descanso aunque la semana tipo tenga rutina: routine_id NULL.
+ALTER TABLE scheduled_workouts MODIFY routine_id VARBINARY(400) NULL

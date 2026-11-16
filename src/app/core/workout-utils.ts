@@ -74,7 +74,8 @@ export function weekdayIndex(date: string): number {
 
 /** What is planned for a date: a one-off plan wins over the weekly plan. */
 export function plannedRoutineId(state: Pick<FitAppState, 'schedule' | 'weeklyPlan'>, date: string): string | null {
-  return state.schedule.find((entry) => entry.date === date)?.routineId ?? state.weeklyPlan[weekdayIndex(date)] ?? null;
+  const oneOff = state.schedule.find((entry) => entry.date === date);
+  return oneOff ? oneOff.routineId : state.weeklyPlan[weekdayIndex(date)] ?? null;
 }
 
 export function createInitialState(): FitAppState {
@@ -203,8 +204,8 @@ export function validateState(value: unknown): FitAppState | null {
   const schedule: ScheduledWorkout[] = [];
   for (const candidate of value['schedule']) {
     if (!record(candidate) || !text(candidate['id'], 100) || !text(candidate['date'], 10)
-      || !parseLocalDate(candidate['date']) || !text(candidate['routineId'], 100)) return null;
-    schedule.push({ id: candidate['id'], date: candidate['date'], routineId: candidate['routineId'] });
+      || !parseLocalDate(candidate['date']) || !(candidate['routineId'] === null || text(candidate['routineId'], 100))) return null;
+    schedule.push({ id: candidate['id'], date: candidate['date'], routineId: candidate['routineId'] as string | null });
   }
   const weights: WeightRecord[] = [];
   for (const candidate of value['weights']) {

@@ -239,3 +239,15 @@ test('store sets weekly plan slots and rejects unknown routines', () => {
     assert.deepEqual(new WorkoutStore().weeklyPlan(), [null, null, 'lower-body', null, null, null, null]);
   });
 });
+
+test('a one-off rest day overrides the weekly plan and survives a round trip', () => {
+  withStorage(() => {
+    const store = new WorkoutStore();
+    store.setWeeklyPlan(0, 'upper-body');
+    assert.equal(store.scheduleRoutine('2026-11-16', null), true);
+    const state = store.snapshot();
+    assert.equal(plannedRoutineId(state, '2026-11-16'), null);
+    assert.equal(plannedRoutineId(state, '2026-11-23'), 'upper-body');
+    assert.deepEqual(deserializeState(serializeState(state)), state);
+  });
+});

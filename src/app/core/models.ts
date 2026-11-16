@@ -69,7 +69,8 @@ export interface ScheduledWorkout {
   id: string;
   /** Local calendar date, YYYY-MM-DD; do not convert through UTC. */
   date: string;
-  routineId: string;
+  /** null = descanso ese día aunque la semana tipo tenga una rutina. */
+  routineId: string | null;
 }
 
 export interface WeightRecord {

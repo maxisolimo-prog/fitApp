@@ -449,3 +449,46 @@ img { max-width: 100%; }
   .quick small { font-size: 13px; }
   .resume-card { margin-inline: -16px; border-radius: 0; padding: 16px; }
 }
+
+/* ---------- Calendario: semana tipo y mes ---------- */
+.weekly-plan { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; }
+.weekly-plan li + li { border-top: 1px solid var(--line); }
+.weekly-row { display: grid; grid-template-columns: 96px 1fr; align-items: center; gap: 12px; min-height: 56px; }
+.weekly-day { font-weight: 600; font-size: 15px; }
+.weekly-row select { width: 100%; min-height: 44px; padding: 8px 12px; border-radius: 10px; border: 1px solid #CFD3C6; background: var(--surface); color: var(--ink); font: inherit; font-size: 15px; font-weight: 600; }
+.weekly-row select.is-rest { color: var(--ink-2); font-weight: 400; background: var(--hueso); }
+.weekly-row select:focus { outline: none; border-color: var(--bosque); box-shadow: 0 0 0 3px rgba(44, 74, 46, 0.18); }
+.badge-outline { background: transparent; color: var(--musgo); border: 1px dashed var(--musgo); }
+
+.month-card { padding: 14px 12px; gap: 10px; }
+.month-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.month-dow { text-align: center; font-size: 11px; font-weight: 700; color: var(--ink-2); padding-bottom: 4px; }
+.month-day { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; aspect-ratio: 1; min-height: 44px; border-radius: 10px; border: 1px solid transparent; background: transparent; color: var(--ink); font: inherit; font-size: 15px; font-weight: 600; }
+.month-day:hover { background: var(--hueso); }
+.month-day.is-planned { background: #EEF0E6; }
+.month-day.is-planned::after { content: ''; position: absolute; bottom: 6px; width: 6px; height: 6px; border-radius: 50%; background: var(--musgo); }
+.month-day.is-override::after { background: transparent; border: 1.5px solid var(--musgo); }
+.month-day.is-done { background: var(--musgo); color: var(--hueso); }
+.month-day.is-done::after { display: none; }
+.month-day.is-today { border-color: var(--bosque); border-width: 2px; }
+.month-day.is-selected { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--lima); }
+.month-mark { height: 14px; display: grid; place-items: center; }
+.month-mark app-icon { width: 14px; height: 14px; }
+.month-pad { aspect-ratio: 1; }
+.month-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0; padding: 4px 4px 0; list-style: none; color: var(--ink-2); }
+.month-legend li { display: inline-flex; align-items: center; gap: 6px; }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.legend-done { background: var(--musgo); }
+.legend-planned { background: #EEF0E6; box-shadow: inset 0 0 0 3px #EEF0E6, inset 0 0 0 6px var(--musgo); }
+.legend-override { border: 1.5px solid var(--musgo); }
+.day-detail h2 { font-size: 20px; }
+.day-detail .eyebrow { text-transform: none; letter-spacing: 0; font-size: 13px; }
+.history-item.compact { min-height: 52px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 12px; }
+.history-item.compact strong { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; }
+.history-item.compact strong app-icon { width: 16px; height: 16px; color: var(--musgo); }
+.icon-button-outline { border-color: var(--line); background: var(--surface); }
+.icon-button-outline:hover { border-color: var(--bosque); background: var(--surface); }
+@media (max-width: 639px) {
+  .day { grid-template-columns: 48px 1fr auto; gap: 4px 10px; padding: 10px 12px; }
+  .day-actions { grid-column: auto; flex-wrap: nowrap; }
+}
