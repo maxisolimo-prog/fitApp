@@ -99,7 +99,7 @@ export class AppComponent implements OnDestroy {
 
   readonly sync = inject(SyncService);
   private readonly swUpdate = inject(SwUpdate);
-  private readonly openedAt = Date.now();
+  private userInteracted = false;
   readonly updateReady = signal(false);
   reloadApp(){this.sync.flush();location.reload();}
   readonly accountMode = signal<'login'|'register'>('login');
@@ -117,12 +117,15 @@ export class AppComponent implements OnDestroy {
     });
     void this.sync.init();
     // The service worker serves the cached version first and downloads a new one in the background.
-    // Right after opening (or with nothing in progress) apply it at once; otherwise offer a button.
+    // Before the user touches anything (and with no workout in progress) apply it at once; otherwise offer a button.
     if (this.swUpdate.isEnabled) {
+      // A broken cached version cannot recover by itself: load a fresh copy.
+      this.swUpdate.unrecoverable.subscribe(() => location.reload());
+      void this.swUpdate.checkForUpdate().catch(() => false);
       this.swUpdate.versionUpdates.subscribe((event) => {
         if (event.type !== 'VERSION_READY') return;
-        const justOpened = Date.now() - this.openedAt < 20_000;
-        if (justOpened && !this.store.activeWorkout()) this.reloadApp(); else this.updateReady.set(true);
+        // Not touched yet (or nothing in progress right after opening): switch now. Otherwise ask, never interrupt.
+        if (!this.userInteracted && !this.store.activeWorkout()) this.reloadApp(); else this.updateReady.set(true);
       });
     }
   }
@@ -137,8 +140,10 @@ export class AppComponent implements OnDestroy {
   async logout(){if(await this.sync.logout()){this.profileDraft={...this.store.profile()};this.notify('Cerraste sesión. Tus datos quedan guardados en tu cuenta.');}}
   async deleteAccount(){const ok=await this.sync.deleteAccount(this.deletePassword);this.deletePassword='';if(ok)this.notify('Cuenta eliminada. Tus datos siguen en este dispositivo.');}
   async resolveConflict(keep:'server'|'local'){await this.sync.resolveConflict(keep);this.profileDraft={...this.store.profile()};this.notify(keep==='server'?'Usás los datos de tu cuenta.':'Tu cuenta ahora tiene los datos de este dispositivo.');}
+  @HostListener('document:pointerdown') @HostListener('document:keydown') interacted(){this.userInteracted=true;}
   @HostListener('document:visibilitychange') visibilityChanged(){
-    if(document.visibilityState==='hidden'){this.sync.flush();return;}
+    // Hidden: when the app comes back it counts as freshly opened, so a pending update can apply itself.
+    if(document.visibilityState==='hidden'){this.sync.flush();this.userInteracted=false;return;}
     // Back to the app (e.g. reopened from the home screen): look for a newer version.
     if(this.swUpdate.isEnabled) void this.swUpdate.checkForUpdate().catch(()=>false);
   }
