@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { IconComponent } from './icon.component';
 import { WorkoutStore } from './core/workout-store';
 import { SyncService, type SyncStatus } from './core/sync.service';
+import { SwUpdate } from '@angular/service-worker';
 import { localDate, weekDates, workoutVolume, workoutDurationMinutes } from './core/workout-utils';
 import { Routine, Profile, Workout, Exercise } from './core/models';
 import { RoutineEditorComponent } from './features/routine-editor.component';
@@ -71,6 +72,10 @@ export class AppComponent implements OnDestroy {
   private readonly numberFormat = new Intl.NumberFormat('es-AR',{maximumFractionDigits:1});
 
   readonly sync = inject(SyncService);
+  private readonly swUpdate = inject(SwUpdate);
+  private readonly openedAt = Date.now();
+  readonly updateReady = signal(false);
+  reloadApp(){this.sync.flush();location.reload();}
   readonly accountMode = signal<'login'|'register'>('login');
   accountEmail=''; accountPassword=''; deletePassword='';
   readonly syncLabels: Record<SyncStatus,string> = {
@@ -85,6 +90,15 @@ export class AppComponent implements OnDestroy {
       else if (this.lastFocus) { const el=this.lastFocus; this.lastFocus=null; setTimeout(() => { if (el.isConnected) el.focus(); }); }
     });
     void this.sync.init();
+    // The service worker serves the cached version first and downloads a new one in the background.
+    // Right after opening (or with nothing in progress) apply it at once; otherwise offer a button.
+    if (this.swUpdate.isEnabled) {
+      this.swUpdate.versionUpdates.subscribe((event) => {
+        if (event.type !== 'VERSION_READY') return;
+        const justOpened = Date.now() - this.openedAt < 20_000;
+        if (justOpened && !this.store.activeWorkout()) this.reloadApp(); else this.updateReady.set(true);
+      });
+    }
   }
 
   async submitAccount(){
@@ -97,7 +111,11 @@ export class AppComponent implements OnDestroy {
   async logout(){if(await this.sync.logout()){this.profileDraft={...this.store.profile()};this.notify('Cerraste sesión. Tus datos quedan guardados en tu cuenta.');}}
   async deleteAccount(){const ok=await this.sync.deleteAccount(this.deletePassword);this.deletePassword='';if(ok)this.notify('Cuenta eliminada. Tus datos siguen en este dispositivo.');}
   async resolveConflict(keep:'server'|'local'){await this.sync.resolveConflict(keep);this.profileDraft={...this.store.profile()};this.notify(keep==='server'?'Usás los datos de tu cuenta.':'Tu cuenta ahora tiene los datos de este dispositivo.');}
-  @HostListener('document:visibilitychange') visibilityChanged(){if(document.visibilityState==='hidden')this.sync.flush();}
+  @HostListener('document:visibilitychange') visibilityChanged(){
+    if(document.visibilityState==='hidden'){this.sync.flush();return;}
+    // Back to the app (e.g. reopened from the home screen): look for a newer version.
+    if(this.swUpdate.isEnabled) void this.swUpdate.checkForUpdate().catch(()=>false);
+  }
 
   fmt(value:number){return this.numberFormat.format(value);}
   openRoutine(r:Routine){this.navigate('routines');this.selectedRoutine.set(r);}

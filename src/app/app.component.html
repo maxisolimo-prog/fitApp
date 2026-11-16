@@ -46,6 +46,10 @@
       <div class="banner banner-error" role="alert"><app-icon name="info" /><p>{{ storageError }}</p>
         <button type="button" class="link" (click)="navigate('profile')">Ir a mis datos</button></div>
     }
+    @if (updateReady()) {
+      <div class="banner banner-update" role="status"><app-icon name="download" /><p>Hay una versión nueva de FitApp.</p>
+        <button type="button" class="btn btn-small btn-primary" (click)="reloadApp()">Actualizar</button></div>
+    }
     @if (!online()) {
       <div class="banner" role="status"><app-icon name="info" /><p>Estás sin conexión. Podés seguir registrando: tus datos se guardan en este dispositivo.</p></div>
     }
