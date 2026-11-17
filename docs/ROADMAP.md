@@ -25,6 +25,34 @@ Hecho:
 - Migración de los datos locales: al crear la cuenta se suben los del dispositivo; al ingresar en otro dispositivo con datos propios, se pregunta.
 - La API reutiliza la validación del front (`workout-utils.ts`).
 
+## Tercera entrega (16 de noviembre de 2026): producto frente a la competencia
+
+Tras el relevamiento de `docs/COMPETENCIA.md` y pruebas del usuario en el celular:
+
+- **Calendario:** semana tipo que se repite + vista de mes; cualquier día se puede cambiar o marcar como descanso (FitAppState v2, migración 003).
+- **Sesión:** columna "Anterior", cargas precargadas de la última vez, agregar/quitar series, notas.
+- **Récords** al terminar y **resumen para compartir** (Web Share / WhatsApp).
+- **Editor de rutinas** sin tope de 12, selector de ejercicios por categoría y buscador, reordenar.
+- **Catálogo** de 16 a 43 ejercicios en 9 grupos musculares (indicaciones a validar con un profesional).
+- **Celular:** inicio rediseñado (foto a todo el ancho, accesos grandes), instalación guiada (un toque en Android, pasos en iPhone), actualización automática de versiones.
+- Revisión adversarial de la sincronización: corregidos 3 hallazgos graves (pérdida de datos, DoS) y los medios.
+
+## Estado frente a la hipótesis de producto
+
+Hipótesis: registro simple + planificación personalizada + IA conversacional, para hispanohablantes.
+
+| Funcionalidad | Fase | Estado |
+| --- | --- | --- |
+| Perfil, objetivos y nivel | MVP | Hecho (faltan objetivo estructurado, días disponibles y equipo) |
+| Rutinas y calendario semanal | MVP | Hecho |
+| Biblioteca con videos | MVP | Parcial: 43 ejercicios con texto, sin videos (licencia o producción propia) |
+| Registro de series, pesos y repeticiones | MVP | Hecho |
+| Estadísticas y evolución | MVP | Hecho |
+| Adaptación automática de rutinas | 2ª fase | Pendiente: empezar por reglas de progresión, sin costo por usuario |
+| Entrenador IA conversacional | 2ª fase | Pendiente: requiere proveedor, presupuesto y límites |
+| Relojes y apps de salud | 2ª fase | Pendiente: requiere app nativa (p. ej. Capacitor) |
+| Panel para entrenadores y gimnasios | Expansión | Pendiente: validar con profes |
+
 ## Próximos incrementos
 
 1. Incorporar archivos de animaciones anatómicas con licencia de uso comercial. Validar su correspondencia con ejercicios y técnica con un profesional. **Requiere comprar la licencia.**
