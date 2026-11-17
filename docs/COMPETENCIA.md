@@ -31,7 +31,7 @@ magnitud, no como cifra exacta.
 - **Puente entre el profe y el alumno:** Mis Actividades resuelve la operación del gimnasio pero su registro de
   entrenamiento es básico; los loggers no tienen profe; las plataformas de entrenador son caras y en dólares.
 
-**Hipótesis de posicionamiento (a validar con usuarios):** *el registro de entrenamiento más cómodo en español,
+**Decisión del 16 de noviembre de 2026:** personas y gimnasios (ver `docs/ROADMAP.md`). Hipótesis original: *el registro de entrenamiento más cómodo en español,
 gratis para el alumno, con un plan pago en pesos para el profe que asigna rutinas y ve el progreso real.* Es el
 paso 5 del roadmap. No se decide sin hablar con entrenadores reales.
 

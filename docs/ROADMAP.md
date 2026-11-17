@@ -53,9 +53,40 @@ Hipótesis: registro simple + planificación personalizada + IA conversacional, 
 | Relojes y apps de salud | 2ª fase | Pendiente: requiere app nativa (p. ej. Capacitor) |
 | Panel para entrenadores y gimnasios | Expansión | Pendiente: validar con profes |
 
-## Decisiones abiertas
+## Decisiones
 
-### ¿Para quién es FitApp? (pendiente, define producto y negocio)
+### Segmento: personas y gimnasios (decidido por el usuario el 16 de noviembre de 2026)
+
+FitApp apunta a **personas** que entrenan y a **gimnasios**. Para no competir de frente con el software de gestión
+(Mis Actividades, GymAr, AgendaPro), en gimnasios FitApp es el **módulo de entrenamiento**, no la administración:
+
+| Para | Qué ofrece | Qué no hace |
+| --- | --- | --- |
+| Personas | App gratis: rutinas, semana tipo, registro, progreso, récords. Cuenta opcional. | — |
+| Gimnasios | Los profes asignan rutinas y semana tipo a cada socio y ven su progreso real; app con logo y colores del gimnasio; socios que se suman con un código o QR. | Cuotas, accesos, reservas de clases, facturación: siguen en el sistema que el gimnasio ya usa. |
+
+Un **profe independiente** entra en el mismo modelo: es un gimnasio con un solo profe. El socio de un gimnasio
+usa la misma app que una persona; su gimnasio solo le suma rutinas asignadas y seguimiento.
+
+**Modelo de negocio (hipótesis a validar):** gratis para personas; abono mensual en pesos para el gimnasio o el
+profe, según cantidad de socios o profes. No se fijan precios sin hablar con 2 o 3 gimnasios.
+
+**Etapas para gimnasios:**
+
+1. **Validar** con 2 o 3 gimnasios o profes: qué sistema de gestión usan, cómo arman hoy las rutinas, cuánto
+   pagarían. Sin esto no se construye el panel.
+2. **Modelo de datos multi-organización:** gimnasio → profes → socios, con roles y autorización por fila (un profe
+   solo ve a sus socios; un socio decide qué comparte). Migración nueva en la API.
+3. **Vinculación del socio** con código o QR del gimnasio; puede desvincularse cuando quiera y sus datos personales
+   siguen siendo suyos.
+4. **Panel del profe** (web, pensado para computadora): lista de socios, asignar rutina y semana tipo, ver
+   asistencia, récords y evolución.
+5. **Marca del gimnasio:** logo y colores en la app del socio.
+6. **Cobro** al gimnasio, recién con precio validado.
+
+### Análisis previo de segmentos
+
+Queda como referencia de por qué se eligió así.
 
 | Opción | A favor | En contra |
 | --- | --- | --- |
@@ -63,9 +94,8 @@ Hipótesis: registro simple + planificación personalizada + IA conversacional, 
 | Entrenador con alumnos | Paga, y en pesos (Trainer UP desde ~ARS 39.000/mes); trae a sus alumnos. | Requiere panel del entrenador (proyecto mediano). |
 | Gimnasio | Contratos más grandes. | Mercado ocupado (Mis Actividades, +600 gimnasios); exige cuotas, accesos, reservas y facturación: otro producto. |
 
-**Recomendación (a confirmar con el usuario y su socio):** el alumno como usuario, gratis; el entrenador
-como cliente que paga, con un panel para asignar rutinas y ver el progreso real de sus alumnos. Gimnasios, no por
-ahora. Hasta decidirlo, no se construye el panel ni se definen precios.
+La recomendación inicial era alumno gratis + entrenador que paga, sin gimnasios. El usuario decidió sumar
+gimnasios; el enfoque de "módulo de entrenamiento" resuelve la objeción principal (no rehacer la gestión).
 
 ### Audio del socio (pendiente)
 
@@ -80,7 +110,7 @@ transcribe en esta PC: el procesamiento local exige CPU alta y la cuelga.
 2. Recuperación de contraseña por email (requiere un servicio de envío de correo) y Google Login (requiere un client ID de Google Cloud).
 3. Despliegue: hosting de la API y la base (AWS u otro), HTTPS con `COOKIE_SECURE=true`, copias de seguridad de la base. Hoy corre en esta PC.
 4. Sincronización por entidad en lugar de foto completa, si los historiales crecen o se usa en varios dispositivos a la vez.
-5. Portal de entrenador según requisitos confirmados, no mediante un selector de roles sin autorización.
+5. Módulo para gimnasios y profes (ver "Segmento: personas y gimnasios"): validar primero, después multi-organización, vinculación, panel del profe y marca. Nunca mediante un selector de roles sin autorización.
 6. Suscripciones y pagos solamente tras validar producto y precio. IA y ajustes automáticos después de definir límites y supervisión.
 
 El MVP no envía mensajes, no contrata servicios y no procesa pagos. Tampoco inventa recomendaciones personalizadas a partir del perfil.
