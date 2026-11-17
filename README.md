@@ -23,7 +23,7 @@ Los dos servidores usan el puerto 4200: detener uno antes de iniciar el otro. El
 
 ## Funciones implementadas
 
-- Cuatro plantillas iniciales y dieciséis ejercicios con indicaciones en español.
+- Cuatro plantillas iniciales y 43 ejercicios en 9 grupos musculares, con indicaciones en español (a validar con un profesional).
 - Crear, personalizar y eliminar rutinas propias.
 - Calendario semanal con una rutina por fecha.
 - Sesión activa con registro de series, carga, repeticiones, temporizador de descanso y recuperación tras recargar.

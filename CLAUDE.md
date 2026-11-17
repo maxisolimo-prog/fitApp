@@ -41,7 +41,7 @@ ya está en el entorno. Procesos largos con afinidad `0xF` y prioridad `BelowNor
 | `src/app/core/sync.service.ts` | Cuenta opcional y sincronización por revisión (conflicto → el alumno elige). |
 | `api/src/` | Express: `app.ts` rutas, `auth.ts` scrypt/sesiones/límites, `state-repo.ts` SQL ↔ `FitAppState`. |
 | `api/migrations/` | SQL versionado; nunca editar uno aplicado, agregar `00N_*.sql`. |
-| `src/app/core/seed.ts` | 16 ejercicios y 4 plantillas. Cargas en 0: nunca inventar pesos ni historial. |
+| `src/app/core/seed.ts` | 43 ejercicios y 4 plantillas. Cargas en 0: nunca inventar pesos ni historial. |
 | `src/app/core/workout-utils.ts` | Funciones puras: fechas locales, volumen, validación estricta, serialización. |
 | `src/app/core/workout-store.ts` | Store con signals; toda mutación valida, persiste y deja `actionError`/`storageError`. |
 | `src/app/app.component.{ts,html}` | Shell, navegación por hash (`#home`, `#routines`, …) y vistas del alumno. |

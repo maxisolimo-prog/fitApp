@@ -301,3 +301,16 @@ test('sets can be added and removed during a session, with renumbering and limit
     assert.equal(store.activeWorkout()!.notes, undefined);
   });
 });
+
+test('routines are not capped at 12 exercises; the catalog ids are unique', () => {
+  withStorage(() => {
+    const store = new WorkoutStore();
+    const ids = store.exercises().map((exercise) => exercise.id);
+    assert.equal(new Set(ids).size, ids.length);
+    assert.ok(ids.length >= 40);
+    const routine = { id: 'custom-big', name: 'Larga', description: '', category: 'Fuerza' as const, duration: 90, level: 'Intermedio' as const, custom: true,
+      exercises: ids.slice(0, 20).map((exerciseId) => ({ exerciseId, sets: 3, reps: 10, weight: 0, restSeconds: 60 })) };
+    assert.equal(store.saveRoutine(routine), true);
+    assert.equal(store.routines().find((r) => r.id === 'custom-big')!.exercises.length, 20);
+  });
+});
