@@ -45,7 +45,7 @@ Hipótesis: registro simple + planificación personalizada + IA conversacional, 
 | --- | --- | --- |
 | Perfil, objetivos y nivel | MVP | Hecho: objetivo principal, días por semana, lugar (gimnasio / casa con pesas / sin equipo) y nivel |
 | Rutinas y calendario semanal | MVP | Hecho |
-| Biblioteca con videos | MVP | Parcial: 43 ejercicios con texto, sin videos (licencia o producción propia) |
+| Biblioteca con videos | MVP | Parcial: 43 ejercicios con texto, sin imágenes. Plan en dos etapas: ilustraciones y mapa muscular con licencia abierta, y después animaciones compradas (ver "Próximos incrementos") |
 | Registro de series, pesos y repeticiones | MVP | Hecho |
 | Estadísticas y evolución | MVP | Hecho |
 | Adaptación automática de rutinas | 2ª fase | Primera parte hecha: semana tipo sugerida según el perfil y progresión de cargas por reglas (subir, mantener o +1 repetición), siempre con confirmación del usuario |
@@ -106,11 +106,26 @@ transcribe en esta PC: el procesamiento local exige CPU alta y la cuelga.
 
 ## Próximos incrementos
 
-1. Incorporar archivos de animaciones anatómicas con licencia de uso comercial. Validar su correspondencia con ejercicios y técnica con un profesional. **Requiere comprar la licencia.**
-2. Recuperación de contraseña por email (requiere un servicio de envío de correo) y Google Login (requiere un client ID de Google Cloud).
-3. Despliegue: hosting de la API y la base (AWS u otro), HTTPS con `COOKIE_SECURE=true`, copias de seguridad de la base. Hoy corre en esta PC.
-4. Sincronización por entidad en lugar de foto completa, si los historiales crecen o se usa en varios dispositivos a la vez.
-5. Módulo para gimnasios y profes (ver "Segmento: personas y gimnasios"): validar primero, después multi-organización, vinculación, panel del profe y marca. Nunca mediante un selector de roles sin autorización.
-6. Suscripciones y pagos solamente tras validar producto y precio. IA y ajustes automáticos después de definir límites y supervisión.
+Los tres primeros salen del análisis de Fitness Online del 17 de noviembre de 2026 (`docs/COMPETENCIA.md`). Cada
+ítem, con su esfuerzo, sus dependencias y las decisiones que faltan, está en [BACKLOG.md](BACKLOG.md).
+
+1. **Que el ejercicio se vea** (B-01 a B-05). Ilustración del movimiento en dos posiciones, mapa muscular propio con
+   músculos principales y secundarios, miniaturas en todas las listas y la ficha del ejercicio a un toque desde la
+   sesión. Con recursos de licencia abierta: no requiere comprar nada ni cambia el esquema. Falta que el usuario
+   acepte el dibujo de línea como imagen provisoria.
+2. **La sesión en el gimnasio** (B-06 a B-12). Sustituir un ejercicio cuando la máquina está ocupada, duración
+   estimada calculada, avance de la sesión en curso, aclarar si la carga es total o por mancuerna, hora y comentario
+   por serie (FitAppState v4). La vista de un ejercicio por pantalla se decide después de probar lo anterior.
+3. **Animaciones anatómicas con licencia comercial** (B-17). Reemplazan a las ilustraciones del punto 1 y dan el
+   aspecto de la competencia. Validar su correspondencia con ejercicios y técnica con un profesional.
+   **Requiere comprar la licencia.**
+4. Recuperación de contraseña por email (requiere un servicio de envío de correo) y Google Login (requiere un client ID de Google Cloud).
+5. Despliegue: hosting de la API y la base (AWS u otro), HTTPS con `COOKIE_SECURE=true`, copias de seguridad de la base. Hoy corre en esta PC.
+6. Sincronización por entidad en lugar de foto completa, si los historiales crecen o se usa en varios dispositivos a la vez.
+7. Módulo para gimnasios y profes (ver "Segmento: personas y gimnasios"): validar primero, después multi-organización, vinculación, panel del profe y marca. Nunca mediante un selector de roles sin autorización. Ahí entran los mensajes entre profe y socio y el programa asignado en secuencia.
+8. Suscripciones y pagos solamente tras validar producto y precio. IA y ajustes automáticos después de definir límites y supervisión.
+
+Más adelante, sin fecha: ejercicios por tiempo, favoritos, mapa muscular de la semana y programa en secuencia
+(B-13 a B-16).
 
 El MVP no envía mensajes, no contrata servicios y no procesa pagos. Tampoco inventa recomendaciones personalizadas a partir del perfil.

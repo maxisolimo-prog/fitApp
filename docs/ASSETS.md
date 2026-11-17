@@ -41,4 +41,12 @@ La paleta y las referencias tipográficas de Temacy están registradas en `docs/
 
 Verificación realizada el 16 de noviembre de 2026: el oEmbed público de YouTube devolvió HTTP 200 y atribución a Muscle & Strength para ambos videos. Los metadatos públicos del reproductor indicaron una duración de 50 segundos para press de banca y 43 segundos para sentadilla goblet, ambos con `playableInEmbed: true`. Esto confirma la disponibilidad declarada en esa fecha; la reproducción real también debe verificarse en el navegador de destino.
 
+## Capturas de la competencia
+
+`docs/competencia/fitness-online-0*.jpeg` son siete capturas de la app Fitness Online aportadas por el usuario el 17 de noviembre de 2026. Son referencia interna para `docs/COMPETENCIA.md`: están fuera de `public/`, la app no las sirve, y ni las capturas ni las imágenes que contienen se usan o recortan como recursos de FitApp.
+
+## Fuentes evaluadas para imágenes de ejercicios
+
+Todavía no se incorporó ninguna. Las candidatas con licencia verificada (Everkinetic, CC BY-SA 4.0, para las ilustraciones; react-native-body-highlighter, MIT, para el mapa muscular) y las descartadas están en la tabla "Fuentes de imágenes evaluadas" de `docs/BACKLOG.md`. Al incorporarlas, registrar acá cada archivo, su origen y la atribución que exige su licencia.
+
 Las animaciones anatómicas de referencia están en [Press de banca de Gym Visual](https://gymvisual.com/animated-gifs/1519-barbell-bench-press.html) y [Remo con mancuerna y apoyo de Gym Visual](https://gymvisual.com/animated-gifs/2683-dumbbell-one-arm-row-rack-support.html). No se descargaron ni incorporaron: para distribuirlas dentro de FitApp hace falta obtener la licencia correspondiente. Ver [condiciones del proveedor](https://gymvisual.com/content/3-terms-and-conditions-of-use). La disponibilidad pública de las muestras no se trata como autorización de uso en producción.

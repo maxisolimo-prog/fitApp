@@ -6,6 +6,7 @@ navegador con `localStorage`, y cuenta opcional que sincroniza con la API Expres
 - [PRODUCT.md](PRODUCT.md): usuario, propósito, principios y anti-referencias.
 - [docs/DESIGN.md](docs/DESIGN.md): paleta Temacy, tipografía, componentes, tono.
 - [docs/ROADMAP.md](docs/ROADMAP.md): qué queda fuera del MVP y en qué orden viene.
+- [docs/BACKLOG.md](docs/BACKLOG.md): ítems concretos (`B-nn`) con esfuerzo, dependencias y decisiones abiertas.
 - [docs/ASSETS.md](docs/ASSETS.md): fuentes y licencias de cada imagen, fuente y referencia.
 
 ## Stack
