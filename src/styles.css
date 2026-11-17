@@ -531,3 +531,16 @@ img { max-width: 100%; }
   .stat-tiles:has(> :nth-child(3):last-child) > div { padding: 12px; }
   .stat-tiles:has(> :nth-child(3):last-child) dd { font-size: 21px; }
 }
+
+/* ---------- Sugerencias: semana y progresión ---------- */
+.plan-card { border-color: var(--musgo); background: #FBFCF6; }
+.plan-card h2 { font-size: 18px; }
+.plan-suggest { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; border-radius: 12px; background: var(--hueso); border: 1px dashed var(--musgo); }
+.plan-suggest p { margin: 0; flex: 1; min-width: 200px; line-height: 1.5; }
+.link-inline { min-height: auto; padding: 0; font-size: inherit; }
+.suggestion { display: flex; align-items: center; gap: 10px; margin: 2px 0 10px; padding: 10px 12px; border-radius: 12px; background: rgba(200, 242, 76, 0.12); border: 1px solid rgba(200, 242, 76, 0.4); color: var(--hueso); }
+.suggestion > app-icon { flex-shrink: 0; color: var(--lima); width: 20px; height: 20px; }
+.suggestion p { margin: 0; flex: 1; font-size: 13px; line-height: 1.45; }
+.suggestion .btn { flex-shrink: 0; }
+.suggestion.is-keep { background: rgba(169, 179, 168, 0.1); border-color: var(--line-dark); }
+.suggestion.is-keep > app-icon { color: var(--muted); }

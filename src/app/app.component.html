@@ -94,6 +94,17 @@
             </article>
           }
 
+          @if (!hasAnyPlan()) {
+            <article class="card plan-card" aria-labelledby="plan-card-title">
+              <div><h2 id="plan-card-title">Armá tu semana en un toque</h2>
+                <p class="muted small">Con {{ store.profile().weeklyGoal }} {{ store.profile().weeklyGoal === 1 ? 'día' : 'días' }} en {{ placeLabels[store.profile().place].toLowerCase() }}: {{ planSummary(suggestedPlan()) }}.</p></div>
+              <div class="actions">
+                <button type="button" class="btn btn-primary" (click)="suggestPlan()">Usar esta semana</button>
+                <button type="button" class="btn btn-secondary" (click)="calendarMode.set('week'); navigate('calendar')">Armarla yo</button>
+              </div>
+            </article>
+          }
+
           <div class="quick-actions">
             <button type="button" class="quick" (click)="editRoutine(null)"><app-icon name="plus" /><span><strong>Creá tu rutina</strong><small>Elegí ejercicios y series</small></span></button>
             <button type="button" class="quick" (click)="calendarMode.set('week'); navigate('calendar')"><app-icon name="calendar" /><span><strong>Armá tu semana</strong><small>Elegí qué hacés cada día</small></span></button>
@@ -262,6 +273,15 @@
                   <h2 [id]="'block-' + group.id">{{ group.exercise.name }}</h2>
                   <p>{{ group.exercise.muscle }} · {{ group.exercise.equipment }}</p>
                 </header>
+                @if (suggestionFor(group.id); as suggestion) {
+                  <div class="suggestion" [class.is-keep]="suggestion.kind === 'mantener'">
+                    <app-icon [name]="suggestion.kind === 'mantener' ? 'info' : 'chart'" />
+                    <p>{{ suggestion.reason }}</p>
+                    @if (suggestion.kind !== 'mantener' && !suggestionApplied(group.id, suggestion)) {
+                      <button type="button" class="btn btn-small btn-primary" (click)="applySuggestion(group.id, suggestion)">{{ suggestion.kind === 'mas-reps' ? suggestion.value + ' reps' : fmt(suggestion.value) + ' kg' }}</button>
+                    }
+                  </div>
+                }
                 <table class="sets-table">
                   <caption class="sr-only">Series de {{ group.exercise.name }}</caption>
                   <thead><tr><th scope="col">Serie</th><th scope="col">Anterior</th><th scope="col">Kg</th><th scope="col">Reps</th><th scope="col"><span class="sr-only">Estado</span></th></tr></thead>
@@ -330,6 +350,15 @@
             <article class="card" aria-labelledby="weekly-title">
               <div class="card-head"><h2 id="weekly-title">Tu semana tipo</h2></div>
               <p class="muted small">Elegí qué hacés cada día. Se repite todas las semanas.</p>
+              <div class="plan-suggest">
+                <p class="small"><strong>Sugerida para vos</strong> · {{ store.profile().weeklyGoal }} {{ store.profile().weeklyGoal === 1 ? 'día' : 'días' }}, {{ placeLabels[store.profile().place].toLowerCase() }}<br><span class="muted">{{ planSummary(suggestedPlan()) }}</span></p>
+                @if (planReplaceAsk()) {
+                  <div class="actions"><button type="button" class="btn btn-small btn-primary" (click)="suggestPlan()">Reemplazar mi semana</button><button type="button" class="btn btn-small btn-secondary" (click)="planReplaceAsk.set(false)">Cancelar</button></div>
+                } @else {
+                  <button type="button" class="btn btn-small btn-secondary" (click)="suggestPlan()"><app-icon name="target" />Usar sugerida</button>
+                }
+              </div>
+              <p class="muted small">Se basa en los días y el lugar de tu perfil. Cambialos en <button type="button" class="link link-inline" (click)="navigate('profile')">Perfil</button>.</p>
               <ul class="weekly-plan">
                 @for (name of weekdayNames; track name; let i = $index) {
                   <li>
@@ -628,14 +657,26 @@
               <h2 id="profile-form-title">Perfil</h2>
               <div class="form-stack">
                 <label class="field"><span>Nombre</span><input name="name" [(ngModel)]="profileDraft.name" maxlength="80" required autocomplete="given-name"></label>
-                <label class="field"><span>Objetivo</span><input name="goal" [(ngModel)]="profileDraft.goal" maxlength="200" required placeholder="Por ejemplo, ganar fuerza"></label>
+                <label class="field"><span>Tu objetivo en palabras</span><input name="goal" [(ngModel)]="profileDraft.goal" maxlength="200" required placeholder="Por ejemplo, llegar a 60 kg en press de banca"></label>
+                <div class="form-grid">
+                  <label class="field"><span>Objetivo principal</span>
+                    <select name="focus" [(ngModel)]="profileDraft.focus">
+                      @for (option of focusOptions; track option) { <option [ngValue]="option">{{ focusLabels[option] }}</option> }
+                    </select>
+                  </label>
+                  <label class="field"><span>Dónde entrenás</span>
+                    <select name="place" [(ngModel)]="profileDraft.place">
+                      @for (option of placeOptions; track option) { <option [ngValue]="option">{{ placeLabels[option] }}</option> }
+                    </select>
+                  </label>
+                </div>
                 <div class="form-grid">
                   <label class="field"><span>Nivel</span>
                     <select name="level" [(ngModel)]="profileDraft.level">
                       @for (level of levels; track level) { <option [ngValue]="level">{{ level }}</option> }
                     </select>
                   </label>
-                  <label class="field"><span>Entrenamientos por semana</span><input type="number" name="weeklyGoal" [(ngModel)]="profileDraft.weeklyGoal" min="1" max="7" step="1" inputmode="numeric" required></label>
+                  <label class="field"><span>Días por semana</span><input type="number" name="weeklyGoal" [(ngModel)]="profileDraft.weeklyGoal" min="1" max="7" step="1" inputmode="numeric" required></label>
                 </div>
               </div>
               @if (profileError) { <p class="form-error" role="alert">{{ profileError }}</p> }

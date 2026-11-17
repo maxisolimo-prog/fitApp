@@ -43,12 +43,12 @@ Hipótesis: registro simple + planificación personalizada + IA conversacional, 
 
 | Funcionalidad | Fase | Estado |
 | --- | --- | --- |
-| Perfil, objetivos y nivel | MVP | Hecho (faltan objetivo estructurado, días disponibles y equipo) |
+| Perfil, objetivos y nivel | MVP | Hecho: objetivo principal, días por semana, lugar (gimnasio / casa con pesas / sin equipo) y nivel |
 | Rutinas y calendario semanal | MVP | Hecho |
 | Biblioteca con videos | MVP | Parcial: 43 ejercicios con texto, sin videos (licencia o producción propia) |
 | Registro de series, pesos y repeticiones | MVP | Hecho |
 | Estadísticas y evolución | MVP | Hecho |
-| Adaptación automática de rutinas | 2ª fase | Pendiente: empezar por reglas de progresión, sin costo por usuario |
+| Adaptación automática de rutinas | 2ª fase | Primera parte hecha: semana tipo sugerida según el perfil y progresión de cargas por reglas (subir, mantener o +1 repetición), siempre con confirmación del usuario |
 | Entrenador IA conversacional | 2ª fase | Pendiente: requiere proveedor, presupuesto y límites |
 | Relojes y apps de salud | 2ª fase | Pendiente: requiere app nativa (p. ej. Capacitor) |
 | Panel para entrenadores y gimnasios | Expansión | Pendiente: validar con profes |

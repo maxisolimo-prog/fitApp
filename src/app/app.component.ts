@@ -5,7 +5,7 @@ import { IconComponent } from './icon.component';
 import { WorkoutStore } from './core/workout-store';
 import { SyncService, type SyncStatus } from './core/sync.service';
 import { SwUpdate } from '@angular/service-worker';
-import { lastSetsFor, localDate, parseLocalDate, personalRecords, plannedRoutineId, weekDates, workoutSummaryText, workoutVolume, workoutDurationMinutes } from './core/workout-utils';
+import { lastSetsFor, localDate, parseLocalDate, personalRecords, plannedRoutineId, suggestProgression, suggestWeeklyPlan, weekDates, workoutSummaryText, workoutVolume, workoutDurationMinutes, type ProgressionSuggestion } from './core/workout-utils';
 import { Routine, Profile, Workout, Exercise, WorkoutSet } from './core/models';
 import { RoutineEditorComponent } from './features/routine-editor.component';
 import { ExerciseDetailComponent } from './features/exercise-detail.component';
@@ -165,6 +165,25 @@ export class AppComponent implements OnDestroy {
     if(typeof navigator.share==='function'){try{await navigator.share({text});return;}catch(error){if((error as DOMException)?.name==='AbortError')return;}}
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`,'_blank','noopener');
   }
+
+  readonly focusLabels = { fuerza: 'Ganar fuerza', musculo: 'Ganar músculo', grasa: 'Bajar grasa', salud: 'Salud y bienestar' } as const;
+  readonly placeLabels = { gimnasio: 'Gimnasio', 'casa-pesas': 'Casa con pesas', 'casa-sin-equipo': 'Casa sin equipo' } as const;
+  readonly focusOptions = Object.keys(this.focusLabels) as (keyof typeof this.focusLabels)[];
+  readonly placeOptions = Object.keys(this.placeLabels) as (keyof typeof this.placeLabels)[];
+  /** Starting weekly plan from the profile's days and place. */
+  readonly suggestedPlan = computed(() => suggestWeeklyPlan(this.store.profile(), this.store.routines()));
+  readonly planReplaceAsk = signal(false);
+  planSummary(plan:(string|null)[]){return plan.map((id,i)=>id?`${this.weekdayNames[i].slice(0,3)}: ${this.routine(id)?.name ?? ''}`:null).filter(Boolean).join(' · ');}
+  suggestPlan(){if(this.store.weeklyPlan().some(slot=>slot!==null)&&!this.planReplaceAsk()){this.planReplaceAsk.set(true);return;}this.planReplaceAsk.set(false);if(this.store.applyWeeklyPlan(this.suggestedPlan()))this.notify('Listo: tu semana tipo quedó armada. Cambiá lo que quieras.');else this.notify(this.store.actionError()??'No se pudo aplicar.');}
+  /** Load/reps suggestion for an exercise of the active session, from its last session and the routine target. */
+  suggestionFor(exerciseId:string):ProgressionSuggestion|null{
+    const workout=this.store.activeWorkout();if(!workout)return null;
+    const entry=this.routine(workout.routineId)?.exercises.find(e=>e.exerciseId===exerciseId);if(!entry)return null;
+    return suggestProgression(this.previousByExercise().get(exerciseId)??[],entry.reps,this.exercise(exerciseId)?.equipment??'');
+  }
+  /** True when the pending sets already use the suggested value (nothing to apply). */
+  suggestionApplied(exerciseId:string,s:ProgressionSuggestion){const pending=this.store.activeWorkout()?.sets.filter(set=>set.exerciseId===exerciseId&&!set.completed)??[];return !pending.length||pending.every(set=>s.kind==='mas-reps'?set.reps===s.value:set.weight===s.value);}
+  applySuggestion(exerciseId:string,s:ProgressionSuggestion){const ok=s.kind==='mas-reps'?this.store.applyReps(exerciseId,s.value):this.store.applyLoad(exerciseId,s.value);this.notify(ok?(s.kind==='mas-reps'?`Listo: ${s.value} repeticiones en las series que faltan.`:`Listo: ${this.fmt(s.value)} kg en las series que faltan.`):(this.store.actionError()??'No se pudo aplicar.'));}
 
   fmt(value:number){return this.numberFormat.format(value);}
   openRoutine(r:Routine){this.navigate('routines');this.selectedRoutine.set(r);}
