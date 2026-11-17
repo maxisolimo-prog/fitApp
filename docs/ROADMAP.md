@@ -45,7 +45,7 @@ Hipótesis: registro simple + planificación personalizada + IA conversacional, 
 | --- | --- | --- |
 | Perfil, objetivos y nivel | MVP | Hecho: objetivo principal, días por semana, lugar (gimnasio / casa con pesas / sin equipo) y nivel |
 | Rutinas y calendario semanal | MVP | Hecho |
-| Biblioteca con videos | MVP | Parcial: 43 ejercicios con texto, sin imágenes. Plan en dos etapas: ilustraciones y mapa muscular con licencia abierta, y después animaciones compradas (ver "Próximos incrementos") |
+| Biblioteca con videos | MVP | Parcial: 43 ejercicios con texto, sin imágenes. Plan: imágenes creadas con GPT y mapa muscular propio; animaciones compradas solo si hace falta (ver "Próximos incrementos") |
 | Registro de series, pesos y repeticiones | MVP | Hecho |
 | Estadísticas y evolución | MVP | Hecho |
 | Adaptación automática de rutinas | 2ª fase | Primera parte hecha: semana tipo sugerida según el perfil y progresión de cargas por reglas (subir, mantener o +1 repetición), siempre con confirmación del usuario |
@@ -109,15 +109,16 @@ transcribe en esta PC: el procesamiento local exige CPU alta y la cuelga.
 Los tres primeros salen del análisis de Fitness Online del 17 de noviembre de 2026 (`docs/COMPETENCIA.md`). Cada
 ítem, con su esfuerzo, sus dependencias y las decisiones que faltan, está en [BACKLOG.md](BACKLOG.md).
 
-1. **Que el ejercicio se vea** (B-01 a B-05). Ilustración del movimiento en dos posiciones, mapa muscular propio con
-   músculos principales y secundarios, miniaturas en todas las listas y la ficha del ejercicio a un toque desde la
-   sesión. Con recursos de licencia abierta: no requiere comprar nada ni cambia el esquema. Falta que el usuario
-   acepte el dibujo de línea como imagen provisoria.
+1. **Que el ejercicio se vea** (B-01 a B-05). Imagen de cada ejercicio, mapa muscular propio con músculos
+   principales y secundarios, miniaturas en todas las listas y la ficha del ejercicio a un toque desde la sesión.
+   No cambia el esquema ni exige comprar licencias. El usuario decidió que las imágenes las cree GPT; el dibujo de
+   línea de licencia abierta queda como reserva. Falta generar una imagen de prueba y que apruebe el estilo: la
+   cuenta de ChatGPT quedó sin cupo hasta el 20 de noviembre de 2026.
 2. **La sesión en el gimnasio** (B-06 a B-12). Sustituir un ejercicio cuando la máquina está ocupada, duración
    estimada calculada, avance de la sesión en curso, aclarar si la carga es total o por mancuerna, hora y comentario
    por serie (FitAppState v4). La vista de un ejercicio por pantalla se decide después de probar lo anterior.
-3. **Animaciones anatómicas con licencia comercial** (B-17). Reemplazan a las ilustraciones del punto 1 y dan el
-   aspecto de la competencia. Validar su correspondencia con ejercicios y técnica con un profesional.
+3. **Animaciones anatómicas con licencia comercial** (B-17). Solo si las imágenes del punto 1 no alcanzan o se
+   quiere movimiento. Validar su correspondencia con ejercicios y técnica con un profesional.
    **Requiere comprar la licencia.**
 4. Recuperación de contraseña por email (requiere un servicio de envío de correo) y Google Login (requiere un client ID de Google Cloud).
 5. Despliegue: hosting de la API y la base (AWS u otro), HTTPS con `COOKIE_SECURE=true`, copias de seguridad de la base. Hoy corre en esta PC.

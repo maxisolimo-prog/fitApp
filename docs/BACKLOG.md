@@ -12,12 +12,11 @@ migración con test de ida y vuelta y una migración SQL nueva en `api/migration
 
 Las toma el usuario. Hasta entonces, los ítems que dependen de ellas no arrancan.
 
-1. **¿Ilustraciones de línea como imagen del ejercicio?** La fuente gratuita y con licencia clara (Everkinetic) es
-   un dibujo de línea en dos posiciones, no un render 3D con músculos en rojo como el de la competencia. La
-   propuesta es usarla ya, junto con un mapa muscular propio, y pasar a animaciones compradas más adelante (B-17).
-   Traba a B-03.
-2. **Presupuesto para animaciones anatómicas con licencia.** Es la única forma de igualar el aspecto de la
-   competencia. Traba a B-17.
+1. **Imagen del ejercicio: resuelta el 17 de noviembre de 2026.** El usuario prefiere que las imágenes las cree
+   GPT, en lugar del dibujo de línea de Everkinetic, que queda como reserva. Falta que apruebe el estilo con una
+   imagen de prueba; ver B-03.
+2. **Presupuesto para animaciones anatómicas con licencia.** Solo hace falta si las imágenes de GPT no alcanzan o
+   si se quiere movimiento. Traba a B-17.
 3. **Vista enfocada, un ejercicio por pantalla.** Es un cambio grande en la pantalla que más se usa. Conviene
    probar primero B-03 a B-06 en el gimnasio y decidir después. Traba a B-12.
 4. **Carga con mancuernas: ¿por mancuerna o sumada?** Hoy la app no lo dice y el volumen calculado depende de eso.
@@ -25,14 +24,15 @@ Las toma el usuario. Hasta entonces, los ítems que dependen de ellas no arranca
 
 ## Bloque 1: que el ejercicio se vea
 
-Es el pedido del usuario. Nada de este bloque cambia el esquema ni cuesta plata.
+Es el pedido del usuario. Nada de este bloque cambia el esquema ni exige comprar licencias; las imágenes de B-03
+consumen el cupo de la cuenta de ChatGPT del usuario.
 
 | # | Qué | Esfuerzo | Esquema | Depende de |
 | --- | --- | --- | --- | --- |
 | B-01 | Músculos principales y secundarios de los 43 ejercicios | Bajo | No | — |
 | B-02 | Mapa muscular propio y solapa "Músculos" en la ficha | Medio | No | B-01 |
-| B-03 | Ilustración del movimiento en dos posiciones | Medio | No | Decisión 1 |
-| B-04 | Miniaturas en las listas | Bajo | No | B-03, o B-02 si no hay ilustración |
+| B-03 | Imagen de cada ejercicio, creada con GPT | Medio | No | B-01, cupo de GPT, estilo aprobado |
+| B-04 | Miniaturas en las listas | Bajo | No | B-03, o B-02 si no hay imagen |
 | B-05 | Abrir la ficha del ejercicio desde la sesión | Medio | No | — |
 
 ### B-01. Músculos principales y secundarios
@@ -59,27 +59,34 @@ contorno. Va en una solapa nueva "Músculos" de la ficha y, en chico, como image
   lado), tiene descripción para lectores de pantalla y el origen queda registrado en `docs/ASSETS.md` con el aviso
   de copyright de la licencia MIT.
 
-### B-03. Ilustración del movimiento
+### B-03. Imagen de cada ejercicio, creada con GPT
 
-Cada ejercicio muestra dos posiciones (inicio y esfuerzo) que se alternan: es el "movimiento repetible" que pide
-`docs/DESIGN.md`, sin video ni fotos de personas.
+Decisión del usuario del 17 de noviembre de 2026: pedirle las imágenes a GPT para acercarse al aspecto de la
+competencia sin usar sus recursos.
 
-- Fuente: [Everkinetic](https://github.com/everkinetic/data): 289 ejercicios, SVG y PNG, dos posiciones por
-  ejercicio, licencia CC BY-SA 4.0. Al ser SVG se puede cambiar el color de la línea (hueso sobre bosque) sin
-  redibujar.
-- Cobertura estimada comparando títulos, sin revisar cada dibujo: unos 30 de los 43 tienen equivalente directo.
-  Dudosos: press militar (allá es sentado), vuelos posteriores, sentadilla búlgara, remo con mancuerna a una mano.
-  Sin equivalente: sentadilla goblet, bird dog, dead bug, dominadas asistidas, face pull, hip thrust, Pallof press.
-- Regla de `docs/DESIGN.md`: solo se muestra una ilustración si corresponde al ejercicio exacto. El resto muestra
-  el mapa muscular de B-02.
-- Tareas: revisar la correspondencia una por una; copiar a `public/` solo los archivos usados (cada SVG pesa unos
-  28 KB sin comprimir); pausa y reproducción accesibles; quieto con `prefers-reduced-motion`; caché perezoso en el
-  service worker para no agrandar la instalación; sacar el enlace externo a Gym Visual que hoy tiene press de banca.
-- Licencia: CC BY-SA 4.0 pide atribución visible ("Everkinetic, Greg Priday") y que las imágenes modificadas se
-  compartan con la misma licencia. Alcanza a las imágenes, no al código de FitApp. Es la lectura habitual de la
-  licencia, no una opinión legal: conviene confirmarla antes de vender la app con la marca de un gimnasio.
-- **Listo cuando:** cada ilustración fue revisada contra su ejercicio, la atribución se ve dentro de la app y todo
-  está en `docs/ASSETS.md`.
+- **Estado:** trabado por cupo. La app de Codex de esta PC trae un `codex.exe` con generación de imágenes, que se
+  invoca con `codex exec`. La invocación se probó ese día y funciona, pero la cuenta había llegado al límite de uso
+  y no generó nada. Se libera el 20 de noviembre de 2026 a las 10:44, o antes comprando créditos en
+  chatgpt.com/settings/usage.
+- **Estilo a pedir:** figura anatómica neutra en grises, músculos principales en lima `#C8F24C`, secundarios en un
+  lima más apagado, fondo bosque `#142118`, cuadrada, sin texto ni marcas. Es obra original: no se le pasan las
+  capturas de la competencia como referencia.
+- **Orden:** primero una sola imagen de prueba (press de banca) para que el usuario apruebe el estilo. Después el
+  resto, de a una. Una posición por ejercicio para empezar; la segunda posición solo si la figura se mantiene
+  igual de una imagen a otra.
+- **Riesgos:** una imagen generada puede mostrar mal la técnica o resaltar el músculo equivocado, y el estilo
+  puede variar entre ejercicios. Cada imagen se revisa contra su ejercicio antes de entrar (regla de
+  `docs/DESIGN.md`) y queda pendiente la revisión de un profesional. La que no pasa se vuelve a generar, o ese
+  ejercicio muestra el mapa muscular de B-02.
+- **Tareas:** generar; reducir el peso (una imagen de esa app ronda los 500 KB en PNG: hay que pasarla a WebP en
+  tamaño de miniatura y de ficha); copiar a `public/`; caché perezoso en el service worker para no agrandar la
+  instalación; sacar el enlace externo a Gym Visual que hoy tiene press de banca.
+- **Reserva:** si el resultado no convence, [Everkinetic](https://github.com/everkinetic/data): dibujo de línea en
+  dos posiciones, CC BY-SA 4.0 (pide atribución visible y compartir igual las imágenes modificadas). Comparando
+  títulos, sin revisar cada dibujo, cubre unos 30 de los 43. Sin equivalente: sentadilla goblet, bird dog, dead
+  bug, dominadas asistidas, face pull, hip thrust, Pallof press.
+- **Listo cuando:** el usuario aprobó el estilo, cada imagen fue revisada contra su ejercicio y `docs/ASSETS.md`
+  registra modelo, fecha y prompt de cada una.
 
 ### B-04. Miniaturas en las listas
 
@@ -144,7 +151,7 @@ encima de la sesión. Hoy la ficha solo se abre desde la Biblioteca, y para ir h
   entrenamientos, el mapa queda vacío y lo dice. Es la versión FitApp del mapa de la competencia: datos reales.
 - **B-16.** Rutinas en un orden que avanza al completar cada una, sin atarse al día de la semana. Se pisa con la
   semana tipo: definir cómo conviven antes de construir. Sin candados.
-- **B-17.** Reemplaza las ilustraciones de B-03 sin tocar las pantallas, si B-03 deja la imagen detrás de un solo
+- **B-17.** Reemplaza las imágenes de B-03 sin tocar las pantallas, si B-03 deja la imagen detrás de un solo
   componente. Incluye validar con un profesional que cada animación corresponde a su ejercicio.
 
 ## Con el módulo de gimnasios
@@ -170,7 +177,8 @@ Licencias leídas en cada repositorio el 17 de noviembre de 2026. Nada de esto e
 
 | Fuente | Qué trae | Licencia | Veredicto |
 | --- | --- | --- | --- |
-| [Everkinetic](https://github.com/everkinetic/data) | 289 ejercicios, dibujo de línea en dos posiciones, SVG y PNG | [CC BY-SA 4.0](https://github.com/everkinetic/data/blob/main/LICENSE.md) | Sí, para B-03. Pide atribución. |
+| GPT, desde la app de Codex del usuario | Imágenes creadas a pedido, con el estilo y los colores de FitApp | Términos de OpenAI de la cuenta del usuario; revisarlos antes de publicar | Elegida para B-03. Sin probar todavía: cuenta sin cupo hasta el 20 de noviembre de 2026. |
+| [Everkinetic](https://github.com/everkinetic/data) | 289 ejercicios, dibujo de línea en dos posiciones, SVG y PNG | [CC BY-SA 4.0](https://github.com/everkinetic/data/blob/main/LICENSE.md) | Reserva para B-03. Pide atribución. |
 | [react-native-body-highlighter](https://github.com/HichamELBSI/react-native-body-highlighter) | Cuerpo de frente y espalda en SVG, por zonas musculares | [MIT](https://github.com/HichamELBSI/react-native-body-highlighter/blob/main/LICENSE) | Sí, para B-02. Pide conservar el aviso de copyright. |
 | [free-exercise-db](https://github.com/yuhonas/free-exercise-db) | Más de 800 ejercicios con músculos principales y secundarios, y dos fotos por ejercicio | [Unlicense](https://github.com/yuhonas/free-exercise-db/blob/main/LICENSE.md) (dominio público) | Datos de músculos: sí, para B-01. Fotos: no; son de personas y el repositorio no documenta su origen. |
 | [Gym Visual](https://gymvisual.com) | Animaciones anatómicas, el estilo que pidió el usuario | Paga; no encontré el precio publicado | Candidata para B-17. Pedir presupuesto. |
