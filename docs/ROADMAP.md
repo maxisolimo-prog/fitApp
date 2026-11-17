@@ -53,6 +53,27 @@ Hipótesis: registro simple + planificación personalizada + IA conversacional, 
 | Relojes y apps de salud | 2ª fase | Pendiente: requiere app nativa (p. ej. Capacitor) |
 | Panel para entrenadores y gimnasios | Expansión | Pendiente: validar con profes |
 
+## Decisiones abiertas
+
+### ¿Para quién es FitApp? (pendiente, define producto y negocio)
+
+| Opción | A favor | En contra |
+| --- | --- | --- |
+| Alumno que entrena solo o guiado | Es lo construido y la prioridad confirmada al inicio; hay espacio en español; rápido de lanzar. | Difícil cobrarle: Strong y Hevy cuestan ~USD 2–3/mes y tienen plan gratis. |
+| Entrenador con alumnos | Paga, y en pesos (Trainer UP desde ~ARS 39.000/mes); trae a sus alumnos. | Requiere panel del entrenador (proyecto mediano). |
+| Gimnasio | Contratos más grandes. | Mercado ocupado (Mis Actividades, +600 gimnasios); exige cuotas, accesos, reservas y facturación: otro producto. |
+
+**Recomendación (a confirmar con el usuario y su socio):** el alumno como usuario, gratis; el entrenador
+como cliente que paga, con un panel para asignar rutinas y ver el progreso real de sus alumnos. Gimnasios, no por
+ahora. Hasta decidirlo, no se construye el panel ni se definen precios.
+
+### Audio del socio (pendiente)
+
+El audio de WhatsApp del amigo (~62 s) todavía no se transcribió. No se le atribuye ninguna funcionalidad hasta
+tener el texto. Paso siguiente: transcribirlo desde WhatsApp (mantener apretado → Transcribir) y cruzarlo con este
+roadmap y con `docs/COMPETENCIA.md`: matriz idea vs. competencia, ventajas reales, alcance y etapas. No se
+transcribe en esta PC: el procesamiento local exige CPU alta y la cuelga.
+
 ## Próximos incrementos
 
 1. Incorporar archivos de animaciones anatómicas con licencia de uso comercial. Validar su correspondencia con ejercicios y técnica con un profesional. **Requiere comprar la licencia.**
