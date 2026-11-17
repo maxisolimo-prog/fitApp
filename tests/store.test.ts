@@ -3,7 +3,7 @@ import test from 'node:test';
 import '@angular/compiler';
 import { WorkoutStore } from '../src/app/core/workout-store';
 import {
-  buildWorkout, completeWorkout, createInitialState, deserializeState, lastSetsFor, localDate, personalRecords, plannedRoutineId, workoutSummaryText,
+  buildWorkout, completeWorkout, createInitialState, deserializeState, lastSetsFor, localDate, personalRecords, plannedRoutineId, suggestProgression, suggestWeeklyPlan, workoutSummaryText,
   parseLocalDate, removeRoutine, serializeState, startOfWeek, validateState,
   STORAGE_KEY, validSetValues, weekDates, workoutDurationMinutes, workoutVolume,
 } from '../src/app/core/workout-utils';
@@ -85,7 +85,7 @@ test('corrupt, mismatched or invalid imports are rejected', () => {
   assert.equal(deserializeState('{broken'), null);
   assert.equal(deserializeState('null'), null);
   assert.equal(deserializeState('{}'), null);
-  assert.equal(validateState({ ...createInitialState(), version: 3 }), null);
+  assert.equal(validateState({ ...createInitialState(), version: 4 }), null);
   const invalid = createInitialState();
   invalid.routines[0].exercises[0].weight = Number.NaN;
   assert.equal(validateState(invalid), null);
@@ -199,12 +199,14 @@ test('storage failures are visible and calendar/weight updates retain one entry 
   });
 });
 
-test('v1 data (before the weekly plan) upgrades to v2 with every day free', () => {
+test('v1 data (before the weekly plan) upgrades to v3 with every day free', () => {
   const v1 = JSON.parse(serializeState(createInitialState()));
   v1.version = 1;
   delete v1.weeklyPlan;
   const upgraded = validateState(v1)!;
-  assert.equal(upgraded.version, 2);
+  assert.equal(upgraded.version, 3);
+  assert.equal(upgraded.profile.focus, 'fuerza');
+  assert.equal(upgraded.profile.place, 'gimnasio');
   assert.deepEqual(upgraded.weeklyPlan, [null, null, null, null, null, null, null]);
 });
 
@@ -312,5 +314,50 @@ test('routines are not capped at 12 exercises; the catalog ids are unique', () =
       exercises: ids.slice(0, 20).map((exerciseId) => ({ exerciseId, sets: 3, reps: 10, weight: 0, restSeconds: 60 })) };
     assert.equal(store.saveRoutine(routine), true);
     assert.equal(store.routines().find((r) => r.id === 'custom-big')!.exercises.length, 20);
+  });
+});
+
+test('v2 profiles get focus and place defaults; invalid values are rejected', () => {
+  const v2 = JSON.parse(serializeState(createInitialState()));
+  v2.version = 2;
+  delete v2.profile.focus;
+  delete v2.profile.place;
+  const upgraded = validateState(v2)!;
+  assert.deepEqual([upgraded.version, upgraded.profile.focus, upgraded.profile.place], [3, 'fuerza', 'gimnasio']);
+  const bad = createInitialState() as unknown as { profile: { focus: string } };
+  bad.profile.focus = 'volar';
+  assert.equal(validateState(bad), null);
+});
+
+test('weekly plan suggestion follows days per week and place', () => {
+  const routines = createInitialState().routines;
+  assert.deepEqual(suggestWeeklyPlan({ weeklyGoal: 3, place: 'gimnasio' }, routines), ['upper-body', null, 'lower-body', null, 'full-body', null, null]);
+  assert.deepEqual(suggestWeeklyPlan({ weeklyGoal: 4, place: 'gimnasio' }, routines), ['upper-body', 'lower-body', null, 'upper-body', 'lower-body', null, null]);
+  assert.deepEqual(suggestWeeklyPlan({ weeklyGoal: 2, place: 'casa-sin-equipo' }, routines), ['at-home', null, null, 'at-home', null, null, null]);
+  assert.deepEqual(suggestWeeklyPlan({ weeklyGoal: 1, place: 'gimnasio' }, [{ id: 'mine' }]), ['mine', null, null, null, null, null, null], 'falls back to existing routines');
+});
+
+test('progression: add load when every set hit the target, keep it otherwise, add a rep for bodyweight', () => {
+  const set = (weight: number, reps: number) => ({ exerciseId: 'x', exerciseName: 'X', setNumber: 1, weight, reps, completed: true });
+  assert.deepEqual(suggestProgression([set(40, 10), set(40, 10)], 10, 'Barra')?.value, 42.5);
+  assert.deepEqual(suggestProgression([set(12, 10), set(12, 11)], 10, 'Mancuernas')?.value, 14);
+  assert.deepEqual(suggestProgression([set(40, 10), set(40, 8)], 10, 'Barra'), { kind: 'mantener', value: 40, reason: 'La última vez no llegaste a 10 repeticiones en todas las series: repetí la carga.' });
+  assert.deepEqual(suggestProgression([set(0, 12), set(0, 12)], 12, 'Peso corporal')?.kind, 'mas-reps');
+  assert.equal(suggestProgression([], 10, 'Barra'), null);
+});
+
+test('store applies a suggested plan and suggested loads only to pending sets', () => {
+  withStorage(() => {
+    const store = new WorkoutStore();
+    assert.equal(store.applyWeeklyPlan(['upper-body', null, null, null, null, null, 'no-existe']), false);
+    assert.equal(store.applyWeeklyPlan(['upper-body', null, 'lower-body', null, null, null, null]), true);
+    assert.equal(store.weeklyPlan()[2], 'lower-body');
+    store.startWorkout('upper-body');
+    store.toggleSet(0);
+    assert.equal(store.applyLoad('bench-press', 42.5), true);
+    const bench = store.activeWorkout()!.sets.filter((s) => s.exerciseId === 'bench-press');
+    assert.deepEqual(bench.map((s) => s.weight), [0, 42.5, 42.5], 'the completed set keeps its load');
+    assert.equal(store.updateProfile({ focus: 'musculo', place: 'casa-pesas' }), true);
+    assert.deepEqual([new WorkoutStore().profile().focus, new WorkoutStore().profile().place], ['musculo', 'casa-pesas']);
   });
 });

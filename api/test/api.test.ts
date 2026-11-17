@@ -53,6 +53,8 @@ function sampleState() {
   const state = createInitialState();
   state.profile.name = 'María';
   state.profile.weight = 68.5;
+  state.profile.focus = 'grasa';
+  state.profile.place = 'casa-pesas';
   const done = buildWorkout(state.routines[0], 'workout-done', '2026-11-15T12:00:00.000Z');
   done.sets[0].completed = true;
   done.sets[0].weight = 22.5;

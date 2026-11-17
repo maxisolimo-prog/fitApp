@@ -1,5 +1,5 @@
 import type { Pool, PoolConnection, RowDataPacket } from 'mysql2/promise';
-import type { FitnessLevel, Routine, RoutineCategory, ScheduledWorkout, WeightRecord, Workout, WorkoutSet } from '../../src/app/core/models.ts';
+import type { FitnessLevel, Routine, RoutineCategory, ScheduledWorkout, TrainingFocus, TrainingPlace, WeightRecord, Workout, WorkoutSet } from '../../src/app/core/models.ts';
 import { validateState, type FitAppState } from '../../src/app/core/workout-utils.ts';
 import { fromSqlDateTime, toSqlDateTime, transaction } from './db.ts';
 
@@ -23,9 +23,9 @@ async function insertMany(db: PoolConnection, table: string, columns: string[], 
 
 export interface StoredState { revision: number; state: FitAppState | null }
 
-/** Rebuilds FitAppState v2 from the relational rows. revision 0 means the account has no data yet. */
+/** Rebuilds FitAppState v3 from the relational rows. revision 0 means the account has no data yet. */
 export async function loadState(db: Executor, userId: number): Promise<StoredState> {
-  const [user] = await rows(db, 'SELECT name, goal, level, weekly_goal, weight, revision FROM users WHERE id = ?', [userId]);
+  const [user] = await rows(db, 'SELECT name, goal, level, weekly_goal, weight, focus, place, revision FROM users WHERE id = ?', [userId]);
   if (!user) throw new Error('Usuario inexistente');
   const revision = Number(user['revision']);
   if (revision === 0) return { revision, state: null };
@@ -75,8 +75,8 @@ export async function loadState(db: Executor, userId: number): Promise<StoredSta
   const weights: WeightRecord[] = weightRows.map((row) => ({ id: String(row['id']), date: String(row['date']), weight: Number(row['weight']) }));
 
   const state: FitAppState = {
-    version: 2,
-    profile: { name: String(user['name']), goal: String(user['goal']), level: user['level'] as FitnessLevel, weeklyGoal: Number(user['weekly_goal']), weight: user['weight'] === null ? null : Number(user['weight']) },
+    version: 3,
+    profile: { name: String(user['name']), goal: String(user['goal']), level: user['level'] as FitnessLevel, weeklyGoal: Number(user['weekly_goal']), weight: user['weight'] === null ? null : Number(user['weight']), focus: user['focus'] as TrainingFocus, place: user['place'] as TrainingPlace },
     routines, history, schedule, weeklyPlan, weights, activeWorkout,
   };
   return { revision, state };
@@ -107,8 +107,8 @@ export async function saveState(pool: Pool, userId: number, baseRevision: number
       await db.query(`DELETE FROM ${table} WHERE user_id = ?`, [userId]);
     }
     const { profile } = state;
-    await db.query('UPDATE users SET name = ?, goal = ?, level = ?, weekly_goal = ?, weight = ?, revision = ? WHERE id = ?',
-      [profile.name, profile.goal, profile.level, profile.weeklyGoal, profile.weight, current + 1, userId]);
+    await db.query('UPDATE users SET name = ?, goal = ?, level = ?, weekly_goal = ?, weight = ?, focus = ?, place = ?, revision = ? WHERE id = ?',
+      [profile.name, profile.goal, profile.level, profile.weeklyGoal, profile.weight, profile.focus, profile.place, current + 1, userId]);
 
     await insertMany(db, 'routines', ['user_id', 'id', 'position', 'name', 'description', 'category', 'duration', 'level', 'custom'],
       state.routines.map((r, i) => [userId, r.id, i, r.name, r.description, r.category, r.duration, r.level, r.custom === undefined ? null : r.custom ? 1 : 0]));

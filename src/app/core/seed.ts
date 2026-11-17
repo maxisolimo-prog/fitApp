@@ -390,4 +390,6 @@ export const defaultProfile: Profile = {
   level: 'Principiante',
   weeklyGoal: 3,
   weight: null,
+  focus: 'fuerza',
+  place: 'gimnasio',
 };

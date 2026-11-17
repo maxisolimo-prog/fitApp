@@ -53,13 +53,22 @@ export interface Workout {
   notes?: string;
 }
 
+export type TrainingFocus = 'fuerza' | 'musculo' | 'grasa' | 'salud';
+export type TrainingPlace = 'gimnasio' | 'casa-pesas' | 'casa-sin-equipo';
+
 export interface Profile {
   name: string;
+  /** Free-text personal goal, in the user's words. */
   goal: string;
   level: FitnessLevel;
+  /** Training days per week (1–7). */
   weeklyGoal: number;
   /** Kilograms; null until the user chooses to enter a value. */
   weight: number | null;
+  /** Main focus, used for suggestions (v3). */
+  focus: TrainingFocus;
+  /** Where the user trains, used to suggest routines (v3). */
+  place: TrainingPlace;
 }
 
 /** Repeating weekly plan: index 0 = lunes … 6 = domingo; each slot is a routine id or null (descanso). */

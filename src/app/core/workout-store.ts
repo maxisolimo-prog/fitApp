@@ -85,6 +85,7 @@ export class WorkoutStore {
       name: patch.name ?? current.name, goal: patch.goal ?? current.goal,
       level: patch.level ?? current.level, weeklyGoal: patch.weeklyGoal ?? current.weeklyGoal,
       weight: patch.weight === undefined ? current.weight : patch.weight,
+      focus: patch.focus ?? current.focus, place: patch.place ?? current.place,
     });
     if (!validated) return this.fail('Revisá tu nombre, objetivo y cantidad de entrenamientos semanales.');
     this.profile.set(validated);
@@ -127,6 +128,35 @@ export class WorkoutStore {
   unschedule(date: string): void {
     this.schedule.update((entries) => entries.filter((entry) => entry.date !== date));
     this.persist();
+  }
+
+  /** Replaces the whole weekly plan (e.g. the suggestion from the profile). */
+  applyWeeklyPlan(plan: WeeklyPlan): boolean {
+    if (!Array.isArray(plan) || plan.length !== 7
+      || !plan.every((slot) => slot === null || this.routines().some((routine) => routine.id === slot))) return this.fail('La semana sugerida no es válida.');
+    this.weeklyPlan.set([...plan]);
+    this.persist();
+    return true;
+  }
+
+  /** Sets the load of every not-yet-completed set of an exercise in the session (applying a suggestion). */
+  applyLoad(exerciseId: string, weight: number): boolean {
+    const workout = this.activeWorkout();
+    if (!workout || !validSetValues(1, weight)) return this.fail('Esa carga no es válida.');
+    if (!workout.sets.some((set) => set.exerciseId === exerciseId && !set.completed)) return this.fail('No quedan series pendientes de ese ejercicio.');
+    this.activeWorkout.set({ ...workout, sets: workout.sets.map((set) => set.exerciseId === exerciseId && !set.completed ? { ...set, weight } : set) });
+    this.persist();
+    return true;
+  }
+
+  /** Sets the reps of every not-yet-completed set of an exercise (bodyweight suggestion). */
+  applyReps(exerciseId: string, reps: number): boolean {
+    const workout = this.activeWorkout();
+    if (!workout || !validSetValues(reps, 0)) return this.fail('Esas repeticiones no son válidas.');
+    if (!workout.sets.some((set) => set.exerciseId === exerciseId && !set.completed)) return this.fail('No quedan series pendientes de ese ejercicio.');
+    this.activeWorkout.set({ ...workout, sets: workout.sets.map((set) => set.exerciseId === exerciseId && !set.completed ? { ...set, reps } : set) });
+    this.persist();
+    return true;
   }
 
   /** weekday: 0 = lunes … 6 = domingo; routineId null = descanso. */
@@ -293,7 +323,7 @@ export class WorkoutStore {
 
   private state(): FitAppState {
     return {
-      version: 2, profile: this.profile(), routines: this.routines(), history: this.history(),
+      version: 3, profile: this.profile(), routines: this.routines(), history: this.history(),
       schedule: this.schedule(), weeklyPlan: this.weeklyPlan(), weights: this.weights(), activeWorkout: this.activeWorkout(),
     };
   }

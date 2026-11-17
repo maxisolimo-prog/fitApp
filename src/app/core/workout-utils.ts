@@ -1,14 +1,14 @@
 import type {
-  FitnessLevel, Profile, Routine, RoutineCategory, ScheduledWorkout, WeeklyPlan,
+  FitnessLevel, Profile, Routine, RoutineCategory, ScheduledWorkout, TrainingFocus, TrainingPlace, WeeklyPlan,
   WeightRecord, Workout, WorkoutSet,
 } from './models';
 import { defaultProfile, seedExercises, seedRoutines } from './seed';
 
 export const STORAGE_KEY = 'fitapp-state-v1';
 
-/** Current format. v1 had no weeklyPlan; validateState upgrades it. */
+/** Current format. v1 had no weeklyPlan, v2 no profile focus/place; validateState upgrades both. */
 export interface FitAppState {
-  version: 2;
+  version: 3;
   profile: Profile;
   routines: Routine[];
   history: Workout[];
@@ -80,7 +80,7 @@ export function plannedRoutineId(state: Pick<FitAppState, 'schedule' | 'weeklyPl
 
 export function createInitialState(): FitAppState {
   return {
-    version: 2,
+    version: 3,
     profile: { ...defaultProfile },
     routines: seedRoutines.map((routine) => ({ ...routine, exercises: routine.exercises.map((exercise) => ({ ...exercise })) })),
     history: [],
@@ -118,13 +118,21 @@ export function validSetValues(reps: unknown, weight: unknown): boolean {
   return number(reps, 1, 999, true) && number(weight, 0, 2000);
 }
 
+export const focuses: TrainingFocus[] = ['fuerza', 'musculo', 'grasa', 'salud'];
+export const places: TrainingPlace[] = ['gimnasio', 'casa-pesas', 'casa-sin-equipo'];
+
+/** focus and place arrived in v3: when missing (older data) they take the defaults; when present they must be valid. */
 export function validateProfile(value: unknown): Profile | null {
   if (!record(value) || !text(value['name'], 80) || !text(value['goal'], 200)
     || !levels.includes(value['level'] as FitnessLevel) || !number(value['weeklyGoal'], 1, 7, true)
-    || !(value['weight'] === null || number(value['weight'], 1, 500))) return null;
+    || !(value['weight'] === null || number(value['weight'], 1, 500))
+    || (value['focus'] !== undefined && !focuses.includes(value['focus'] as TrainingFocus))
+    || (value['place'] !== undefined && !places.includes(value['place'] as TrainingPlace))) return null;
   return {
     name: value['name'].trim(), goal: value['goal'].trim(), level: value['level'] as FitnessLevel,
     weeklyGoal: value['weeklyGoal'], weight: value['weight'] as number | null,
+    focus: (value['focus'] as TrainingFocus | undefined) ?? defaultProfile.focus,
+    place: (value['place'] as TrainingPlace | undefined) ?? defaultProfile.place,
   };
 }
 
@@ -183,7 +191,7 @@ export function validateWorkout(value: unknown, active: boolean): Workout | null
 
 /** Strictly reconstruct known fields: imported objects are never assigned to app state. */
 export function validateState(value: unknown): FitAppState | null {
-  if (!record(value) || (value['version'] !== 1 && value['version'] !== 2) || !Array.isArray(value['routines'])
+  if (!record(value) || ![1, 2, 3].includes(value['version'] as number) || !Array.isArray(value['routines'])
     || !Array.isArray(value['history']) || !Array.isArray(value['schedule']) || !Array.isArray(value['weights'])
     || value['routines'].length < 1 || value['routines'].length > 200 || value['history'].length > 10_000
     || value['schedule'].length > 5000 || value['weights'].length > 10_000) return null;
@@ -213,9 +221,9 @@ export function validateState(value: unknown): FitAppState | null {
       || !parseLocalDate(candidate['date']) || !number(candidate['weight'], 1, 500)) return null;
     weights.push({ id: candidate['id'], date: candidate['date'], weight: candidate['weight'] });
   }
-  // v1 → v2: no weekly plan yet. v2 requires exactly seven slots.
+  // v1 had no weekly plan; from v2 on it has exactly seven slots.
   let weeklyPlan = emptyWeeklyPlan();
-  if (value['version'] === 2) {
+  if (value['version'] !== 1) {
     const plan = value['weeklyPlan'];
     if (!Array.isArray(plan) || plan.length !== 7 || !plan.every((slot) => slot === null || text(slot, 100))) return null;
     weeklyPlan = plan.map((slot) => slot as string | null);
@@ -229,7 +237,7 @@ export function validateState(value: unknown): FitAppState | null {
   // Calendar and weights are kept in date order everywhere (store and API).
   schedule.sort((a, b) => a.date.localeCompare(b.date));
   weights.sort((a, b) => a.date.localeCompare(b.date));
-  return { version: 2, profile, routines, history, schedule, weeklyPlan, weights, activeWorkout };
+  return { version: 3, profile, routines, history, schedule, weeklyPlan, weights, activeWorkout };
 }
 
 export function serializeState(value: FitAppState): string {
@@ -325,4 +333,53 @@ export function completeWorkout(workout: Workout, finishedAt = new Date().toISOS
   // A system clock adjustment must not create a session that cannot be restored.
   const safeEnd = Date.parse(finishedAt) < Date.parse(workout.startedAt) ? workout.startedAt : finishedAt;
   return sets.length ? { ...workout, finishedAt: safeEnd, sets } : null;
+}
+
+/** Weekdays (0 = lunes) to train for a number of days, spread so rest days fall in between. */
+const trainingDays: Record<number, number[]> = {
+  1: [0], 2: [0, 3], 3: [0, 2, 4], 4: [0, 1, 3, 4], 5: [0, 1, 2, 3, 4], 6: [0, 1, 2, 3, 4, 5], 7: [0, 1, 2, 3, 4, 5, 6],
+};
+
+/**
+ * A starting weekly plan from the profile's days and place, using the starter templates. It is a
+ * suggestion the user can edit; it never claims to be a personalised prescription.
+ */
+export function suggestWeeklyPlan(profile: Pick<Profile, 'weeklyGoal' | 'place'>, routines: Pick<Routine, 'id'>[]): WeeklyPlan {
+  const has = (id: string) => routines.some((routine) => routine.id === id);
+  const days = trainingDays[Math.min(7, Math.max(1, profile.weeklyGoal))];
+  let rotation: string[];
+  if (profile.place === 'casa-sin-equipo') rotation = ['at-home'];
+  else if (profile.place === 'casa-pesas') rotation = ['full-body', 'at-home'];
+  else if (days.length <= 2) rotation = ['full-body'];
+  else if (days.length === 3) rotation = ['upper-body', 'lower-body', 'full-body'];
+  else rotation = ['upper-body', 'lower-body'];
+  rotation = rotation.filter(has);
+  if (!rotation.length) rotation = routines.slice(0, 1).map((routine) => routine.id);
+  const plan = emptyWeeklyPlan();
+  days.forEach((weekday, index) => { plan[weekday] = rotation[index % rotation.length] ?? null; });
+  return plan;
+}
+
+export interface ProgressionSuggestion {
+  kind: 'subir' | 'mantener' | 'mas-reps';
+  /** Suggested load in kg for 'subir'/'mantener'; reps target for 'mas-reps'. */
+  value: number;
+  reason: string;
+}
+
+/**
+ * Double progression from the last session of an exercise: every set at or above the target reps
+ * → add load (or a rep for bodyweight); otherwise keep the load. No history → no suggestion.
+ */
+export function suggestProgression(lastSets: WorkoutSet[], targetReps: number, equipment: string): ProgressionSuggestion | null {
+  if (!lastSets.length || !Number.isInteger(targetReps) || targetReps < 1) return null;
+  const allReached = lastSets.every((set) => set.reps >= targetReps);
+  const load = Math.max(...lastSets.map((set) => set.weight));
+  if (load <= 0) {
+    if (!allReached) return null;
+    return { kind: 'mas-reps', value: targetReps + 1, reason: `Completaste ${targetReps} repeticiones en todas las series: probá una más.` };
+  }
+  if (!allReached) return { kind: 'mantener', value: load, reason: `La última vez no llegaste a ${targetReps} repeticiones en todas las series: repetí la carga.` };
+  const step = /mancuerna/i.test(equipment) ? 2 : 2.5;
+  return { kind: 'subir', value: load + step, reason: `Completaste todas las series con ${new Intl.NumberFormat('es-AR').format(load)} kg: probá subir ${new Intl.NumberFormat('es-AR').format(step)} kg.` };
 }
