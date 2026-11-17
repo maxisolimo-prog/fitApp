@@ -5,8 +5,8 @@ import { IconComponent } from './icon.component';
 import { WorkoutStore } from './core/workout-store';
 import { SyncService, type SyncStatus } from './core/sync.service';
 import { SwUpdate } from '@angular/service-worker';
-import { localDate, parseLocalDate, plannedRoutineId, weekDates, workoutVolume, workoutDurationMinutes } from './core/workout-utils';
-import { Routine, Profile, Workout, Exercise } from './core/models';
+import { lastSetsFor, localDate, parseLocalDate, personalRecords, plannedRoutineId, weekDates, workoutSummaryText, workoutVolume, workoutDurationMinutes } from './core/workout-utils';
+import { Routine, Profile, Workout, Exercise, WorkoutSet } from './core/models';
 import { RoutineEditorComponent } from './features/routine-editor.component';
 import { ExerciseDetailComponent } from './features/exercise-detail.component';
 
@@ -146,6 +146,24 @@ export class AppComponent implements OnDestroy {
     if(document.visibilityState==='hidden'){this.sync.flush();this.userInteracted=false;return;}
     // Back to the app (e.g. reopened from the home screen): look for a newer version.
     if(this.swUpdate.isEnabled) void this.swUpdate.checkForUpdate().catch(()=>false);
+  }
+
+  /** Last session's completed sets per exercise of the active workout ("Anterior"). */
+  readonly previousByExercise = computed(() => {
+    const workout = this.store.activeWorkout();
+    const map = new Map<string, WorkoutSet[]>();
+    if (workout) for (const id of new Set(workout.sets.map(s => s.exerciseId))) map.set(id, lastSetsFor(this.store.history(), id));
+    return map;
+  });
+  previousLabel(exerciseId:string, setNumber:number){const set=this.previousByExercise().get(exerciseId)?.[setNumber-1];return set?`${this.fmt(set.weight)} × ${set.reps}`:'—';}
+  addSet(exerciseId:string){if(!this.store.addSet(exerciseId))this.notify(this.store.actionError()??'No se pudo agregar la serie.');}
+  removeLastSet(rows:{index:number}[]){const last=rows.at(-1);if(last&&!this.store.removeSet(last.index))this.notify(this.store.actionError()??'No se pudo quitar la serie.');}
+  /** Records of a saved session, compared with the sessions before it (history is newest first). */
+  recordsFor(workout:Workout){const history=this.store.history();const position=history.findIndex(w=>w.id===workout.id);return personalRecords(workout,position<0?history:history.slice(position+1));}
+  async shareWorkout(workout:Workout){
+    const text=workoutSummaryText(workout,this.recordsFor(workout));
+    if(typeof navigator.share==='function'){try{await navigator.share({text});return;}catch(error){if((error as DOMException)?.name==='AbortError')return;}}
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`,'_blank','noopener');
   }
 
   fmt(value:number){return this.numberFormat.format(value);}

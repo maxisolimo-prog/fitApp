@@ -251,15 +251,73 @@ export function removeRoutine(state: FitAppState, id: string, today = localDate(
   };
 }
 
-export function buildWorkout(routine: Routine, id: string, startedAt = new Date().toISOString()): Workout {
+/**
+ * Completed sets of an exercise in the most recent session that included it (history is newest
+ * first). Used to show "Anterior" and to start a new session from real loads instead of zeros.
+ */
+export function lastSetsFor(history: Workout[], exerciseId: string): WorkoutSet[] {
+  for (const workout of history) {
+    const sets = workout.sets.filter((set) => set.exerciseId === exerciseId && set.completed);
+    if (sets.length) return sets;
+  }
+  return [];
+}
+
+/** A new session copies the routine, prefilled with what was actually lifted last time. */
+export function buildWorkout(routine: Routine, id: string, startedAt = new Date().toISOString(), history: Workout[] = []): Workout {
   return {
     id, routineId: routine.id, routineName: routine.name, startedAt, finishedAt: null,
-    sets: routine.exercises.flatMap((entry) => Array.from({ length: entry.sets }, (_, index) => ({
-      exerciseId: entry.exerciseId,
-      exerciseName: seedExercises.find((exercise) => exercise.id === entry.exerciseId)?.name ?? entry.exerciseId,
-      setNumber: index + 1, reps: entry.reps, weight: entry.weight, completed: false,
-    }))),
+    sets: routine.exercises.flatMap((entry) => {
+      const previous = lastSetsFor(history, entry.exerciseId);
+      return Array.from({ length: entry.sets }, (_, index) => {
+        const last = previous[index] ?? previous.at(-1);
+        return {
+          exerciseId: entry.exerciseId,
+          exerciseName: seedExercises.find((exercise) => exercise.id === entry.exerciseId)?.name ?? entry.exerciseId,
+          setNumber: index + 1, reps: last?.reps ?? entry.reps, weight: last?.weight ?? entry.weight, completed: false,
+        };
+      });
+    }),
   };
+}
+
+export interface PersonalRecord {
+  exerciseId: string;
+  exerciseName: string;
+  weight: number;
+  reps: number;
+  previous: number;
+}
+
+/**
+ * Heaviest completed set per exercise that beats every earlier session. Only exercises with a
+ * real previous load count: a first time is not presented as a record.
+ */
+export function personalRecords(workout: Workout, earlier: Workout[]): PersonalRecord[] {
+  const records: PersonalRecord[] = [];
+  for (const exerciseId of new Set(workout.sets.map((set) => set.exerciseId))) {
+    const best = workout.sets.filter((set) => set.exerciseId === exerciseId && set.completed && set.weight > 0)
+      .reduce<WorkoutSet | null>((top, set) => !top || set.weight > top.weight || (set.weight === top.weight && set.reps > top.reps) ? set : top, null);
+    if (!best) continue;
+    const previous = earlier.flatMap((w) => w.sets).filter((set) => set.exerciseId === exerciseId && set.completed)
+      .reduce((top, set) => Math.max(top, set.weight), 0);
+    if (previous > 0 && best.weight > previous) {
+      records.push({ exerciseId, exerciseName: best.exerciseName, weight: best.weight, reps: best.reps, previous });
+    }
+  }
+  return records;
+}
+
+/** Plain-text summary to share (WhatsApp, etc.). Only real numbers from the session. */
+export function workoutSummaryText(workout: Workout, records: PersonalRecord[]): string {
+  const format = (value: number) => new Intl.NumberFormat('es-AR', { maximumFractionDigits: 1 }).format(value);
+  const volume = workoutVolume(workout);
+  const lines = [
+    `Terminé "${workout.routineName}" en FitApp`,
+    `${workoutDurationMinutes(workout)} min · ${workout.sets.length} ${workout.sets.length === 1 ? 'serie' : 'series'}${volume > 0 ? ` · ${format(volume)} kg levantados` : ''}`,
+    ...records.map((record) => `Récord en ${record.exerciseName}: ${format(record.weight)} kg × ${record.reps} (antes ${format(record.previous)} kg)`),
+  ];
+  return lines.join('\n');
 }
 
 export function completeWorkout(workout: Workout, finishedAt = new Date().toISOString()): Workout | null {

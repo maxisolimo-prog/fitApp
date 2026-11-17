@@ -264,11 +264,12 @@
                 </header>
                 <table class="sets-table">
                   <caption class="sr-only">Series de {{ group.exercise.name }}</caption>
-                  <thead><tr><th scope="col">Serie</th><th scope="col">Kg</th><th scope="col">Reps</th><th scope="col"><span class="sr-only">Estado</span></th></tr></thead>
+                  <thead><tr><th scope="col">Serie</th><th scope="col">Anterior</th><th scope="col">Kg</th><th scope="col">Reps</th><th scope="col"><span class="sr-only">Estado</span></th></tr></thead>
                   <tbody>
                     @for (row of group.sets; track row.index) {
                       <tr [class.is-done]="row.set.completed">
                         <th scope="row" class="tabular">{{ row.set.setNumber }}</th>
+                        <td class="prev tabular">{{ previousLabel(group.id, row.set.setNumber) }}</td>
                         <td><input #weightInput type="number" inputmode="decimal" min="0" max="2000" step="0.5" [value]="row.set.weight"
                           (change)="updateSet(row.index, 'weight', weightInput.value, $event)" (focus)="weightInput.select()"
                           [attr.aria-label]="'Carga en kg, serie ' + row.set.setNumber + ' de ' + group.exercise.name"></td>
@@ -285,10 +286,16 @@
                     }
                   </tbody>
                 </table>
+                <div class="set-controls">
+                  <button type="button" class="btn btn-small btn-outline-light" (click)="addSet(group.id)"><app-icon name="plus" />Agregar serie</button>
+                  @if (group.sets.length > 1) { <button type="button" class="link link-light" (click)="removeLastSet(group.sets)">Quitar la última</button> }
+                </div>
               </article>
             }
 
             <footer class="workout-foot">
+              <label class="field notes-field"><span>Notas de la sesión <small>(opcional)</small></span>
+                <textarea #notesInput rows="2" maxlength="4000" [value]="active.notes ?? ''" (change)="store.setNotes(notesInput.value)" placeholder="Cómo te sentiste, qué ajustar la próxima vez"></textarea></label>
               <button type="button" class="btn btn-primary btn-wide" (click)="finish()"><app-icon name="check" />Terminar y guardar</button>
               <button type="button" class="btn btn-danger-ghost-dark" (click)="confirmation.set('discard')">Descartar sesión</button>
               <p class="small">Se guardan sólo las series marcadas como completas.</p>
@@ -464,6 +471,20 @@
               <div><dt>Series completas</dt><dd class="tabular">{{ workout.sets.length }}</dd></div>
               <div><dt>Volumen</dt><dd class="tabular">{{ fmt(volume(workout)) }} <small>kg</small></dd></div>
             </dl>
+            @if (recordsFor(workout); as records) {
+              @if (records.length) {
+                <article class="card records-card" aria-labelledby="records-title">
+                  <h2 id="records-title"><app-icon name="medal" />{{ records.length === 1 ? 'Récord nuevo' : records.length + ' récords nuevos' }}</h2>
+                  <ul class="records-list">
+                    @for (record of records; track record.exerciseId) {
+                      <li><strong>{{ record.exerciseName }}</strong><span class="tabular">{{ fmt(record.weight) }} kg × {{ record.reps }}</span><small>antes {{ fmt(record.previous) }} kg</small></li>
+                    }
+                  </ul>
+                </article>
+              }
+            }
+            @if (workout.notes) { <article class="card"><h2>Notas</h2><p class="notes-text">{{ workout.notes }}</p></article> }
+            <div class="actions"><button type="button" class="btn btn-primary" (click)="shareWorkout(workout)"><app-icon name="share" />Compartir</button></div>
             <div class="card table-card">
               <table class="data-table">
                 <caption class="sr-only">Series registradas</caption>

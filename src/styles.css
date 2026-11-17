@@ -499,3 +499,35 @@ img { max-width: 100%; }
 .step-badge { display: grid; place-items: center; flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; background: var(--bosque); color: var(--lima); font-size: 13px; font-weight: 700; }
 .share-glyph { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 6px; background: var(--hueso); vertical-align: middle; }
 .share-glyph app-icon { width: 16px; height: 16px; }
+
+/* ---------- Sesión: anterior, series, notas; récords ---------- */
+.sets-table td.prev { font-size: 13px; color: var(--muted); white-space: nowrap; width: 72px; }
+.sets-table tr.is-done td.prev { color: #C9D2C6; }
+.set-controls { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; }
+.link-light { color: var(--muted); }
+.link-light:hover { color: var(--hueso); }
+.notes-field { width: 100%; }
+.notes-field > span { color: var(--hueso); }
+.notes-field small { font-weight: 400; color: var(--muted); }
+.notes-field textarea { width: 100%; min-height: 64px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line-dark); background: var(--panel); color: var(--hueso); font: inherit; font-size: 15px; resize: vertical; }
+.notes-field textarea::placeholder { color: var(--muted); }
+.notes-field textarea:focus { outline: none; border-color: var(--lima); }
+.records-card { background: var(--lima); border-color: var(--lima); }
+.records-card h2 { display: flex; align-items: center; gap: 8px; color: var(--bosque); }
+.records-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.records-list li { display: grid; grid-template-columns: 1fr auto; gap: 0 12px; color: var(--bosque); }
+.records-list strong { font-size: 15px; }
+.records-list span { font-weight: 700; font-size: 16px; text-align: right; }
+.records-list small { grid-column: 1 / -1; color: var(--musgo); font-size: 12px; }
+.notes-text { white-space: pre-wrap; }
+@media (max-width: 420px) { .sets-table td.prev { width: 60px; font-size: 12px; } .sets-table input { max-width: 84px; } }
+@media (max-width: 480px) {
+  .sets-table th, .sets-table td { padding: 5px 2px; }
+  .sets-table tbody th { width: 32px; }
+  .sets-table input { padding: 6px 2px; font-size: 17px; max-width: none; }
+  .sets-table td:nth-child(4) { width: 58px; }
+  .set-check { width: 46px; height: 46px; }
+  .stat-tiles:has(> :nth-child(3):last-child) { grid-template-columns: repeat(3, 1fr); }
+  .stat-tiles:has(> :nth-child(3):last-child) > div { padding: 12px; }
+  .stat-tiles:has(> :nth-child(3):last-child) dd { font-size: 21px; }
+}

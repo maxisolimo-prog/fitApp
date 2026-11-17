@@ -142,7 +142,7 @@ export class WorkoutStore {
     if (this.activeWorkout()) return this.fail('Ya tenés un entrenamiento en curso. Retomalo o descartalo antes de empezar otro.');
     const routine = this.routines().find((entry) => entry.id === routineId);
     if (!routine) return this.fail('No encontramos esa rutina.');
-    this.activeWorkout.set(buildWorkout(routine, this.id('workout')));
+    this.activeWorkout.set(buildWorkout(routine, this.id('workout'), undefined, this.history()));
     this.persist();
     return true;
   }
@@ -159,6 +159,46 @@ export class WorkoutStore {
     const workout = this.activeWorkout();
     if (!workout || !Number.isInteger(index) || !workout.sets[index]) return this.fail('No encontramos esa serie.');
     this.activeWorkout.set({ ...workout, sets: workout.sets.map((set, position) => position === index ? { ...set, completed: !set.completed } : set) });
+    this.persist();
+    return true;
+  }
+
+  /** Adds one more set to an exercise of the session, copying its last set's load and reps. */
+  addSet(exerciseId: string): boolean {
+    const workout = this.activeWorkout();
+    if (!workout) return this.fail('No hay una sesión en curso.');
+    const ofExercise = workout.sets.map((set, index) => ({ set, index })).filter(({ set }) => set.exerciseId === exerciseId);
+    if (!ofExercise.length) return this.fail('No encontramos ese ejercicio en la sesión.');
+    if (ofExercise.length >= 30 || workout.sets.length >= 500) return this.fail('Llegaste al máximo de series para este ejercicio.');
+    const last = ofExercise.at(-1)!;
+    const added = { ...last.set, setNumber: ofExercise.length + 1, completed: false };
+    const sets = [...workout.sets.slice(0, last.index + 1), added, ...workout.sets.slice(last.index + 1)];
+    this.activeWorkout.set({ ...workout, sets });
+    this.persist();
+    return true;
+  }
+
+  /** Removes a set and renumbers the rest of that exercise. The session keeps at least one set. */
+  removeSet(index: number): boolean {
+    const workout = this.activeWorkout();
+    if (!workout || !Number.isInteger(index) || !workout.sets[index]) return this.fail('No encontramos esa serie.');
+    if (workout.sets.length <= 1) return this.fail('La sesión necesita al menos una serie.');
+    const exerciseId = workout.sets[index].exerciseId;
+    let number = 0;
+    const sets = workout.sets.filter((_, position) => position !== index)
+      .map((set) => set.exerciseId === exerciseId ? { ...set, setNumber: ++number } : set);
+    this.activeWorkout.set({ ...workout, sets });
+    this.persist();
+    return true;
+  }
+
+  /** Free-text notes for the session in progress (kept when it is saved). */
+  setNotes(notes: string): boolean {
+    const workout = this.activeWorkout();
+    if (!workout) return this.fail('No hay una sesión en curso.');
+    if (notes.length > 4000) return this.fail('Las notas pueden tener hasta 4.000 caracteres.');
+    const { notes: _previous, ...rest } = workout;
+    this.activeWorkout.set(notes.trim() ? { ...rest, notes } : rest);
     this.persist();
     return true;
   }

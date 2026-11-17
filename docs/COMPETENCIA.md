@@ -46,7 +46,7 @@ paso 5 del roadmap. No se decide sin hablar con entrenadores reales.
 | 5 | Hosting estable con dominio | Sin esto no hay usuarios reales (hoy es un link de ngrok). | Medio, requiere decisión de costos |
 | 6 | Portal del entrenador | Diferencial y modelo de negocio. | Alto, requiere validar con profes |
 
-Pendientes al 16 de noviembre de 2026. Ese día se priorizó el calendario (semana tipo + vista de mes con cambios por día), pedido por el usuario: combina la planificación por fecha de las apps de entrenadores con la vista de lo entrenado de Strong y Hevy.
+Los puntos 1–4 se implementaron el 16 de noviembre de 2026 (anterior y cargas precargadas, agregar/quitar series, récords con resumen para compartir, notas). Antes, ese mismo día, se priorizó el calendario (semana tipo + vista de mes con cambios por día), pedido por el usuario: combina la planificación por fecha de las apps de entrenadores con la vista de lo entrenado de Strong y Hevy.
 
 ## Fuentes
 

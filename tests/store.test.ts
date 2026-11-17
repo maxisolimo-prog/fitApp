@@ -3,7 +3,7 @@ import test from 'node:test';
 import '@angular/compiler';
 import { WorkoutStore } from '../src/app/core/workout-store';
 import {
-  buildWorkout, completeWorkout, createInitialState, deserializeState, localDate, plannedRoutineId,
+  buildWorkout, completeWorkout, createInitialState, deserializeState, lastSetsFor, localDate, personalRecords, plannedRoutineId, workoutSummaryText,
   parseLocalDate, removeRoutine, serializeState, startOfWeek, validateState,
   STORAGE_KEY, validSetValues, weekDates, workoutDurationMinutes, workoutVolume,
 } from '../src/app/core/workout-utils';
@@ -249,5 +249,55 @@ test('a one-off rest day overrides the weekly plan and survives a round trip', (
     assert.equal(plannedRoutineId(state, '2026-11-16'), null);
     assert.equal(plannedRoutineId(state, '2026-11-23'), 'upper-body');
     assert.deepEqual(deserializeState(serializeState(state)), state);
+  });
+});
+
+test('a new session starts from the loads actually lifted last time', () => {
+  const state = createInitialState();
+  const routine = state.routines[0];
+  const first = buildWorkout(routine, 'w1', '2026-11-10T12:00:00.000Z');
+  first.sets[0] = { ...first.sets[0], weight: 40, reps: 8, completed: true };
+  first.sets[1] = { ...first.sets[1], weight: 42.5, reps: 6, completed: true };
+  const history = [completeWorkout(first, '2026-11-10T12:30:00.000Z')!];
+  assert.deepEqual(lastSetsFor(history, 'bench-press').map((s) => [s.weight, s.reps]), [[40, 8], [42.5, 6]]);
+  const next = buildWorkout(routine, 'w2', '2026-11-12T12:00:00.000Z', history);
+  const bench = next.sets.filter((s) => s.exerciseId === 'bench-press');
+  assert.deepEqual(bench.map((s) => [s.weight, s.reps, s.completed]), [[40, 8, false], [42.5, 6, false], [42.5, 6, false]]);
+  const row = next.sets.find((s) => s.exerciseId === 'seated-row')!;
+  assert.equal(row.weight, 0, 'never-done exercises keep the template');
+});
+
+test('records only count when a previous load is beaten', () => {
+  const routine = createInitialState().routines[0];
+  const old = buildWorkout(routine, 'old', '2026-11-01T12:00:00.000Z');
+  old.sets[0] = { ...old.sets[0], weight: 40, reps: 8, completed: true };
+  const earlier = [completeWorkout(old, '2026-11-01T12:30:00.000Z')!];
+  const now = buildWorkout(routine, 'now', '2026-11-08T12:00:00.000Z');
+  now.sets[0] = { ...now.sets[0], weight: 45, reps: 5, completed: true };
+  now.sets[3] = { ...now.sets[3], weight: 30, reps: 10, completed: true };
+  const records = personalRecords(completeWorkout(now, '2026-11-08T12:40:00.000Z')!, earlier);
+  assert.deepEqual(records.map((r) => [r.exerciseId, r.weight, r.previous]), [['bench-press', 45, 40]], 'seated row is a first time, not a record');
+  const text = workoutSummaryText(completeWorkout(now, '2026-11-08T12:40:00.000Z')!, records);
+  assert.match(text, /Tren superior/);
+  assert.match(text, /Récord en Press de banca: 45 kg × 5 \(antes 40 kg\)/);
+});
+
+test('sets can be added and removed during a session, with renumbering and limits', () => {
+  withStorage(() => {
+    const store = new WorkoutStore();
+    store.startWorkout('upper-body');
+    const benchCount = () => store.activeWorkout()!.sets.filter((s) => s.exerciseId === 'bench-press').length;
+    assert.equal(store.updateSet(2, 9, 50), true);
+    assert.equal(store.addSet('bench-press'), true);
+    assert.equal(benchCount(), 4);
+    const added = store.activeWorkout()!.sets[3];
+    assert.deepEqual([added.exerciseId, added.setNumber, added.weight, added.reps, added.completed], ['bench-press', 4, 50, 9, false]);
+    assert.equal(store.removeSet(0), true);
+    assert.deepEqual(store.activeWorkout()!.sets.filter((s) => s.exerciseId === 'bench-press').map((s) => s.setNumber), [1, 2, 3]);
+    assert.equal(store.addSet('no-existe'), false);
+    assert.equal(store.setNotes('Hombro bien, subir carga'), true);
+    assert.equal(new WorkoutStore().activeWorkout()!.notes, 'Hombro bien, subir carga');
+    assert.equal(store.setNotes('   '), true);
+    assert.equal(store.activeWorkout()!.notes, undefined);
   });
 });
