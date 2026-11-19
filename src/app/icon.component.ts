@@ -27,6 +27,7 @@ const paths: Record<string, string> = {
   medal: 'm8 14-2 8 6-3 6 3-2-8M19 8A7 7 0 1 1 5 8a7 7 0 0 1 14 0',
   menu: 'M4 6h16M4 12h16M4 18h16',
   user: 'M20 21a8 8 0 0 0-16 0M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0',
+  swap: 'M7 4 3 8l4 4M3 8h18M17 12l4 4-4 4M21 16H3',
   share: 'M12 15V3m-4 4 4-4 4 4M6 10H5a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1h-1',
 };
 @Component({

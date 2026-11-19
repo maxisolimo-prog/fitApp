@@ -3,8 +3,8 @@ import type { Profile, Routine, ScheduledWorkout, WeeklyPlan, WeightRecord, Work
 import { seedExercises } from './seed';
 import {
   buildWorkout, completeWorkout, createInitialState, deserializeState, FitAppState,
-  localDate, parseLocalDate, removeRoutine, serializeState, STORAGE_KEY,
-  validateProfile, validateRoutine, validateState, validSetValues, weekDates,
+  localDate, parseLocalDate, removeRoutine, serializeState, STORAGE_KEY, substituteExercise,
+  validateProfile, validateRoutine, validateState, validateWorkout, validSetValues, weekDates,
 } from './workout-utils';
 
 /** Written by an earlier build in its own key; now part of STORAGE_KEY. */
@@ -217,7 +217,31 @@ export class WorkoutStore {
     let number = 0;
     const sets = workout.sets.filter((_, position) => position !== index)
       .map((set) => set.exerciseId === exerciseId ? { ...set, setNumber: ++number } : set);
-    this.activeWorkout.set({ ...workout, sets });
+    // Misma garantía que al cambiar un ejercicio: lo renumerado se valida antes de escribir.
+    const checked = validateWorkout({ ...workout, sets }, true);
+    if (!checked) return this.fail('No se pudo quitar la serie.');
+    this.activeWorkout.set(checked);
+    this.persist();
+    return true;
+  }
+
+  /**
+   * Cambia un ejercicio por otro en las series que faltan de la sesión. La rutina no cambia y las series ya
+   * completadas quedan con el ejercicio original.
+   */
+  substituteExercise(fromId: string, toId: string): boolean {
+    const workout = this.activeWorkout();
+    if (!workout) return this.fail('No hay una sesión en curso.');
+    if (!this.exercises().some((exercise) => exercise.id === toId)) return this.fail('No encontramos ese ejercicio.');
+    if (fromId === toId) return this.fail('Elegí un ejercicio distinto.');
+    if (workout.sets.some((set) => set.exerciseId === toId)) return this.fail('Ese ejercicio ya está en la sesión.');
+    if (!workout.sets.some((set) => set.exerciseId === fromId && !set.completed)) return this.fail('No quedan series pendientes de ese ejercicio.');
+    const next = substituteExercise(workout, fromId, toId, this.history());
+    // Renumerar puede dejar una serie fuera de rango si la sesión llegó con más de 30 series de un ejercicio
+    // (importada o de la cuenta): se valida antes de escribir, para no guardar algo que después no carga.
+    const checked = next && validateWorkout(next, true);
+    if (!checked) return this.fail('No se pudo cambiar el ejercicio.');
+    this.activeWorkout.set(checked);
     this.persist();
     return true;
   }

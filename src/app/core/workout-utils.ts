@@ -309,6 +309,67 @@ export function buildWorkout(routine: Routine, id: string, startedAt = new Date(
   };
 }
 
+/**
+ * Cambia un ejercicio por otro en una sesión en curso. Solo cambian las series que faltan: las completadas quedan
+ * con el ejercicio original, renumeradas. El reemplazo arranca con lo que se levantó la última vez con ese ejercicio
+ * o, si es la primera vez, sin carga y con las repeticiones que tenía la serie: la carga de un ejercicio no vale para
+ * otro. Devuelve null si el cambio no se puede hacer: el reemplazo no existe, es el mismo ejercicio, ya está en la
+ * sesión, o no quedan series pendientes del original.
+ */
+export function substituteExercise(workout: Workout, fromId: string, toId: string, history: Workout[] = []): Workout | null {
+  const to = seedExercises.find((exercise) => exercise.id === toId);
+  if (!to || fromId === toId || workout.sets.some((set) => set.exerciseId === toId)
+    || !workout.sets.some((set) => set.exerciseId === fromId && !set.completed)) return null;
+  const previous = lastSetsFor(history, toId);
+  let kept = 0;
+  let replaced = 0;
+  const sets = workout.sets.map((set): WorkoutSet => {
+    if (set.exerciseId !== fromId) return set;
+    if (set.completed) return { ...set, setNumber: ++kept };
+    const last = previous[replaced] ?? previous.at(-1);
+    return { exerciseId: to.id, exerciseName: to.name, setNumber: ++replaced, reps: last?.reps ?? set.reps, weight: last?.weight ?? 0, completed: false };
+  });
+  return { ...workout, sets };
+}
+
+/**
+ * Qué ejercicio de la rutina ocupa cada reemplazo hecho en la sesión en curso (reemplazo → ejercicio de la rutina).
+ * No forma parte de FitAppState: es una ayuda de pantalla, como el reloj del descanso, para que el reemplazo herede
+ * el descanso y el objetivo de repeticiones del ejercicio que reemplazó. Si se pierde (otro dispositivo, datos del
+ * navegador borrados), el reemplazo usa el descanso por defecto y nada más.
+ */
+export interface SessionSwaps {
+  workoutId: string;
+  swaps: Record<string, string>;
+}
+
+/** Lee lo guardado por la pantalla de sesión. Cualquier cosa que no sea exactamente lo esperado se descarta. */
+export function parseSessionSwaps(raw: string | null): SessionSwaps | null {
+  if (!raw || raw.length > 20_000) return null;
+  try {
+    const value: unknown = JSON.parse(raw);
+    if (!record(value) || !text(value['workoutId'], 100) || !record(value['swaps'])) return null;
+    const swaps: Record<string, string> = {};
+    for (const [toId, fromId] of Object.entries(value['swaps'])) {
+      if (!exerciseIds.has(toId) || typeof fromId !== 'string' || !exerciseIds.has(fromId)) return null;
+      swaps[toId] = fromId;
+    }
+    return { workoutId: value['workoutId'], swaps };
+  } catch { return null; }
+}
+
+/** Anota un reemplazo. Si lo reemplazado ya era un reemplazo, apunta al ejercicio original de la rutina. */
+export function recordSwap(current: SessionSwaps | null, workoutId: string, fromId: string, toId: string): SessionSwaps {
+  const swaps = current?.workoutId === workoutId ? { ...current.swaps } : {};
+  swaps[toId] = Object.hasOwn(swaps, fromId) ? swaps[fromId] : fromId;
+  return { workoutId, swaps };
+}
+
+/** Ejercicio de la rutina al que corresponde un ejercicio de la sesión: él mismo, o el que reemplazó. */
+export function swapOrigin(current: SessionSwaps | null, workoutId: string, exerciseId: string): string {
+  return current?.workoutId === workoutId && Object.hasOwn(current.swaps, exerciseId) ? current.swaps[exerciseId] : exerciseId;
+}
+
 export interface PersonalRecord {
   exerciseId: string;
   exerciseName: string;

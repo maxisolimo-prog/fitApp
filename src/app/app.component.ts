@@ -5,7 +5,8 @@ import { IconComponent } from './icon.component';
 import { WorkoutStore } from './core/workout-store';
 import { SyncService, type SyncStatus } from './core/sync.service';
 import { SwUpdate } from '@angular/service-worker';
-import { estimateRoutineMinutes, lastSetsFor, localDate, parseLocalDate, personalRecords, plannedRoutineId, suggestProgression, suggestWeeklyPlan, weekDates, workoutSummaryText, workoutVolume, workoutDurationMinutes, type ProgressionSuggestion } from './core/workout-utils';
+import { estimateRoutineMinutes, lastSetsFor, localDate, parseLocalDate, parseSessionSwaps, personalRecords, plannedRoutineId, recordSwap, swapOrigin, suggestProgression, suggestWeeklyPlan, weekDates, workoutSummaryText, workoutVolume, workoutDurationMinutes, type ProgressionSuggestion, type SessionSwaps } from './core/workout-utils';
+import { MOVEMENT_LABELS, substitutesFor } from './core/movements';
 import { Routine, Profile, Workout, Exercise, WorkoutSet } from './core/models';
 import { RoutineEditorComponent } from './features/routine-editor.component';
 import { ExerciseDetailComponent } from './features/exercise-detail.component';
@@ -41,7 +42,27 @@ export class AppComponent implements OnDestroy {
   /** Ficha de un ejercicio abierta encima de la sesión. La sesión sigue montada debajo: no se pierde nada de lo cargado. */
   readonly sessionExercise = signal<Exercise|null>(null);
   /** Hay una hoja abierta: lo de atrás queda inactivo para el teclado y los lectores de pantalla. */
-  readonly sheetOpen = computed(() => !!this.sessionExercise());
+  readonly sheetOpen = computed(() => !!this.sessionExercise() || !!this.substituting());
+  /** Ejercicio de la sesión que se está por cambiar (hoja "Cambiar ejercicio") y el reemplazo elegido. */
+  readonly substituting = signal<Exercise|null>(null);
+  readonly substituteChoice = signal<string|null>(null);
+  /** Reemplazos hechos en la sesión en curso: el reemplazo hereda el descanso y el objetivo del ejercicio que reemplazó. */
+  readonly sessionSwaps = signal<SessionSwaps|null>(this.savedSwaps());
+  /** Con qué se puede reemplazar: primero el mismo movimiento, después el mismo grupo muscular. */
+  readonly substituteOptions = computed(() => {
+    const from = this.substituting(), workout = this.store.activeWorkout();
+    if (!from || !workout) return null;
+    const inSession = new Set(workout.sets.map(set => set.exerciseId));
+    const row = (exercise: Exercise) => {
+      const last = lastSetsFor(this.store.history(), exercise.id)[0];
+      return { exercise, used: inSession.has(exercise.id), last: !last ? '' : last.weight > 0 ? `${this.fmt(last.weight)} kg × ${last.reps}` : `${last.reps} repeticiones` };
+    };
+    const { sameMovement, sameGroup } = substitutesFor(from, this.store.exercises());
+    return [
+      { title: 'Mismo movimiento', detail: MOVEMENT_LABELS[from.movement], rows: sameMovement.map(row) },
+      { title: 'Mismo grupo muscular', detail: from.muscle, rows: sameGroup.map(row) },
+    ].filter(section => section.rows.length);
+  });
   private sheetTrigger: HTMLElement|null = null;
   readonly confirmation = signal<'discard'|'delete'|'import'|null>(null);
   readonly weekOffset = signal(0);
@@ -162,7 +183,28 @@ export class AppComponent implements OnDestroy {
 
   openSessionExercise(exercise:Exercise, trigger:HTMLElement){this.sheetTrigger=trigger;this.sessionExercise.set(exercise);this.focusSheet();}
   /** Cierra la hoja abierta y devuelve el foco a quien la abrió. */
-  closeSheet(){if(!this.sheetOpen())return;this.sessionExercise.set(null);const trigger=this.sheetTrigger;this.sheetTrigger=null;setTimeout(()=>{if(trigger?.isConnected)trigger.focus();});}
+  closeSheet(){if(!this.sheetOpen())return;this.dropSheets();const trigger=this.sheetTrigger;this.sheetTrigger=null;setTimeout(()=>{if(trigger?.isConnected)trigger.focus();});}
+  private dropSheets(){this.sessionExercise.set(null);this.substituting.set(null);this.substituteChoice.set(null);}
+  hasPending(rows:{set:WorkoutSet}[]){return rows.some(row=>!row.set.completed);}
+  openSubstitute(exercise:Exercise, trigger:HTMLElement){this.sheetTrigger=trigger;this.substituteChoice.set(null);this.substituting.set(exercise);this.focusSheet();}
+  confirmSubstitute(){
+    const from=this.substituting(), toId=this.substituteChoice(), workout=this.store.activeWorkout();
+    if(!from||!toId||!workout)return;
+    if(!this.store.substituteExercise(from.id,toId)){this.notify(this.store.actionError()??'No se pudo cambiar el ejercicio.');return;}
+    const swaps=recordSwap(this.sessionSwaps(),workout.id,from.id,toId);
+    this.sessionSwaps.set(swaps);
+    try{localStorage.setItem('fitapp-session-swaps',JSON.stringify(swaps));}catch{}
+    this.dropSheets();this.sheetTrigger=null;
+    this.notify(`Listo: ${this.exercise(toId).name} en las series que te faltan. Tu rutina no cambia.`);
+    // El botón que abrió la hoja puede haber desaparecido con el ejercicio: el foco va al nombre del reemplazo.
+    setTimeout(()=>(document.getElementById('block-'+toId)?.querySelector('button') as HTMLElement|null)?.focus());
+  }
+  /** Otra pestaña cambió un ejercicio: se toma su registro de reemplazos, validado como siempre. */
+  @HostListener('window:storage', ['$event']) storageChanged(event:StorageEvent){if(event.key==='fitapp-session-swaps')this.sessionSwaps.set(parseSessionSwaps(event.newValue));}
+  private savedSwaps(){try{return parseSessionSwaps(localStorage.getItem('fitapp-session-swaps'));}catch{return null;}}
+  private clearSwaps(){this.sessionSwaps.set(null);try{localStorage.removeItem('fitapp-session-swaps');}catch{}}
+  /** Renglón de la rutina que corresponde a un ejercicio de la sesión; para un reemplazo, el del ejercicio que reemplazó. */
+  private routineEntry(exerciseId:string){const workout=this.store.activeWorkout();if(!workout)return undefined;const origin=swapOrigin(this.sessionSwaps(),workout.id,exerciseId);return this.routine(workout.routineId)?.exercises.find(e=>e.exerciseId===origin);}
   private focusSheet(){setTimeout(()=>(document.querySelector('.sheet [data-sheet-focus]') as HTMLElement|null)?.focus());}
   @HostListener('document:keydown.escape') escapePressed(){if(!this.confirmation()&&!this.sync.conflict())this.closeSheet();}
 
@@ -196,7 +238,7 @@ export class AppComponent implements OnDestroy {
   /** Load/reps suggestion for an exercise of the active session, from its last session and the routine target. */
   suggestionFor(exerciseId:string):ProgressionSuggestion|null{
     const workout=this.store.activeWorkout();if(!workout)return null;
-    const entry=this.routine(workout.routineId)?.exercises.find(e=>e.exerciseId===exerciseId);if(!entry)return null;
+    const entry=this.routineEntry(exerciseId);if(!entry)return null;
     return suggestProgression(this.previousByExercise().get(exerciseId)??[],entry.reps,this.exercise(exerciseId)?.equipment??'');
   }
   /** True when the pending sets already use the suggested value (nothing to apply). */
@@ -221,13 +263,13 @@ export class AppComponent implements OnDestroy {
   private savedRest(){try{return Number(localStorage.getItem('fitapp-rest-until'))||0;}catch{return 0;}}
 
   initialView():View { const hash=location.hash.slice(1); return ['home','routines','calendar','progress','library','profile','workout','editor'].includes(hash)?hash as View:'home'; }
-  @HostListener('window:hashchange') hashChanged(){this.view.set(this.initialView());this.sessionExercise.set(null);}
+  @HostListener('window:hashchange') hashChanged(){this.view.set(this.initialView());this.dropSheets();}
   @HostListener('window:online') wentOnline(){this.online.set(true);if(this.sync.account())void this.sync.syncNow();}
   @HostListener('window:offline') wentOffline(){this.online.set(false);}
   @HostListener('window:beforeinstallprompt', ['$event']) installReady(event:Event){event.preventDefault();this.installPrompt.set(event as unknown as { prompt(): Promise<unknown>; userChoice: Promise<{ outcome: string }> });}
   @HostListener('window:appinstalled') appInstalled(){this.installed.set(true);this.installPrompt.set(null);this.notify(`Listo, ${this.brand.name} quedó instalada.`);}
   ngOnDestroy(){clearInterval(this.interval);clearTimeout(this.toastTimer);}
-  navigate(view:View){this.view.set(view);location.hash=view; this.sessionExercise.set(null);this.selectedRoutine.set(null);this.selectedExercise.set(null);this.selectedHistory.set(null);if(view==='profile') this.profileDraft={...this.store.profile()}; window.scrollTo({top:0,behavior:'instant'});}
+  navigate(view:View){this.view.set(view);location.hash=view; this.dropSheets();this.selectedRoutine.set(null);this.selectedExercise.set(null);this.selectedHistory.set(null);if(view==='profile') this.profileDraft={...this.store.profile()}; window.scrollTo({top:0,behavior:'instant'});}
   notify(message:string){this.toast.set(message);clearTimeout(this.toastTimer);this.toastTimer=setTimeout(()=>this.toast.set(''),4500);}
   exercise(id:string){return this.store.exercises().find(e=>e.id===id)!;}
   routine(id:string){return this.store.routines().find(r=>r.id===id);}
@@ -246,12 +288,12 @@ export class AppComponent implements OnDestroy {
   removeSchedule(date:string){this.store.unschedule(date);this.notify('Ese día vuelve a tu semana tipo.');}
   start(r:Routine){if(this.store.activeWorkout()){this.navigate('workout');this.notify('Continuá tu sesión en curso antes de empezar otra.');return;}if(this.store.startWorkout(r.id)){this.navigate('workout');this.notify('Todo listo. Registrá cada serie a tu ritmo.');}else this.notify(this.store.actionError()??'No se pudo iniciar.');}
   updateSet(index:number,key:'reps'|'weight',value:string,event:Event){const set=this.store.activeWorkout()!.sets[index];const num=Number(value);if(value.trim()===''||!this.store.updateSet(index,key==='reps'?num:set.reps,key==='weight'?num:set.weight)){(event.target as HTMLInputElement).value=String(set[key]);this.notify('Usá repeticiones de 1 a 999 y una carga de 0 a 2000 kg.');}}
-  toggleSet(index:number){const set=this.store.activeWorkout()!.sets[index];if(this.store.toggleSet(index)&&!set.completed){const routine=this.routine(this.store.activeWorkout()!.routineId);this.startRest(routine?.exercises.find(e=>e.exerciseId===set.exerciseId)?.restSeconds??60);}}
+  toggleSet(index:number){const set=this.store.activeWorkout()!.sets[index];if(this.store.toggleSet(index)&&!set.completed)this.startRest(this.routineEntry(set.exerciseId)?.restSeconds??60);}
   startRest(seconds=60){const until=Date.now()+seconds*1000;this.restUntil.set(until);try{localStorage.setItem('fitapp-rest-until',String(until));}catch{}this.now.set(Date.now());}
   skipRest(){this.restUntil.set(0);try{localStorage.removeItem('fitapp-rest-until');}catch{}}
   clock(seconds:number){const mins=Math.floor(seconds/60);return `${mins.toString().padStart(2,'0')}:${(seconds%60).toString().padStart(2,'0')}`;}
-  finish(){const workout=this.store.finishWorkout();if(workout){this.skipRest();this.navigate('progress');this.selectedHistory.set(workout);this.notify('¡Sesión guardada! Cada entrenamiento cuenta.');}else this.notify(this.store.actionError()??'Marcá al menos una serie completada.');}
-  confirmAction(){const action=this.confirmation();if(action==='discard'){this.store.discardWorkout();this.skipRest();this.navigate('home');this.notify('Sesión descartada.');}if(action==='delete'&&this.selectedRoutine()){if(this.store.deleteRoutine(this.selectedRoutine()!.id)){this.selectedRoutine.set(null);this.notify('Rutina eliminada. Tu historial se conserva.');}else this.notify(this.store.actionError()??'No se puede eliminar.');}if(action==='import'){if(this.store.importJson(this.pendingImport)){this.profileDraft={...this.store.profile()};this.notify('Copia de seguridad importada.');}else this.notify(this.store.actionError()??'El archivo no es una copia válida.');this.pendingImport='';}this.confirmation.set(null);}
+  finish(){const workout=this.store.finishWorkout();if(workout){this.skipRest();this.clearSwaps();this.navigate('progress');this.selectedHistory.set(workout);this.notify('¡Sesión guardada! Cada entrenamiento cuenta.');}else this.notify(this.store.actionError()??'Marcá al menos una serie completada.');}
+  confirmAction(){const action=this.confirmation();if(action==='discard'){this.store.discardWorkout();this.skipRest();this.clearSwaps();this.navigate('home');this.notify('Sesión descartada.');}if(action==='delete'&&this.selectedRoutine()){if(this.store.deleteRoutine(this.selectedRoutine()!.id)){this.selectedRoutine.set(null);this.notify('Rutina eliminada. Tu historial se conserva.');}else this.notify(this.store.actionError()??'No se puede eliminar.');}if(action==='import'){if(this.store.importJson(this.pendingImport)){this.profileDraft={...this.store.profile()};this.notify('Copia de seguridad importada.');}else this.notify(this.store.actionError()??'El archivo no es una copia válida.');this.pendingImport='';}this.confirmation.set(null);}
   editRoutine(r:Routine|null=null){this.editingRoutine=r;this.navigate('editor');}
   routineSaved(){this.navigate('routines');this.notify('Rutina guardada.');}
   saveProfile(){this.profileError='';if(this.store.updateProfile(this.profileDraft)){this.notify('Perfil actualizado.');}else this.profileError=this.store.actionError()??'Revisá los datos del perfil.';}

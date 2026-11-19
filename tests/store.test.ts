@@ -4,7 +4,7 @@ import '@angular/compiler';
 import { WorkoutStore } from '../src/app/core/workout-store';
 import {
   buildWorkout, completeWorkout, createInitialState, deserializeState, lastSetsFor, localDate, personalRecords, plannedRoutineId, suggestProgression, suggestWeeklyPlan, workoutSummaryText,
-  parseLocalDate, removeRoutine, serializeState, startOfWeek, validateState,
+  parseLocalDate, parseSessionSwaps, recordSwap, removeRoutine, serializeState, startOfWeek, substituteExercise, swapOrigin, validateState,
   STORAGE_KEY, validSetValues, weekDates, workoutDurationMinutes, workoutVolume,
 } from '../src/app/core/workout-utils';
 
@@ -302,6 +302,94 @@ test('sets can be added and removed during a session, with renumbering and limit
     assert.equal(store.setNotes('   '), true);
     assert.equal(store.activeWorkout()!.notes, undefined);
   });
+});
+
+test('substituting an exercise changes only its pending sets; completed ones and the routine stay (B-06)', () => {
+  withStorage(() => {
+    const store = new WorkoutStore();
+    assert.equal(store.substituteExercise('bench-press', 'incline-press'), false, 'needs a session');
+    store.startWorkout('upper-body');
+    store.updateSet(1, 9, 40);
+    store.toggleSet(1); // la segunda serie de press de banca, hecha antes que la primera
+    const before = JSON.stringify(store.activeWorkout());
+    assert.equal(store.substituteExercise('bench-press', 'seated-row'), false, 'already in the session');
+    assert.equal(store.actionError(), 'Ese ejercicio ya está en la sesión.');
+    assert.equal(store.substituteExercise('bench-press', 'bench-press'), false);
+    assert.equal(store.substituteExercise('bench-press', 'no-existe'), false);
+    assert.equal(store.substituteExercise('push-up', 'incline-press'), false, 'the original is not in the session');
+    assert.equal(JSON.stringify(store.activeWorkout()), before, 'failed attempts change nothing');
+
+    assert.equal(store.substituteExercise('bench-press', 'incline-press'), true);
+    const sets = store.activeWorkout()!.sets;
+    assert.equal(sets.length, 14);
+    assert.deepEqual(sets.slice(0, 4).map((s) => [s.exerciseId, s.exerciseName, s.setNumber, s.weight, s.reps, s.completed]), [
+      ['incline-press', 'Press inclinado con mancuernas', 1, 0, 10, false],
+      ['bench-press', 'Press de banca', 1, 40, 9, true],
+      ['incline-press', 'Press inclinado con mancuernas', 2, 0, 10, false],
+      ['seated-row', 'Remo en polea', 1, 0, 12, false],
+    ], 'pending sets become the substitute without load; the completed set keeps its exercise and is renumbered');
+    assert.equal(store.routines().find((r) => r.id === 'upper-body')!.exercises[0].exerciseId, 'bench-press', 'the routine is untouched');
+    assert.deepEqual(new WorkoutStore().activeWorkout()!.sets.map((s) => s.exerciseId), sets.map((s) => s.exerciseId), 'persisted and valid on reload');
+
+    assert.equal(store.substituteExercise('bench-press', 'push-up'), false, 'no pending sets left of the original');
+    assert.equal(store.substituteExercise('incline-press', 'push-up'), true, 'a substitute can be changed again');
+    assert.equal(store.substituteExercise('push-up', 'bench-press'), false, 'cannot go back while the original is in the session');
+    store.toggleSet(0);
+    const saved = store.finishWorkout()!;
+    assert.deepEqual(saved.sets.map((s) => [s.exerciseId, s.setNumber]), [['push-up', 1], ['bench-press', 1]]);
+  });
+});
+
+test('renumbering never writes a session that would not load again (review of B-06)', () => {
+  withStorage((storage) => {
+    // Una sesión con 31 series del mismo ejercicio es válida al importar (la validación mira cada número de serie,
+    // no cuántas hay), pero renumerarlas daría una serie 31, fuera de rango.
+    const state = createInitialState();
+    const active = buildWorkout(state.routines[0], 'w-31', '2026-11-19T10:00:00.000Z');
+    active.sets = Array.from({ length: 31 }, () => ({ exerciseId: 'bench-press', exerciseName: 'Press de banca', setNumber: 1, reps: 10, weight: 0, completed: false }));
+    storage.setItem(STORAGE_KEY, JSON.stringify({ ...state, activeWorkout: active }));
+    const store = new WorkoutStore();
+    assert.equal(store.activeWorkout()!.sets.length, 31);
+    assert.equal(store.substituteExercise('bench-press', 'incline-press'), false);
+    assert.equal(store.activeWorkout()!.sets[30].exerciseId, 'bench-press', 'nothing changed');
+    assert.ok(new WorkoutStore().activeWorkout(), 'the stored session still loads');
+    assert.equal(store.storageError(), null);
+  });
+});
+
+test('a substitute starts from what was lifted last time with that exercise, never from the original load', () => {
+  const routine = createInitialState().routines.find((r) => r.id === 'upper-body')!;
+  const earlier = completeWorkout({
+    ...buildWorkout(routine, 'old', '2026-11-10T10:00:00.000Z'),
+    sets: [
+      { exerciseId: 'incline-press', exerciseName: 'Press inclinado con mancuernas', setNumber: 1, reps: 8, weight: 20, completed: true },
+      { exerciseId: 'incline-press', exerciseName: 'Press inclinado con mancuernas', setNumber: 2, reps: 7, weight: 22, completed: true },
+    ],
+  }, '2026-11-10T11:00:00.000Z')!;
+  const workout = buildWorkout(routine, 'now', '2026-11-19T10:00:00.000Z');
+  workout.sets[0] = { ...workout.sets[0], weight: 60 };
+  const next = substituteExercise(workout, 'bench-press', 'incline-press', [earlier])!;
+  assert.deepEqual(next.sets.slice(0, 3).map((s) => [s.setNumber, s.weight, s.reps]), [[1, 20, 8], [2, 22, 7], [3, 22, 7]]);
+  assert.equal(workout.sets[0].exerciseId, 'bench-press', 'the input is not mutated');
+  assert.equal(substituteExercise(workout, 'bench-press', 'seated-row'), null);
+  assert.ok(validateState({ ...createInitialState(), activeWorkout: next }), 'the result is a valid active session');
+});
+
+test('session swaps point a substitute at the routine exercise it replaced and reject junk', () => {
+  let swaps = recordSwap(null, 'w1', 'bench-press', 'incline-press');
+  swaps = recordSwap(swaps, 'w1', 'incline-press', 'push-up');
+  assert.deepEqual(swaps, { workoutId: 'w1', swaps: { 'incline-press': 'bench-press', 'push-up': 'bench-press' } });
+  assert.equal(swapOrigin(swaps, 'w1', 'push-up'), 'bench-press');
+  assert.equal(swapOrigin(swaps, 'w1', 'seated-row'), 'seated-row');
+  assert.equal(swapOrigin(swaps, 'otra-sesion', 'push-up'), 'push-up', 'swaps of another session do not apply');
+  assert.equal(swapOrigin(null, 'w1', 'push-up'), 'push-up');
+  assert.deepEqual(recordSwap(swaps, 'w2', 'seated-row', 'barbell-row'), { workoutId: 'w2', swaps: { 'barbell-row': 'seated-row' } }, 'a new session starts clean');
+  assert.deepEqual(parseSessionSwaps(JSON.stringify(swaps)), swaps);
+  for (const raw of [null, '', 'no es json', '[]', '{}', '{"workoutId":"w1"}', '{"workoutId":7,"swaps":{}}', '{"workoutId":"w1","swaps":[]}',
+    '{"workoutId":"w1","swaps":{"push-up":"no-existe"}}', '{"workoutId":"w1","swaps":{"no-existe":"push-up"}}',
+    '{"workoutId":"w1","swaps":{"__proto__":"push-up"}}', '{"workoutId":"w1","swaps":{"push-up":7}}']) {
+    assert.equal(parseSessionSwaps(raw), null, String(raw));
+  }
 });
 
 test('routines are not capped at 12 exercises; the catalog ids are unique', () => {

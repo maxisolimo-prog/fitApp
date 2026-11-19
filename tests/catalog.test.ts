@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { isMovementId, MOVEMENT_LABELS, substitutesFor } from '../src/app/core/movements';
 import { isMuscleId, MUSCLE_IDS, MUSCLE_LABELS, muscleNames, muscleSentence } from '../src/app/core/muscles';
 import { seedExercises, seedRoutines } from '../src/app/core/seed';
 import { estimateRoutineMinutes, SETUP_SECONDS_PER_EXERCISE, WORK_SECONDS_PER_SET } from '../src/app/core/workout-utils';
@@ -65,6 +66,32 @@ test('la miniatura mira cada músculo del lado donde el dibujo lo trae, con un r
   assert.equal(thumbView(['quadriceps']).side, 'front');
   assert.equal(thumbView(['hamstring']).side, 'back');
   assert.equal(typeof thumbView([]).viewBox, 'string');
+});
+
+test('cada ejercicio tiene un movimiento de la lista y todos los movimientos se usan', () => {
+  for (const exercise of seedExercises) assert.ok(isMovementId(exercise.movement), `${exercise.id}: movimiento «${exercise.movement}» fuera de la lista`);
+  const used = new Set(seedExercises.map((exercise) => exercise.movement));
+  for (const movement of Object.keys(MOVEMENT_LABELS)) assert.ok(used.has(movement as keyof typeof MOVEMENT_LABELS), `ningún ejercicio usa «${movement}»`);
+  for (const value of ['', 'press', 'constructor', '__proto__', null, undefined, 3]) assert.equal(isMovementId(value), false);
+});
+
+test('los reemplazos proponen primero el mismo movimiento y después el mismo grupo, sin repetir ni incluirse', () => {
+  const byId = (id: string) => seedExercises.find((exercise) => exercise.id === id)!;
+  const ids = (list: { id: string }[]) => list.map((exercise) => exercise.id);
+  const bench = substitutesFor(byId('bench-press'), seedExercises);
+  assert.deepEqual(ids(bench.sameMovement), ['incline-press', 'push-up', 'chest-press-machine']);
+  assert.deepEqual(ids(bench.sameGroup), ['dumbbell-fly', 'cable-crossover']);
+  // Un ejercicio sin par de movimiento igual ofrece los de su grupo muscular.
+  const lateral = substitutesFor(byId('lateral-raise'), seedExercises);
+  assert.deepEqual(ids(lateral.sameMovement), []);
+  assert.ok(lateral.sameGroup.length >= 2);
+  for (const exercise of seedExercises) {
+    const { sameMovement, sameGroup } = substitutesFor(exercise, seedExercises);
+    const all = [...ids(sameMovement), ...ids(sameGroup)];
+    assert.ok(!all.includes(exercise.id), `${exercise.id} se propone a sí mismo`);
+    assert.equal(new Set(all).size, all.length, `${exercise.id}: reemplazo repetido`);
+    assert.ok(all.length >= 1, `${exercise.id} no tiene ningún reemplazo`);
+  }
 });
 
 test('la duración estimada sale de series, descansos y armado, redondeada a 5 minutos', () => {

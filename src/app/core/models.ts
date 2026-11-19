@@ -7,12 +7,21 @@ export type MuscleId =
   | 'trapezius' | 'deltoids' | 'chest' | 'upper-back' | 'lower-back' | 'biceps' | 'triceps' | 'forearm'
   | 'abs' | 'obliques' | 'gluteal' | 'quadriceps' | 'hamstring' | 'adductors' | 'calves' | 'tibialis';
 
+/** Patrón de movimiento: dos ejercicios con el mismo patrón se pueden reemplazar entre sí. Nombres en `movements.ts`. */
+export type MovementId =
+  | 'press-pecho' | 'apertura-pecho' | 'remo' | 'traccion-vertical' | 'press-hombros' | 'elevacion-lateral'
+  | 'hombro-posterior' | 'curl-biceps' | 'extension-triceps' | 'sentadilla' | 'zancada' | 'bisagra-cadera'
+  | 'extension-cadera' | 'abduccion-cadera' | 'extension-rodilla' | 'flexion-rodilla' | 'gemelos' | 'flexion-tronco'
+  | 'estabilidad-tronco';
+
 export interface Exercise {
   id: string;
   name: string;
   /** Grupo para filtros y listas ("Pecho", "Piernas"). El detalle por músculo está en los dos campos siguientes. */
   muscle: string;
   equipment: string;
+  /** Patrón de movimiento, para proponer reemplazos durante la sesión. */
+  movement: MovementId;
   /** Músculos que hacen el trabajo principal. Al menos uno. */
   primaryMuscles: MuscleId[];
   /** Músculos que ayudan a mover. Puede estar vacío. */
