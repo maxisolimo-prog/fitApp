@@ -47,7 +47,7 @@ ya está en el entorno. Procesos largos con afinidad `0xF` y prioridad `BelowNor
 | `src/app/core/workout-utils.ts` | Funciones puras: fechas locales, volumen, validación estricta, serialización. |
 | `src/app/core/workout-store.ts` | Store con signals; toda mutación valida, persiste y deja `actionError`/`storageError`. |
 | `src/app/app.component.{ts,html}` | Shell, navegación por hash (`#home`, `#routines`, …) y vistas del alumno. |
-| `src/app/features/` | `routine-editor` (claro), `exercise-detail` (oscuro, pestañas accesibles) y `muscle-map` (mapa muscular; sus trazos están en `muscle-map.data.ts`, generado y con licencia MIT: no editar a mano). |
+| `src/app/features/` | `routine-editor` (claro), `exercise-detail` (oscuro, pestañas accesibles), `muscle-map` (mapa muscular; sus trazos están en `muscle-map.data.ts`, generado y con licencia MIT: no editar a mano) y `exercise-thumb` (miniatura de las listas: el único lugar que decide qué imagen lleva un ejercicio). |
 | `src/app/brands/` | Una marca por archivo (`fitapp`, `qivox`, `fitnessgroup`): tokens, nombre, logo y funciones. `index.ts` resuelve y aplica la marca al arrancar. |
 | `src/styles.css` | Tokens por rol (valores por defecto: Temacy), `@font-face` locales y estilos globales del shell. |
 | `tests/` | Dominio, validación, store, sincronización (con API simulada) y marcas (contraste, elección, sin colores sueltos). |

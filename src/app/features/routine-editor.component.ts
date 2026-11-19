@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, Output, computed, inject, signal, type 
 import { FormsModule } from '@angular/forms';
 import type { Exercise, FitnessLevel, Routine, RoutineCategory, RoutineExercise } from '../core/models';
 import { WorkoutStore } from '../core/workout-store';
+import { ExerciseThumbComponent } from './exercise-thumb.component';
 
 /** Same bound as validateRoutine in workout-utils: generous, not a product limit. */
 const MAX_EXERCISES = 50;
@@ -9,7 +10,7 @@ const MAX_EXERCISES = 50;
 @Component({
   selector: 'app-routine-editor',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, ExerciseThumbComponent],
   template: `
     <section class="routine-editor" aria-labelledby="routine-editor-title">
       <header class="editor-header">
@@ -128,7 +129,7 @@ const MAX_EXERCISES = 50;
             <li>
               <button type="button" class="picker-item" [class.is-picked]="picked().has(exercise.id)" [class.is-used]="isUsed(exercise.id)"
                 [disabled]="isUsed(exercise.id)" [attr.aria-pressed]="picked().has(exercise.id)" (click)="togglePick(exercise.id)">
-                <span class="picker-initial" aria-hidden="true">{{ exercise.name.charAt(0) }}</span>
+                <app-exercise-thumb [exercise]="exercise" />
                 <span class="picker-text"><strong>{{ exercise.name }}</strong><small>{{ exercise.muscle }} · {{ exercise.equipment }}{{ isUsed(exercise.id) ? ' · ya está en la rutina' : '' }}</small></span>
                 <span class="picker-check" aria-hidden="true">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m5 12 4 4L19 6"/></svg>
@@ -198,7 +199,7 @@ const MAX_EXERCISES = 50;
     .picker-list{list-style:none;margin:0;padding:0;overflow-y:auto;display:flex;flex-direction:column;gap:6px;flex:1;min-height:120px}
     .picker-item{display:flex;align-items:center;gap:12px;width:100%;min-height:60px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);text-align:left}
     .picker-item:hover:not(:disabled){border-color:var(--ink)}.picker-item.is-picked{border-color:var(--strong);background:var(--bg-tint)}
-    .picker-initial{display:grid;place-items:center;flex-shrink:0;width:40px;height:40px;border-radius:10px;background:var(--dark);color:var(--accent);font-weight:700}
+    .picker-item app-exercise-thumb{--thumb-radius:10px}
     .picker-text{flex:1;min-width:0;display:flex;flex-direction:column}.picker-text strong{font-size:15px}.picker-text small{font-size:12px;color:var(--ink-2)}
     .picker-check{display:grid;place-items:center;flex-shrink:0;width:28px;height:28px;border-radius:50%;border:1.5px solid var(--line-strong);color:transparent}
     .picker-check svg{width:16px;height:16px}.picker-item.is-picked .picker-check{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}

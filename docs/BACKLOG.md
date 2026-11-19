@@ -36,7 +36,7 @@ consumen el cupo de la cuenta de ChatGPT del usuario.
 | B-01 | Músculos principales y secundarios de los 43 ejercicios | Bajo | No | Hecho el 18 de noviembre de 2026 |
 | B-02 | Mapa muscular propio y solapa "Músculos" en la ficha | Medio | No | Hecho el 18 de noviembre de 2026 |
 | B-03 | Imagen de cada ejercicio, creada con GPT | Medio | No | B-01, cupo de GPT, estilo aprobado |
-| B-04 | Miniaturas en las listas | Bajo | No | Destrabado: puede usar el mapa de B-02 |
+| B-04 | Miniaturas en las listas | Bajo | No | Hecho el 19 de noviembre de 2026 |
 | B-05 | Abrir la ficha del ejercicio desde la sesión | Medio | No | — |
 
 ### B-01. Músculos principales y secundarios
@@ -110,6 +110,12 @@ biblioteca y selector del editor de rutinas. Sin ilustración, va el mapa muscul
 
 - **Listo cuando:** las cuatro listas muestran miniatura, la carga es perezosa y la lista no salta al aparecer las
   imágenes (tamaño reservado).
+- **Hecho.** Las cuatro listas usan un solo componente, `app-exercise-thumb`: muestra la ilustración del
+  ejercicio si existe y, si no, el mapa muscular recortado en la zona del músculo principal (torso, muslos o
+  piernas, de frente o de espalda). Hoy ningún ejercicio tiene ilustración, así que todas muestran el mapa; cuando
+  lleguen las imágenes de B-03 alcanza con cargarlas en el catálogo. El dibujo se baja al aparecer la primera
+  miniatura y está una sola vez en la página; el cuadrado se reserva desde el principio y, si la descarga falla,
+  queda la inicial del ejercicio como antes.
 
 ### B-05. Ficha del ejercicio desde la sesión
 

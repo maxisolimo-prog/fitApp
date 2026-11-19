@@ -100,6 +100,7 @@ Mientras no haya imagen del movimiento, la ficha muestra qué músculos trabaja 
 - El dibujo lleva descripción para lectores de pantalla con los mismos músculos.
 - Es una guía general, no una medición: sin porcentajes. La clasificación está pendiente de revisión por un profesional.
 - Solo se pueden marcar las 16 zonas de `src/app/core/muscles.ts`, que son las que trae el dibujo.
+- En las listas va en chico, como miniatura del ejercicio: un cuadrado oscuro con la zona del músculo principal (torso, muslos o piernas) y los músculos resaltados con el acento. Es decorativa: el nombre va siempre al lado. Cuando un ejercicio tenga ilustración, la miniatura muestra la ilustración.
 
 ## Lenguaje y contenido
 

@@ -188,7 +188,7 @@
             <ol class="plan-list">
               @for (entry of routine.exercises; track entry.exerciseId; let i = $index) {
                 <li>
-                  <span class="plan-index tabular" aria-hidden="true">{{ i + 1 }}</span>
+                  <span class="plan-thumb"><app-exercise-thumb [exercise]="exercise(entry.exerciseId)" /><span class="plan-index tabular" aria-hidden="true">{{ i + 1 }}</span></span>
                   <span class="plan-name"><strong>{{ exercise(entry.exerciseId).name }}</strong><small>{{ exercise(entry.exerciseId).muscle }} · {{ exercise(entry.exerciseId).equipment }}</small></span>
                   <span class="plan-numbers tabular">{{ entry.sets }} × {{ entry.reps }}<small>{{ entry.weight ? fmt(entry.weight) + ' kg' : 'sin carga' }} · {{ entry.restSeconds }} s</small></span>
                 </li>
@@ -272,8 +272,11 @@
             @for (group of workoutGroups(); track group.id) {
               <article class="exercise-block" [attr.aria-labelledby]="'block-' + group.id">
                 <header>
-                  <h2 [id]="'block-' + group.id">{{ group.exercise.name }}</h2>
-                  <p>{{ group.exercise.muscle }} · {{ group.exercise.equipment }}</p>
+                  <app-exercise-thumb [exercise]="group.exercise" />
+                  <div class="block-title">
+                    <h2 [id]="'block-' + group.id">{{ group.exercise.name }}</h2>
+                    <p>{{ group.exercise.muscle }} · {{ group.exercise.equipment }}</p>
+                  </div>
                 </header>
                 @if (suggestionFor(group.id); as suggestion) {
                   <div class="suggestion" [class.is-keep]="suggestion.kind === 'mantener'">
@@ -631,7 +634,7 @@
               @for (item of filteredExercises; track item.id) {
                 <li>
                   <button type="button" class="exercise-item" (click)="selectedExercise.set(item)">
-                    <span class="exercise-initial" aria-hidden="true">{{ item.name.charAt(0) }}</span>
+                    <app-exercise-thumb [exercise]="item" />
                     <span class="exercise-text"><strong>{{ item.name }}</strong><small>{{ item.muscle }} · {{ item.equipment }}</small></span>
                     @if (recordFor(item.id) > 0) { <span class="exercise-record tabular"><small>Mejor</small>{{ fmt(recordFor(item.id)) }} kg</span> }
                     <app-icon name="chevron" />
@@ -801,6 +804,8 @@
     }
   </nav>
 </div>
+
+<app-body-sprite />
 
 <div class="toast-region" role="status" aria-live="polite">
   @if (toast()) { <div class="toast">{{ toast() }}</div> }

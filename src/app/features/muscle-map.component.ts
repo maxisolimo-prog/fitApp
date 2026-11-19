@@ -3,8 +3,10 @@ import type { MuscleId } from '../core/models';
 import { muscleSentence } from '../core/muscles';
 import type { BodyPart } from './muscle-map.data';
 
-type Side = 'front' | 'back';
-interface BodyData {
+import type { BodySide } from './muscle-focus';
+
+type Side = BodySide;
+export interface BodyData {
   front: readonly BodyPart[];
   back: readonly BodyPart[];
   outline: Readonly<Record<Side, string>>;
@@ -13,7 +15,7 @@ interface BodyData {
 
 /** El dibujo pesa unos 60 kB: va en un archivo aparte y se pide una sola vez, cuando hace falta el primer mapa. */
 let bodyRequest: Promise<BodyData> | null = null;
-function loadBody(): Promise<BodyData> {
+export function loadBody(): Promise<BodyData> {
   if (!bodyRequest) {
     const request = import('./muscle-map.data').then((data) => ({
       front: data.BODY_FRONT, back: data.BODY_BACK, outline: data.BODY_OUTLINE, viewBox: data.BODY_VIEWBOX,

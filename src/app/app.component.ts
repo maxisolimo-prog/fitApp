@@ -9,12 +9,14 @@ import { lastSetsFor, localDate, parseLocalDate, personalRecords, plannedRoutine
 import { Routine, Profile, Workout, Exercise, WorkoutSet } from './core/models';
 import { RoutineEditorComponent } from './features/routine-editor.component';
 import { ExerciseDetailComponent } from './features/exercise-detail.component';
+import { ExerciseThumbComponent } from './features/exercise-thumb.component';
+import { BodySpriteComponent } from './features/body-sprite';
 import { BRAND } from './brands/brand.token';
 
 type View = 'home'|'routines'|'calendar'|'progress'|'library'|'profile'|'workout'|'editor';
 @Component({
   selector:'app-root', standalone:true,
-  imports:[CommonModule, FormsModule, IconComponent, RoutineEditorComponent, ExerciseDetailComponent],
+  imports:[CommonModule, FormsModule, IconComponent, RoutineEditorComponent, ExerciseDetailComponent, ExerciseThumbComponent, BodySpriteComponent],
   templateUrl:'./app.component.html'
 })
 export class AppComponent implements OnDestroy {

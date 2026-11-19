@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { isMuscleId, MUSCLE_IDS, MUSCLE_LABELS, muscleNames, muscleSentence } from '../src/app/core/muscles';
 import { seedExercises } from '../src/app/core/seed';
+import { focusSide, thumbView } from '../src/app/features/muscle-focus';
 import { BODY_BACK, BODY_FRONT, BODY_OUTLINE, BODY_VIEWBOX } from '../src/app/features/muscle-map.data';
 
 test('el catálogo tiene 43 ejercicios con identificador propio', () => {
@@ -45,6 +46,24 @@ test('el dibujo del cuerpo trae solo trazos SVG y sus dos vistas', () => {
   }
   assert.ok(safe.test(BODY_OUTLINE.front) && safe.test(BODY_OUTLINE.back));
   assert.deepEqual(BODY_VIEWBOX, { front: '0 0 724 1448', back: '724 0 724 1448' });
+});
+
+test('la miniatura mira cada músculo del lado donde el dibujo lo trae, con un recorte cuadrado dentro del dibujo', () => {
+  const drawn = { front: new Set(BODY_FRONT.map((part) => part.slug)), back: new Set(BODY_BACK.map((part) => part.slug)) };
+  for (const id of MUSCLE_IDS) {
+    const view = thumbView([id]);
+    assert.equal(view.side, focusSide(id));
+    assert.ok(drawn[view.side].has(id), `el lado «${view.side}» del dibujo no trae «${id}»`);
+    const [x, y, width, height] = view.viewBox.split(' ').map(Number);
+    const [left, top, sideWidth, sideHeight] = BODY_VIEWBOX[view.side].split(' ').map(Number);
+    assert.equal(width, height, `${id}: el recorte tiene que ser cuadrado`);
+    assert.ok(x >= left && x + width <= left + sideWidth && y >= top && y + height <= top + sideHeight, `${id}: el recorte se sale del dibujo`);
+  }
+  // Un ejercicio se mira donde está su primer músculo principal; sin músculos no se rompe.
+  assert.deepEqual(thumbView(['gluteal', 'chest']), thumbView(['gluteal']));
+  assert.equal(thumbView(['quadriceps']).side, 'front');
+  assert.equal(thumbView(['hamstring']).side, 'back');
+  assert.equal(typeof thumbView([]).viewBox, 'string');
 });
 
 test('los nombres salen en el orden de la lista y se leen de corrido', () => {
