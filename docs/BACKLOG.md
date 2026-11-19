@@ -137,7 +137,9 @@ encima de la sesión. Hoy la ficha solo se abre desde la Biblioteca, y para ir h
 - **Hecho.** El nombre del ejercicio (y su miniatura) abre la ficha en una hoja encima de la sesión, que sigue
   montada debajo. La hoja muestra el descanso que está corriendo. Mientras está abierta, lo de atrás queda inactivo
   para el teclado y los lectores de pantalla. El botón Atrás del teléfono cierra la hoja y deja al alumno en la
-  sesión. **Falta:** el selector de ejercicios del editor de rutinas todavía no hace lo mismo con Atrás.
+  sesión. El selector de ejercicios del editor de rutinas también se cierra con Atrás, y salir del editor con
+  cambios sin guardar (con Atrás, "Cancelar" o "Volver a mis rutinas") pregunta antes. **Falta:** si se sale del
+  editor tocando la navegación de abajo, la rutina a medio armar se pierde sin preguntar, como antes.
 
 ## Bloque 2: la sesión en el gimnasio
 
@@ -158,8 +160,8 @@ encima de la sesión. Hoy la ficha solo se abre desde la Biblioteca, y para ir h
   se puede elegir un ejercicio que ya está en la sesión. No toca el esquema porque cada serie ya guarda su
   ejercicio, pero es lógica del store: pasa por `store-guardian`. **Hecho:** cada ejercicio de la sesión con series
   pendientes tiene un botón "Cambiar". La hoja ofrece primero los del mismo movimiento y después los del mismo
-  grupo muscular; tocar uno hace el cambio (dos toques en total) y el aviso ofrece "Deshacer" durante unos
-  segundos, mientras la sesión siga como quedó. El dato nuevo del catálogo es `movement`, con 19 patrones (`src/app/core/movements.ts`); **falta la
+  grupo muscular; tocar uno hace el cambio (dos toques en total). Se puede deshacer desde el aviso, unos
+  segundos, o con "Volver a…" al pie del ejercicio nuevo, hasta que el alumno registre otra cosa en la sesión. El dato nuevo del catálogo es `movement`, con 19 patrones (`src/app/core/movements.ts`); **falta la
   revisión de un profesional**. El reemplazo arranca con lo que se levantó la última vez con ese ejercicio o, si es
   la primera, sin carga: la carga de un ejercicio no vale para otro. Para que herede el descanso y la sugerencia de
   progresión, la pantalla recuerda a qué ejercicio de la rutina reemplaza cada uno (`fitapp-session-swaps`, fuera
@@ -174,8 +176,9 @@ encima de la sesión. Hoy la ficha solo se abre desde la Biblioteca, y para ir h
 - **B-08. Avance.** La tarjeta de la sesión en curso muestra "5 de 16 series" con un anillo, como el 37 % de la
   competencia. Los datos ya existen. **Hecho:** el anillo es decorativo; el texto de al lado dice lo mismo.
 - **B-09. Carga.** Texto al lado del campo Kg y en la ficha: "por mancuerna", "barra incluida", según el equipo. Solo
-  cambia etiquetas: no reinterpreta lo ya registrado. **Hecho:** "Kg por mancuerna" o "Kg con la barra incluida"
-  arriba de la tabla de series, en el editor de rutinas y en la ficha. Polea, máquina y peso corporal no llevan
+  cambia etiquetas: no reinterpreta lo ya registrado. **Hecho:** arriba de la tabla de series dice "Anotá el peso de
+  una mancuerna." o "Anotá el total, con la barra incluida."; el editor de rutinas, la ficha y la hoja para cambiar
+  de ejercicio lo aclaran como "kg por mancuerna" o "con la barra incluida". Polea, máquina y peso corporal no llevan
   aclaración. Mi progreso avisa que, con mancuernas, el volumen cuenta la carga de una.
 - **B-10. Hora de cada serie.** Campo opcional en la serie. Permite mostrar el descanso real y la hora en el
   historial. Las series viejas quedan sin hora: no se inventa. **Hecho:** `completedAt` se anota al marcar la serie

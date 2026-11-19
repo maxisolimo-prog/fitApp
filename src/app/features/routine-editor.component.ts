@@ -1,7 +1,7 @@
-import { Component, EventEmitter, Input, Output, computed, inject, signal, type OnChanges } from '@angular/core';
+import { Component, EventEmitter, Input, Output, computed, inject, signal, type OnChanges, type OnDestroy, type OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { Exercise, FitnessLevel, Routine, RoutineCategory, RoutineExercise } from '../core/models';
-import { BackClose } from '../back-close';
+import { BackClose, type BackLayer } from '../back-close';
 import { loadHint } from '../load-hint';
 import { WorkoutStore } from '../core/workout-store';
 import { estimateRoutineMinutes } from '../core/workout-utils';
@@ -22,7 +22,7 @@ const MAX_EXERCISES = 50;
           <h2 id="routine-editor-title">{{ title }}</h2>
           <p class="intro">Elegí los ejercicios que quieras y ajustá series, repeticiones y descanso.</p>
         </div>
-        <button class="text-button" type="button" (click)="cancelled.emit()">Volver a mis rutinas</button>
+        <button class="text-button" type="button" (click)="requestLeave()">Volver a mis rutinas</button>
       </header>
 
       <form #routineForm="ngForm" (ngSubmit)="save()" novalidate>
@@ -96,12 +96,24 @@ const MAX_EXERCISES = 50;
         <footer class="editor-footer">
           <p>{{ routine && !routine.custom ? 'Se guardará como una nueva rutina. La plantilla original se conserva.' : 'Podés volver a editar tu rutina cuando quieras.' }}</p>
           <div class="footer-actions">
-            <button type="button" class="secondary-button" (click)="cancelled.emit()">Cancelar</button>
+            <button type="button" class="secondary-button" (click)="requestLeave()">Cancelar</button>
             <button type="submit" class="primary-button" [disabled]="!valid">Guardar rutina</button>
           </div>
         </footer>
       </form>
     </section>
+
+    @if (leaveAsk()) {
+      <div class="overlay" (click)="stay()" aria-hidden="true"></div>
+      <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="leave-title" aria-describedby="leave-desc" (keydown.escape)="stay()">
+        <h2 id="leave-title">¿Salir sin guardar la rutina?</h2>
+        <p id="leave-desc">Se pierden los cambios que hiciste en esta rutina.</p>
+        <div class="actions">
+          <button type="button" id="leave-stay" class="btn btn-secondary" (click)="stay()">Seguir editando</button>
+          <button type="button" class="btn btn-danger" (click)="confirmLeave()">Salir sin guardar</button>
+        </div>
+      </div>
+    }
 
     @if (pickerOpen()) {
       <div class="picker-overlay" (click)="closePicker()" aria-hidden="true"></div>
@@ -207,17 +219,25 @@ const MAX_EXERCISES = 50;
     @media(max-width:680px){.editor-header{flex-direction:column;gap:8px;margin-bottom:20px}h2{font-size:26px}.details-grid{grid-template-columns:1fr 1fr;gap:14px}.name-field,.description-field{grid-column:1/-1}
       .exercise-row fieldset{padding:12px}.exercise-numbers{gap:8px}.exercise-numbers .field>span{font-size:11px}.tool-button{width:36px;height:36px}
       .editor-footer{flex-direction:column;align-items:stretch;gap:16px}.editor-footer p{max-width:none}.footer-actions{width:100%}.footer-actions button{flex:1}}
+    .dialog h2{font-family:var(--font-body);font-size:19px;font-weight:650;letter-spacing:-.02em;text-transform:none;margin:0 0 8px}
     @media(prefers-reduced-motion:reduce){button{transition:none}}
   `],
 })
-export class RoutineEditorComponent implements OnChanges {
+export class RoutineEditorComponent implements OnChanges, OnInit, OnDestroy {
   @Input() routine: Routine | null = null;
   @Output() readonly saved = new EventEmitter<void>();
   @Output() readonly cancelled = new EventEmitter<void>();
   readonly store = inject(WorkoutStore);
   private readonly backClose = inject(BackClose);
   /** El selector abierto ocupa una entrada del historial: el botón Atrás del teléfono lo cierra sin salir del editor. */
-  private closePickerLayer: (() => void) | null = null;
+  private pickerLayer: BackLayer | null = null;
+  /** El editor mismo ocupa otra: con cambios sin guardar, Atrás pregunta antes de salir. */
+  private editorLayer: BackLayer | null = null;
+  /** Cómo estaba el formulario al abrirlo, para saber si hay cambios sin guardar. */
+  private initial = '';
+  /** Se está preguntando si salir sin guardar. */
+  readonly leaveAsk = signal(false);
+  private leaveFocus: HTMLElement | null = null;
   readonly categories: RoutineCategory[] = ['Fuerza', 'Movilidad', 'Resistencia'];
   readonly levels: FitnessLevel[] = ['Principiante', 'Intermedio', 'Avanzado'];
   name = '';
@@ -248,6 +268,74 @@ export class RoutineEditorComponent implements OnChanges {
     this.entries = this.routine?.exercises.map((entry) => ({ ...entry })) ?? [];
     this.attempted = false;
     this.saveError = '';
+    this.initial = this.formState();
+    this.leaveAsk.set(false);
+  }
+
+  ngOnInit(): void {
+    this.initial = this.formState();
+    this.watchBack();
+  }
+
+  ngOnDestroy(): void {
+    // Se salió por otro camino (la navegación): las capas se olvidan sin tocar el historial.
+    this.editorLayer?.forget();
+    this.pickerLayer?.forget();
+    this.editorLayer = this.pickerLayer = null;
+  }
+
+  private formState(): string {
+    return JSON.stringify([this.name, this.description, this.category, this.level, this.entries]);
+  }
+
+  /** Hay cambios sin guardar. */
+  get dirty(): boolean {
+    return this.formState() !== this.initial;
+  }
+
+  /** Mientras el editor está abierto, Atrás pasa primero por acá. */
+  private watchBack(): void {
+    this.editorLayer ??= this.backClose.open(() => { this.editorLayer = null; this.backPressed(); });
+  }
+
+  private backPressed(): void {
+    // Atrás con la pregunta a la vista es "seguir editando".
+    if (this.leaveAsk()) { this.stay(); this.watchBack(); return; }
+    // Sin cambios, Atrás sigue de largo como siempre.
+    if (!this.dirty) { history.back(); return; }
+    this.askLeave();
+    this.watchBack();
+  }
+
+  private askLeave(): void {
+    this.leaveFocus = document.activeElement as HTMLElement | null;
+    this.leaveAsk.set(true);
+    setTimeout(() => document.getElementById('leave-stay')?.focus());
+  }
+
+  /** "Cancelar" y "Volver a mis rutinas": con cambios sin guardar, pregunta. */
+  requestLeave(): void {
+    if (this.dirty) this.askLeave();
+    else this.leave(() => this.cancelled.emit());
+  }
+
+  stay(): void {
+    this.leaveAsk.set(false);
+    const element = this.leaveFocus;
+    this.leaveFocus = null;
+    setTimeout(() => { if (element?.isConnected) element.focus(); });
+  }
+
+  confirmLeave(): void {
+    this.leaveAsk.set(false);
+    this.leave(() => this.cancelled.emit());
+  }
+
+  /** Sale del editor: primero saca su entrada del historial y recién después navega. */
+  private leave(then: () => void): void {
+    const layer = this.editorLayer;
+    this.editorLayer = null;
+    (layer ? layer.close() : Promise.resolve()).then(then);
   }
 
   get title(): string {
@@ -304,18 +392,18 @@ export class RoutineEditorComponent implements OnChanges {
     this.picked.set(new Set());
     this.pickerSearch.set('');
     this.pickerOpen.set(true);
-    this.closePickerLayer ??= this.backClose.open(() => { this.closePickerLayer = null; this.closePicker(); });
+    this.pickerLayer ??= this.backClose.open(() => { this.pickerLayer = null; this.closePicker(); });
     setTimeout(() => document.getElementById('picker-search-input')?.focus());
   }
 
-  /** Cierra el selector y devuelve el foco al botón que lo abrió. */
-  closePicker(): void {
-    const close = this.closePickerLayer;
-    this.closePickerLayer = null;
-    close?.();
+  /** Cierra el selector. Si no se indica otra cosa, devuelve el foco al botón que lo abrió. */
+  closePicker(refocus = true): void {
+    const layer = this.pickerLayer;
+    this.pickerLayer = null;
+    void layer?.close();
     if (!this.pickerOpen()) return;
     this.pickerOpen.set(false);
-    setTimeout(() => document.querySelector<HTMLElement>('app-routine-editor .add-button')?.focus());
+    if (refocus) setTimeout(() => document.querySelector<HTMLElement>('app-routine-editor .add-button')?.focus());
   }
 
   togglePick(id: string): void {
@@ -329,8 +417,11 @@ export class RoutineEditorComponent implements OnChanges {
   /** Adds the picked exercises in catalog order with sensible defaults the user then adjusts. */
   confirmPick(): void {
     const ids = this.store.exercises().map((exercise) => exercise.id).filter((id) => this.picked().has(id) && !this.isUsed(id));
+    const firstNew = this.entries.length;
     this.entries = [...this.entries, ...ids.map((exerciseId) => ({ exerciseId, sets: 3, reps: 10, weight: 0, restSeconds: 60 }))];
-    this.closePicker();
+    this.closePicker(false);
+    // El foco va a lo que sigue: las series del primer ejercicio agregado (el botón de agregar puede quedar deshabilitado).
+    setTimeout(() => document.querySelectorAll('app-routine-editor .exercise-row')[firstNew]?.querySelector<HTMLElement>('.exercise-numbers input')?.focus(), 50);
   }
 
   move(index: number, delta: number): void {
@@ -358,7 +449,7 @@ export class RoutineEditorComponent implements OnChanges {
       category: this.category, level: this.level, custom: true,
       exercises: this.entries.map((entry) => ({ ...entry })),
     };
-    if (this.store.saveRoutine(routine)) this.saved.emit();
+    if (this.store.saveRoutine(routine)) this.leave(() => this.saved.emit());
     else this.saveError = this.store.actionError() ?? 'No pudimos guardar la rutina. Revisá los datos e intentá otra vez.';
   }
 }

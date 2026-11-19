@@ -88,6 +88,8 @@ La marca Fitness Group usa además Anton (títulos, un solo peso, en mayúsculas
 - Nada de lo que aparece al completar una serie puede mover la fila que el alumno está tocando. Por eso el descanso flota abajo, al alcance del pulgar, en lugar de ocupar un lugar en la página.
 - Una duración entre series ("+45 s", "+2 min 10 s") nunca se escribe con el formato de una hora del día.
 - Lo que es una estimación se muestra como tal: la duración de una rutina lleva "≈".
+- Una acción que se puede deshacer no depende solo de un aviso que se va: el aviso ofrece "Deshacer" y además queda una salida a la vista ("Volver a…") mientras siga valiendo. El aviso no se va mientras el puntero o el foco estén sobre él.
+- El botón Atrás del teléfono cierra lo que esté abierto encima de la pantalla (hoja, selector) antes de salir de ella, y nunca descarta sin preguntar algo que el alumno estaba armando.
 - Los nombres de clase propios no pueden coincidir con una utilidad de Tailwind (`outline`, `ring`): Tailwind genera su regla y la aplica encima.
 
 ## Demostraciones de ejercicios

@@ -313,7 +313,7 @@
                     }
                   </div>
                 }
-                @if (loadHint(group.exercise.equipment); as hint) { <p class="load-hint">Kg {{ hint }}</p> }
+                @if (loadAction(group.exercise.equipment); as hint) { <p class="load-hint">{{ hint }}</p> }
                 <table class="sets-table">
                   <caption class="sr-only">Series de {{ group.exercise.name }}</caption>
                   <thead><tr><th scope="col">Serie</th><th scope="col">Anterior</th><th scope="col">Kg</th><th scope="col">Reps</th><th scope="col"><span class="sr-only">Estado</span></th></tr></thead>
@@ -369,6 +369,12 @@
                   <button type="button" class="btn btn-small btn-outline-light" (click)="addSet(group.id)"><app-icon name="plus" />Agregar serie</button>
                   @if (group.sets.length > 1) { <button type="button" class="link link-light" (click)="removeLastSet(group.sets)">Quitar la última</button> }
                 </div>
+                @if (swapUndo(); as undo) {
+                  @if (undo.toId === group.id) {
+                    <!-- Deshacer el cambio sin depender del reloj del aviso. Va al pie: al desaparecer no mueve las series. -->
+                    <button type="button" class="link link-light swap-undo" (click)="undoSubstitute()"><app-icon name="left" />Volver a {{ undo.fromName }}</button>
+                  }
+                }
               </article>
             }
 
@@ -925,8 +931,10 @@
 
 <div class="toast-region" role="status" aria-live="polite">
   @if (toast()) {
-    <div class="toast"><span>{{ toast() }}</span>
-      @if (toastAction(); as action) { <button type="button" class="toast-action" (click)="runToastAction()">{{ action.label }}</button> }
+    <div class="toast" (pointerenter)="holdToast()" (pointerleave)="releaseToast()" (focusin)="holdToast()" (focusout)="releaseToast()"><span>{{ toast() }}</span>
+      @if (toastAction(); as action) {
+        @if (!action.available || action.available()) { <button type="button" class="toast-action" (click)="runToastAction()">{{ action.label }}</button> }
+      }
     </div>
   }
 </div>

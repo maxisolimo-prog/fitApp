@@ -83,7 +83,10 @@
   color-scheme: light;
 }
 
-html { -webkit-text-size-adjust: 100%; scroll-padding-top: 72px; }
+/* Los márgenes de desplazamiento dejan a la vista lo que recibe el foco: arriba está la barra superior; abajo, la
+   navegación y el descanso, que flota encima. */
+html { -webkit-text-size-adjust: 100%; scroll-padding-top: 72px; scroll-padding-bottom: calc(var(--bottom-nav) + 100px + env(safe-area-inset-bottom)); }
+@media (min-width: 960px) { html { scroll-padding-bottom: 112px; } }
 body {
   margin: 0;
   background: var(--bg);
@@ -335,7 +338,7 @@ img { max-width: 100%; }
 
 /* El descanso flota abajo, al alcance del pulgar, fuera del flujo de la página: que aparezca o que termine no mueve
    las series. Antes iba arriba de la lista y corría toda la tabla justo cuando el alumno marcaba una serie. */
-.rest-bar { position: fixed; z-index: 18; left: 12px; right: 12px; bottom: calc(var(--bottom-nav) + 12px + env(safe-area-inset-bottom)); max-width: 520px; margin-inline: auto; display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line-dark); background: var(--dark-strong); color: var(--on-dark); box-shadow: 0 8px 24px color-mix(in srgb, var(--dark-deep) 45%, transparent); }
+.rest-bar { position: fixed; z-index: 18; left: 12px; right: 12px; bottom: calc(var(--bottom-nav) + 12px + env(safe-area-inset-bottom)); max-width: 520px; margin-inline: auto; display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--muted-on-dark) 40%, transparent); background: var(--dark-strong); color: var(--on-dark); box-shadow: 0 8px 24px color-mix(in srgb, var(--dark-deep) 45%, transparent); }
 .rest-bar > app-icon { width: 24px; height: 24px; color: var(--accent); }
 .rest-time { flex: 1; display: flex; flex-direction: column; }
 .rest-time small { font-size: 11px; color: var(--on-dark-soft); text-transform: uppercase; letter-spacing: 0.08em; }
@@ -482,7 +485,7 @@ img { max-width: 100%; }
 /* Acción dentro del aviso ("Deshacer"): 44 px para el dedo sin agrandar el aviso. */
 .toast-action { flex-shrink: 0; min-height: 44px; margin: -10px -10px -10px 0; padding: 0 12px; border: 0; border-radius: 8px; background: none; color: var(--accent); font: inherit; font-weight: 700; }
 .toast-action:focus-visible { outline-color: var(--accent); }
-@media (min-width: 960px) { .toast-region { left: var(--sidebar); bottom: 32px; } }
+@media (min-width: 960px) { .toast-region { left: var(--sidebar); bottom: 112px; } }
 
 .overlay { position: fixed; inset: 0; z-index: 70; background: color-mix(in srgb, var(--dark-deep) 55%, transparent); }
 .dialog { position: fixed; z-index: 71; left: 16px; right: 16px; bottom: 16px; max-width: 440px; margin: 0 auto; padding: 22px; border-radius: 18px; background: var(--surface); box-shadow: 0 20px 50px color-mix(in srgb, var(--dark-deep) 35%, transparent); animation: toast-in 180ms ease-out; }
@@ -620,7 +623,9 @@ img { max-width: 100%; }
 /* ---------- Sesión: anterior, series, notas; récords ---------- */
 .sets-table td.prev { font-size: 13px; color: var(--muted-on-dark); white-space: nowrap; width: 72px; }
 .sets-table tr.is-done td.prev { color: var(--on-dark-soft); }
-/* Qué representa el número de Kg ("Kg por mancuerna"), arriba de la tabla de series. */
+/* Deshacer el último cambio de ejercicio, al pie del bloque: que desaparezca no mueve las series. */
+.swap-undo { margin-top: 4px; }
+/* Qué representa el número de kg ("Anotá el peso de una mancuerna."), arriba de la tabla de series. */
 .load-hint { margin: 0 0 2px; font-size: 12px; color: var(--muted-on-dark); }
 /* Comentario de una serie: un renglón debajo de la serie, solo si tiene comentario. */
 .sets-table tr.note-row td { width: auto; padding: 0 4px 6px; text-align: left; }
