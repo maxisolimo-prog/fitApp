@@ -5,6 +5,7 @@ import { isMuscleId, MUSCLE_IDS, MUSCLE_LABELS, muscleNames, muscleSentence } fr
 import { seedExercises, seedRoutines } from '../src/app/core/seed';
 import { estimateRoutineMinutes, SETUP_SECONDS_PER_EXERCISE, WORK_SECONDS_PER_SET } from '../src/app/core/workout-utils';
 import { focusSide, thumbView } from '../src/app/features/muscle-focus';
+import { loadHint } from '../src/app/load-hint';
 import { BODY_BACK, BODY_FRONT, BODY_OUTLINE, BODY_VIEWBOX } from '../src/app/features/muscle-map.data';
 
 test('el catálogo tiene 43 ejercicios con identificador propio', () => {
@@ -91,6 +92,19 @@ test('los reemplazos proponen primero el mismo movimiento y después el mismo gr
     assert.ok(!all.includes(exercise.id), `${exercise.id} se propone a sí mismo`);
     assert.equal(new Set(all).size, all.length, `${exercise.id}: reemplazo repetido`);
     assert.ok(all.length >= 1, `${exercise.id} no tiene ningún reemplazo`);
+  }
+});
+
+test('la aclaración de la carga está decidida para cada equipo del catálogo', () => {
+  // Con mancuernas se anota la carga de una; con barra, el total con la barra incluida. Un equipo nuevo en el
+  // catálogo tiene que sumarse acá a propósito.
+  const expected: Record<string, string> = {
+    Barra: 'con la barra incluida', Mancuernas: 'por mancuerna', Mancuerna: 'por mancuerna',
+    Polea: '', 'Máquina': '', 'Peso corporal': '', Banco: '',
+  };
+  for (const exercise of seedExercises) {
+    assert.ok(Object.hasOwn(expected, exercise.equipment), `${exercise.id}: falta decidir la aclaración para «${exercise.equipment}»`);
+    assert.equal(loadHint(exercise.equipment), expected[exercise.equipment], exercise.id);
   }
 });
 

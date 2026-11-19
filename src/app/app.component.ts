@@ -14,6 +14,7 @@ import { ExerciseThumbComponent } from './features/exercise-thumb.component';
 import { BodySpriteComponent } from './features/body-sprite';
 import { BRAND } from './brands/brand.token';
 import { BackClose } from './back-close';
+import { loadHint } from './load-hint';
 
 type View = 'home'|'routines'|'calendar'|'progress'|'library'|'profile'|'workout'|'editor';
 @Component({
@@ -300,6 +301,8 @@ export class AppComponent implements OnDestroy {
   applySuggestion(exerciseId:string,s:ProgressionSuggestion){const ok=s.kind==='mas-reps'?this.store.applyReps(exerciseId,s.value):this.store.applyLoad(exerciseId,s.value);this.notify(ok?(s.kind==='mas-reps'?`Listo: ${s.value} repeticiones en las series que faltan.`:`Listo: ${this.fmt(s.value)} kg en las series que faltan.`):(this.store.actionError()??'No se pudo aplicar.'));}
 
   fmt(value:number){return this.numberFormat.format(value);}
+  /** Qué representa el número de Kg según el equipo ("por mancuerna", "con la barra incluida") o ''. */
+  readonly loadHint = loadHint;
   /** Minutos estimados de una rutina (se muestran con "≈"). */
   estimate(r:Routine){return estimateRoutineMinutes(r);}
   setCount(r:Routine){return r.exercises.reduce((total,entry)=>total+entry.sets,0);}

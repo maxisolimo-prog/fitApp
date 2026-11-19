@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, Output, computed, inject, signal, type 
 import { FormsModule } from '@angular/forms';
 import type { Exercise, FitnessLevel, Routine, RoutineCategory, RoutineExercise } from '../core/models';
 import { BackClose } from '../back-close';
+import { loadHint } from '../load-hint';
 import { WorkoutStore } from '../core/workout-store';
 import { estimateRoutineMinutes } from '../core/workout-utils';
 import { ExerciseThumbComponent } from './exercise-thumb.component';
@@ -272,7 +273,13 @@ export class RoutineEditorComponent implements OnChanges {
 
   private exerciseById(id: string): Exercise | undefined { return this.store.exercises().find((exercise) => exercise.id === id); }
   exerciseName(id: string): string { return this.exerciseById(id)?.name ?? id; }
-  exerciseMeta(id: string): string { const exercise = this.exerciseById(id); return exercise ? `${exercise.muscle} · ${exercise.equipment}` : ''; }
+  /** Grupo, equipo y, si hace falta, qué representa el número de Kg ("kg por mancuerna"). */
+  exerciseMeta(id: string): string {
+    const exercise = this.exerciseById(id);
+    if (!exercise) return '';
+    const hint = loadHint(exercise.equipment);
+    return `${exercise.muscle} · ${exercise.equipment}${hint ? ` · kg ${hint}` : ''}`;
+  }
 
   numberInRange(value: number, min: number, max: number): boolean {
     return typeof value === 'number' && Number.isFinite(value) && value >= min && value <= max;

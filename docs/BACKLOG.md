@@ -22,14 +22,14 @@ Las toma el usuario. Hasta entonces, los ítems que dependen de ellas no arranca
    imagen de prueba; ver B-03.
 2. **Presupuesto para animaciones anatómicas con licencia.** Solo hace falta si las imágenes de GPT no alcanzan o
    si se quiere movimiento. Traba a B-17.
-3. **Vista enfocada, un ejercicio por pantalla.** Es un cambio grande en la pantalla que más se usa. Conviene
-   probar primero B-03 a B-06 en el gimnasio y decidir después. Traba a B-12.
-4. **Carga con mancuernas: ¿por mancuerna o sumada?** Hoy la app no lo dice y el volumen calculado depende de eso.
-   Propuesta: por mancuerna, que es el número que figura en la que uno agarra. Traba a B-09.
-5. **Imágenes de ejercicios con tres marcas.** El estilo pensado para B-03 (músculos en lima sobre fondo verde)
-   solo sirve para la marca FitApp. Opciones: un solo juego neutro (figura gris, fondo transparente) y que el color
-   de marca lo ponga el mapa muscular de B-02, que es SVG y lo toma solo; o un juego por marca, con el triple de
-   cupo de GPT. Propuesta: el juego neutro. Traba a B-03.
+3. **Vista enfocada, un ejercicio por pantalla.** Es un cambio grande en la pantalla que más se usa. El 19 de
+   noviembre de 2026 el usuario decidió esperar: primero usar unos días en el gimnasio la sesión como quedó ese día
+   y decidir con eso. Traba a B-12.
+4. **Carga con mancuernas: resuelta el 19 de noviembre de 2026.** Por mancuerna: se anota el número que figura en
+   la que uno agarra. Con barra, el total con la barra incluida. Ver B-09.
+5. **Imágenes de ejercicios con tres marcas: resuelta el 19 de noviembre de 2026.** Un solo juego en grises, sin
+   color en los músculos y con fondo transparente, que sirve para las tres marcas. El color de cada marca lo pone
+   el mapa muscular de B-02. B-03 ya no espera una decisión: solo el cupo de GPT.
 
 ## Bloque 1: que el ejercicio se vea
 
@@ -88,9 +88,9 @@ competencia sin usar sus recursos.
   invoca con `codex exec`. La invocación se probó ese día y funciona, pero la cuenta había llegado al límite de uso
   y no generó nada. Se libera el 20 de noviembre de 2026 a las 10:44, o antes comprando créditos en
   chatgpt.com/settings/usage.
-- **Estilo a pedir:** figura anatómica neutra en grises, músculos principales en lima `#C8F24C`, secundarios en un
-  lima más apagado, fondo bosque `#142118`, cuadrada, sin texto ni marcas. Es obra original: no se le pasan las
-  capturas de la competencia como referencia.
+- **Estilo a pedir:** figura anatómica neutra en grises, sin color en los músculos, fondo transparente, sin texto
+  ni marcas (decisión 5). Es obra original: no se le pasan las capturas de la competencia como referencia. El
+  prompt completo está en [PROMPT-IMAGENES.md](PROMPT-IMAGENES.md).
 - **Orden:** primero una sola imagen de prueba (press de banca) para que el usuario apruebe el estilo. Después el
   resto, de a una. Una posición por ejercicio para empezar; la segunda posición solo si la figura se mantiene
   igual de una imagen a otra.
@@ -146,10 +146,10 @@ encima de la sesión. Hoy la ficha solo se abre desde la Biblioteca, y para ir h
 | B-06 | Sustituir un ejercicio durante la sesión | Medio | No | Hecho el 19 de noviembre de 2026 |
 | B-07 | Duración estimada calculada y "Empezar" fijo en la previa | Bajo | No | Hecho el 19 de noviembre de 2026 |
 | B-08 | Avance de la sesión en curso en Inicio | Bajo | No | Hecho el 19 de noviembre de 2026 |
-| B-09 | Aclarar si la carga es total o por mancuerna | Bajo | No | Decisión 4 |
+| B-09 | Aclarar si la carga es total o por mancuerna | Bajo | No | Hecho el 19 de noviembre de 2026 |
 | B-10 | Guardar la hora de cada serie | Medio | **Sí (v4)** | Hecho el 19 de noviembre de 2026 |
 | B-11 | Comentario por serie | Bajo | **Sí (v4)** | Hecho el 19 de noviembre de 2026 |
-| B-12 | Vista enfocada: un ejercicio por pantalla | Alto | No | Decisión 3, B-03 |
+| B-12 | Vista enfocada: un ejercicio por pantalla | Alto | No | Decisión 3 (el usuario espera a probar), B-03 |
 
 - **B-06. Sustituir.** "Cambiar ejercicio" abre una hoja con equivalentes por movimiento (en la captura, todos son
   presses de pecho), no solo por grupo muscular. Necesita un dato nuevo en el catálogo: qué ejercicios se reemplazan
@@ -174,7 +174,9 @@ encima de la sesión. Hoy la ficha solo se abre desde la Biblioteca, y para ir h
 - **B-08. Avance.** La tarjeta de la sesión en curso muestra "5 de 16 series" con un anillo, como el 37 % de la
   competencia. Los datos ya existen. **Hecho:** el anillo es decorativo; el texto de al lado dice lo mismo.
 - **B-09. Carga.** Texto al lado del campo Kg y en la ficha: "por mancuerna", "barra incluida", según el equipo. Solo
-  cambia etiquetas: no reinterpreta lo ya registrado.
+  cambia etiquetas: no reinterpreta lo ya registrado. **Hecho:** "Kg por mancuerna" o "Kg con la barra incluida"
+  arriba de la tabla de series, en el editor de rutinas y en la ficha. Polea, máquina y peso corporal no llevan
+  aclaración. Mi progreso avisa que, con mancuernas, el volumen cuenta la carga de una.
 - **B-10. Hora de cada serie.** Campo opcional en la serie. Permite mostrar el descanso real y la hora en el
   historial. Las series viejas quedan sin hora: no se inventa. **Hecho:** `completedAt` se anota al marcar la serie
   y se borra al desmarcarla. El detalle de un entrenamiento muestra la hora de cada serie y, debajo, el tiempo desde

@@ -620,7 +620,9 @@ img { max-width: 100%; }
 /* ---------- Sesión: anterior, series, notas; récords ---------- */
 .sets-table td.prev { font-size: 13px; color: var(--muted-on-dark); white-space: nowrap; width: 72px; }
 .sets-table tr.is-done td.prev { color: var(--on-dark-soft); }
-/* Comentario de una serie: un renglón debajo de la serie, solo si tiene comentario o es la última completada. */
+/* Qué representa el número de Kg ("Kg por mancuerna"), arriba de la tabla de series. */
+.load-hint { margin: 0 0 2px; font-size: 12px; color: var(--muted-on-dark); }
+/* Comentario de una serie: un renglón debajo de la serie, solo si tiene comentario. */
 .sets-table tr.note-row td { width: auto; padding: 0 4px 6px; text-align: left; }
 .note-button { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; min-height: 44px; padding: 4px 8px; border: 0; border-radius: 10px; background: none; color: var(--on-dark-soft); font: inherit; font-size: 13px; line-height: 1.4; text-align: left; overflow-wrap: anywhere; }
 .note-button app-icon { width: 16px; height: 16px; color: var(--muted-on-dark); }

@@ -313,6 +313,7 @@
                     }
                   </div>
                 }
+                @if (loadHint(group.exercise.equipment); as hint) { <p class="load-hint">Kg {{ hint }}</p> }
                 <table class="sets-table">
                   <caption class="sr-only">Series de {{ group.exercise.name }}</caption>
                   <thead><tr><th scope="col">Serie</th><th scope="col">Anterior</th><th scope="col">Kg</th><th scope="col">Reps</th><th scope="col"><span class="sr-only">Estado</span></th></tr></thead>
@@ -323,7 +324,7 @@
                         <td class="prev tabular">{{ previousLabel(group.id, row.set.setNumber) }}</td>
                         <td><input #weightInput type="number" inputmode="decimal" min="0" max="2000" step="0.5" [value]="row.set.weight"
                           (change)="updateSet(row.index, 'weight', weightInput.value, $event)" (focus)="weightInput.select()"
-                          [attr.aria-label]="'Carga en kg, serie ' + row.set.setNumber + ' de ' + group.exercise.name"></td>
+                          [attr.aria-label]="'Carga en kg' + (loadHint(group.exercise.equipment) ? ' ' + loadHint(group.exercise.equipment) : '') + ', serie ' + row.set.setNumber + ' de ' + group.exercise.name"></td>
                         <td><input #repsInput type="number" inputmode="numeric" min="1" max="999" step="1" [value]="row.set.reps"
                           (change)="updateSet(row.index, 'reps', repsInput.value, $event)" (focus)="repsInput.select()"
                           [attr.aria-label]="'Repeticiones, serie ' + row.set.setNumber + ' de ' + group.exercise.name"></td>
@@ -624,7 +625,7 @@
                 <ul class="sr-only">
                   @for (date of thisWeek; track date) { <li>{{ dateLabel(date, { weekday: 'long', day: 'numeric' }) }}: {{ fmt(weeklyBar(date)) }} kg</li> }
                 </ul>
-                <p class="muted small">Carga × repeticiones de las series completas. Los ejercicios sin carga suman 0 kg.</p>
+                <p class="muted small">Carga × repeticiones de las series completas. Con mancuernas cuenta la carga de una; los ejercicios sin carga suman 0 kg.</p>
               </article>
 
               <article class="card" aria-labelledby="weight-title">

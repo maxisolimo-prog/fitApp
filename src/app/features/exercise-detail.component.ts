@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Output, computed, effect, inject, input, signal } from '@angular/core';
 import type { Exercise, WorkoutSet } from '../core/models';
 import { muscleSentence } from '../core/muscles';
+import { loadHint } from '../load-hint';
 import { WorkoutStore } from '../core/workout-store';
 import { MuscleMapComponent } from './muscle-map.component';
 
@@ -114,7 +115,7 @@ interface ExerciseSession {
             <span class="empty-footnote">Todavía no hay registros de {{ exercise().name.toLocaleLowerCase('es') }}.</span>
           </div>
         }
-        <footer class="exercise-meta"><span>Grupo muscular <strong>{{ exercise().muscle }}</strong></span><span>Equipamiento <strong>{{ exercise().equipment }}</strong></span></footer>
+        <footer class="exercise-meta"><span>Grupo muscular <strong>{{ exercise().muscle }}</strong></span><span>Equipamiento <strong>{{ exercise().equipment }}</strong></span>@if (loadHint(); as hint) { <span>Los kg se anotan <strong>{{ hint }}</strong></span> }</footer>
       </section>
 
       <section class="tab-panel muscles-panel" role="tabpanel" [id]="prefix() + '-panel-muscles'"
@@ -130,7 +131,7 @@ interface ExerciseSession {
 
       <section class="tab-panel history-panel" role="tabpanel" [id]="prefix() + '-panel-history'"
         [attr.aria-labelledby]="prefix() + '-tab-history'" [hidden]="activeTab() !== 'history'" tabindex="0">
-        <div class="panel-heading"><span class="section-kicker">CADA SERIE CUENTA</span><h3>Tu historial</h3><p>Las series completadas de este ejercicio, en un solo lugar.</p></div>
+        <div class="panel-heading"><span class="section-kicker">CADA SERIE CUENTA</span><h3>Tu historial</h3><p>Las series completadas de este ejercicio, en un solo lugar.@if (loadHint(); as hint) { Los kg se anotan {{ hint }}. }</p></div>
         @if (sessions().length) {
           <div class="history-list">
             @for (session of newestSessions(); track session.id; let first = $first) {
@@ -228,6 +229,8 @@ export class ExerciseDetailComponent {
   ];
   /** El mapa se dibuja (y su archivo se descarga) recién la primera vez que se abre la solapa. */
   readonly musclesOpened = signal(false);
+  /** Qué representa el número de Kg en este ejercicio ("por mancuerna", "con la barra incluida") o ''. */
+  readonly loadHint = computed(() => loadHint(this.exercise().equipment));
   readonly primaryNames = computed(() => muscleSentence(this.exercise().primaryMuscles));
   readonly secondaryNames = computed(() => muscleSentence(this.exercise().secondaryMuscles));
   readonly prefix = computed(() => `exercise-detail-${this.exercise().id}`);

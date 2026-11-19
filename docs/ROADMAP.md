@@ -63,6 +63,8 @@ Sale del análisis de Fitness Online (`docs/COMPETENCIA.md`). Detalle de cada í
 - **Duración estimada** calculada con series y descansos, y "Empezar" siempre a mano en el celular (B-07).
 - **Avance de la sesión** en Inicio (B-08).
 - **Hora y comentario por serie** (B-10, B-11): FitAppState v4, migración 005.
+- **Qué representa el número de Kg** (B-09): con mancuernas, la carga de una; con barra, con la barra incluida.
+- **El descanso flota abajo**, al alcance del pulgar: que aparezca o termine ya no mueve la tabla de series.
 - Dos revisiones adversariales del dominio (`store-guardian`) y una de interfaz (`ui-reviewer`). La primera
   encontró que cambiar la duración de las plantillas hacía aparecer un conflicto falso al ingresar a una cuenta
   desde un dispositivo vacío; la segunda, que una app sin actualizar podía pisar datos de la versión nueva; la de
@@ -148,12 +150,12 @@ Los tres primeros salen del análisis de Fitness Online del 17 de noviembre de 2
    No cambia el esquema ni exige comprar licencias. El usuario decidió que las imágenes las cree GPT; el dibujo de
    línea de licencia abierta queda como reserva. Falta generar una imagen de prueba y que apruebe el estilo: la
    cuenta de ChatGPT quedó sin cupo hasta el 20 de noviembre de 2026. **Hecho** (quinta entrega): músculos, mapa
-   muscular, miniaturas y ficha desde la sesión. Faltan las imágenes (B-03); el prompt para pedirlas está en
-   [PROMPT-IMAGENES.md](PROMPT-IMAGENES.md).
+   muscular, miniaturas y ficha desde la sesión. Faltan las imágenes (B-03): van en grises, un solo juego para
+   las tres marcas, y el prompt para pedirlas está en [PROMPT-IMAGENES.md](PROMPT-IMAGENES.md).
 2. **La sesión en el gimnasio** (B-06 a B-12). Sustituir un ejercicio cuando la máquina está ocupada, duración
    estimada calculada, avance de la sesión en curso, aclarar si la carga es total o por mancuerna, hora y comentario
    por serie (FitAppState v4). La vista de un ejercicio por pantalla se decide después de probar lo anterior.
-   **Hecho** (quinta entrega) todo menos B-09 y B-12, que esperan una decisión del usuario.
+   **Hecho** (quinta entrega) todo menos B-12: el usuario decidió esperar a usar la sesión unos días en el gimnasio.
 3. **Animaciones anatómicas con licencia comercial** (B-17). Solo si las imágenes del punto 1 no alcanzan o se
    quiere movimiento. Validar su correspondencia con ejercicios y técnica con un profesional.
    **Requiere comprar la licencia.**
