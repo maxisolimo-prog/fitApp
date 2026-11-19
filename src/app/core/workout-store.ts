@@ -287,6 +287,22 @@ export class WorkoutStore {
     return true;
   }
 
+  /**
+   * Vuelve la sesión en curso a un estado anterior de esa misma sesión: es el "Deshacer" de un cambio de ejercicio.
+   * Solo vale si la sesión sigue exactamente como quedó después de ese cambio (`expected`): deshacer no puede pisar
+   * nada que el alumno haya hecho después. Se compara el contenido, no el objeto: otra pestaña puede haber vuelto a
+   * cargar los mismos datos.
+   */
+  restoreSession(previous: Workout, expected: Workout): boolean {
+    const workout = this.activeWorkout();
+    if (!workout || JSON.stringify(workout) !== JSON.stringify(expected)) return this.fail('Ya hubo otros cambios en la sesión: no se pudo deshacer.');
+    const checked = validateWorkout(previous, true);
+    if (!checked || checked.id !== workout.id || checked.startedAt !== workout.startedAt) return this.fail('No se pudo deshacer el cambio.');
+    this.activeWorkout.set(checked);
+    this.persist();
+    return true;
+  }
+
   /** Free-text notes for the session in progress (kept when it is saved). */
   setNotes(notes: string): boolean {
     const workout = this.activeWorkout();

@@ -36,6 +36,8 @@ export class AppComponent implements OnDestroy {
   readonly today = localDate();
   readonly now = signal(Date.now());
   readonly toast = signal('');
+  /** Acción que ofrece el aviso mientras está a la vista (por ejemplo, "Deshacer"). */
+  readonly toastAction = signal<{ label: string; run: () => void } | null>(null);
   readonly online = signal(navigator.onLine);
   readonly selectedRoutine = signal<Routine|null>(null);
   readonly selectedExercise = signal<Exercise|null>(null);
@@ -49,9 +51,8 @@ export class AppComponent implements OnDestroy {
   /** Entrenamiento abierto en el historial: segundos desde la serie anterior, y si alguna serie tiene hora. */
   readonly historyPauses = computed(() => { const workout = this.selectedHistory(); return workout ? setPauses(workout) : []; });
   readonly historyHasTimes = computed(() => this.selectedHistory()?.sets.some(set => !!set.completedAt) ?? false);
-  /** Ejercicio de la sesión que se está por cambiar (hoja "Cambiar ejercicio") y el reemplazo elegido. */
+  /** Ejercicio de la sesión que se está por cambiar (hoja "Cambiar ejercicio"). */
   readonly substituting = signal<Exercise|null>(null);
-  readonly substituteChoice = signal<string|null>(null);
   /** Reemplazos hechos en la sesión en curso: el reemplazo hereda el descanso y el objetivo del ejercicio que reemplazó. */
   readonly sessionSwaps = signal<SessionSwaps|null>(this.savedSwaps());
   /** Con qué se puede reemplazar: primero el mismo movimiento, después el mismo grupo muscular. */
@@ -207,7 +208,7 @@ export class AppComponent implements OnDestroy {
   openSessionExercise(exercise:Exercise, trigger:HTMLElement){this.sheetTrigger=trigger;this.sessionExercise.set(exercise);this.pushSheetHistory();this.focusSheet();}
   /** Cierra la hoja abierta y devuelve el foco a quien la abrió. */
   closeSheet(){if(!this.sheetOpen())return;this.popSheetHistory();this.dropSheets();const trigger=this.sheetTrigger;this.sheetTrigger=null;setTimeout(()=>{if(trigger?.isConnected)trigger.focus();});}
-  private dropSheets(){this.sessionExercise.set(null);this.substituting.set(null);this.substituteChoice.set(null);}
+  private dropSheets(){this.sessionExercise.set(null);this.substituting.set(null);}
   hasPending(rows:{set:WorkoutSet}[]){return rows.some(row=>!row.set.completed);}
   editNote(index:number){this.noteKey=this.setKey(index);this.noteEditing.set(index);setTimeout(()=>document.getElementById('set-note-'+index)?.focus());}
   /** Qué serie es la que ocupa una posición: si la sesión cambia mientras se escribe, el comentario no va a otra serie. */
@@ -231,34 +232,31 @@ export class AppComponent implements OnDestroy {
     return `+${minutes} min${rest?` ${rest} s`:''}`;
   }
   timeLabel(iso:string){return new Intl.DateTimeFormat('es-AR',{hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(iso));}
-  openSubstitute(exercise:Exercise, trigger:HTMLElement){this.sheetTrigger=trigger;this.substituteChoice.set(null);this.substituting.set(exercise);this.pushSheetHistory();this.focusSheet();}
-  /** Flechas sobre las opciones de reemplazo: pasan a la siguiente o a la anterior y la eligen, como en cualquier grupo de opciones. */
-  swapKey(event:KeyboardEvent){
-    const step=event.key==='ArrowDown'||event.key==='ArrowRight'?1:event.key==='ArrowUp'||event.key==='ArrowLeft'?-1:0;
-    if(!step)return;
-    const options=Array.from(document.querySelectorAll<HTMLButtonElement>('.swap-item:not(:disabled)'));
-    const current=options.indexOf(document.activeElement as HTMLButtonElement);
-    if(current<0)return;
-    event.preventDefault();
-    const next=options[(current+step+options.length)%options.length];
-    next.focus();next.click();
-  }
-  confirmSubstitute(){
-    const from=this.substituting(), toId=this.substituteChoice(), workout=this.store.activeWorkout();
-    if(!from||!toId||!workout)return;
+  openSubstitute(exercise:Exercise, trigger:HTMLElement){this.sheetTrigger=trigger;this.substituting.set(exercise);this.pushSheetHistory();this.focusSheet();}
+  /** Tocar un reemplazo hace el cambio en el momento. El aviso ofrece deshacerlo mientras la sesión siga como quedó. */
+  substituteWith(toId:string){
+    const from=this.substituting(), before=this.store.activeWorkout(), swapsBefore=this.sessionSwaps();
+    if(!from||!before)return;
     if(!this.store.substituteExercise(from.id,toId)){this.notify(this.store.actionError()??'No se pudo cambiar el ejercicio.');return;}
-    const swaps=recordSwap(this.sessionSwaps(),workout.id,from.id,toId);
-    this.sessionSwaps.set(swaps);
-    try{localStorage.setItem('fitapp-session-swaps',JSON.stringify(swaps));}catch{}
+    const after=this.store.activeWorkout();
+    this.saveSwaps(recordSwap(swapsBefore,before.id,from.id,toId));
     this.popSheetHistory();this.dropSheets();this.sheetTrigger=null;
-    this.notify(`Listo: ${this.exercise(toId).name} en las series que te faltan. Tu rutina no cambia.`);
+    this.notify(`Listo: ${this.exercise(toId).name} en las series que te faltan.`,{label:'Deshacer',run:()=>{
+      // Deshacer no puede pisar algo que el alumno hizo después del cambio: el store solo lo acepta si la sesión sigue igual.
+      if(!after||!this.store.restoreSession(before,after)){this.notify(this.store.actionError()??'No se pudo deshacer el cambio.');return;}
+      this.saveSwaps(swapsBefore);
+      this.notify(`Listo: volvió ${from.name}.`);
+      this.focusBlock(from.id);
+    }});
     // El botón que abrió la hoja puede haber desaparecido con el ejercicio: el foco va al nombre del reemplazo.
-    setTimeout(()=>(document.getElementById('block-'+toId)?.querySelector('button') as HTMLElement|null)?.focus());
+    this.focusBlock(toId);
   }
+  private focusBlock(exerciseId:string){setTimeout(()=>(document.getElementById('block-'+exerciseId)?.querySelector('button') as HTMLElement|null)?.focus());}
+  private saveSwaps(swaps:SessionSwaps|null){this.sessionSwaps.set(swaps);try{if(swaps)localStorage.setItem('fitapp-session-swaps',JSON.stringify(swaps));else localStorage.removeItem('fitapp-session-swaps');}catch{}}
   /** Otra pestaña cambió un ejercicio: se toma su registro de reemplazos, validado como siempre. */
   @HostListener('window:storage', ['$event']) storageChanged(event:StorageEvent){if(event.key==='fitapp-session-swaps')this.sessionSwaps.set(parseSessionSwaps(event.newValue));}
   private savedSwaps(){try{return parseSessionSwaps(localStorage.getItem('fitapp-session-swaps'));}catch{return null;}}
-  private clearSwaps(){this.sessionSwaps.set(null);try{localStorage.removeItem('fitapp-session-swaps');}catch{}}
+  private clearSwaps(){this.saveSwaps(null);}
   /** Renglón de la rutina que corresponde a un ejercicio de la sesión; para un reemplazo, el del ejercicio que reemplazó. */
   private routineEntry(exerciseId:string){const workout=this.store.activeWorkout();if(!workout)return undefined;const origin=swapOrigin(this.sessionSwaps(),workout.id,exerciseId);return this.routine(workout.routineId)?.exercises.find(e=>e.exerciseId===origin);}
   private focusSheet(){setTimeout(()=>(document.querySelector('.sheet [data-sheet-focus]') as HTMLElement|null)?.focus());}
@@ -326,7 +324,9 @@ export class AppComponent implements OnDestroy {
   @HostListener('window:appinstalled') appInstalled(){this.installed.set(true);this.installPrompt.set(null);this.notify(`Listo, ${this.brand.name} quedó instalada.`);}
   ngOnDestroy(){clearInterval(this.interval);clearTimeout(this.toastTimer);}
   navigate(view:View){this.view.set(view);location.hash=view; this.dropSheets();this.selectedRoutine.set(null);this.selectedExercise.set(null);this.selectedHistory.set(null);if(view==='profile') this.profileDraft={...this.store.profile()}; window.scrollTo({top:0,behavior:'instant'});}
-  notify(message:string){this.toast.set(message);clearTimeout(this.toastTimer);this.toastTimer=setTimeout(()=>this.toast.set(''),4500);}
+  /** Un aviso con acción queda más tiempo a la vista, para llegar a tocarla. */
+  notify(message:string,action:{label:string;run:()=>void}|null=null){this.toast.set(message);this.toastAction.set(action);clearTimeout(this.toastTimer);this.toastTimer=setTimeout(()=>{this.toast.set('');this.toastAction.set(null);},action?8000:4500);}
+  runToastAction(){const action=this.toastAction();clearTimeout(this.toastTimer);this.toast.set('');this.toastAction.set(null);action?.run();}
   exercise(id:string){return this.store.exercises().find(e=>e.id===id)!;}
   routine(id:string){return this.store.routines().find(r=>r.id===id);}
   imageFor(id:string){return id==='at-home'?'images/home-workout.jpg':id==='lower-body'?'images/mobility.jpg':'images/strength.jpg';}

@@ -569,6 +569,41 @@ test('renumbering never writes a session that would not load again (review of B-
   });
 });
 
+test('undoing a substitution restores that same session exactly, and nothing else', () => {
+  withStorage(() => {
+    const store = new WorkoutStore();
+    store.startWorkout('upper-body');
+    store.updateSet(0, 9, 40);
+    store.toggleSet(0);
+    store.setSetNote(0, 'Bien');
+    const before = store.activeWorkout()!;
+    assert.equal(store.substituteExercise('bench-press', 'incline-press'), true);
+    const after = store.activeWorkout()!;
+    // Otra pestaña que vuelve a cargar los mismos datos deja otro objeto con el mismo contenido: deshacer sigue valiendo.
+    assert.equal(store.restoreSession(before, JSON.parse(JSON.stringify(after))), true);
+    assert.equal(serializeState(store.snapshot()), serializeState({ ...store.snapshot(), activeWorkout: before }), 'back to exactly what it was');
+    assert.deepEqual(new WorkoutStore().activeWorkout(), before, 'and it is what gets stored');
+
+    // Si el alumno hizo algo después del cambio, deshacer no lo pisa.
+    assert.equal(store.substituteExercise('bench-press', 'incline-press'), true);
+    const changed = store.activeWorkout()!;
+    store.toggleSet(1);
+    const later = store.activeWorkout()!;
+    assert.equal(store.restoreSession(before, changed), false);
+    assert.equal(store.actionError(), 'Ya hubo otros cambios en la sesión: no se pudo deshacer.');
+    assert.equal(store.activeWorkout(), later, 'a refused undo changes nothing');
+
+    // Tampoco acepta una sesión que no sea la que está en curso, ni datos inválidos.
+    assert.equal(store.restoreSession({ ...before, id: 'otra-sesion' }, later), false);
+    assert.equal(store.restoreSession({ ...before, startedAt: '2020-01-01T00:00:00.000Z' }, later), false);
+    assert.equal(store.restoreSession({ ...before, sets: [] }, later), false);
+    assert.equal(store.restoreSession({ ...before, sets: [{ ...before.sets[0], exerciseId: 'no-existe' }] }, later), false);
+    assert.equal(store.activeWorkout(), later);
+    store.discardWorkout();
+    assert.equal(store.restoreSession(before, later), false, 'there has to be a session in progress');
+  });
+});
+
 test('a substitute starts from what was lifted last time with that exercise, never from the original load', () => {
   const routine = createInitialState().routines.find((r) => r.id === 'upper-body')!;
   const earlier = completeWorkout({

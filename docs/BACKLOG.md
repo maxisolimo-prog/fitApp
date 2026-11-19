@@ -157,8 +157,9 @@ encima de la sesión. Hoy la ficha solo se abre desde la Biblioteca, y para ir h
   completadas quedan con el ejercicio original. El reemplazo hereda el descanso y muestra su propio "Anterior". No
   se puede elegir un ejercicio que ya está en la sesión. No toca el esquema porque cada serie ya guarda su
   ejercicio, pero es lógica del store: pasa por `store-guardian`. **Hecho:** cada ejercicio de la sesión con series
-  pendientes tiene un botón para cambiarlo. La hoja ofrece primero los del mismo movimiento y después los del mismo
-  grupo muscular. El dato nuevo del catálogo es `movement`, con 19 patrones (`src/app/core/movements.ts`); **falta la
+  pendientes tiene un botón "Cambiar". La hoja ofrece primero los del mismo movimiento y después los del mismo
+  grupo muscular; tocar uno hace el cambio (dos toques en total) y el aviso ofrece "Deshacer" durante unos
+  segundos, mientras la sesión siga como quedó. El dato nuevo del catálogo es `movement`, con 19 patrones (`src/app/core/movements.ts`); **falta la
   revisión de un profesional**. El reemplazo arranca con lo que se levantó la última vez con ese ejercicio o, si es
   la primera, sin carga: la carga de un ejercicio no vale para otro. Para que herede el descanso y la sugerencia de
   progresión, la pantalla recuerda a qué ejercicio de la rutina reemplaza cada uno (`fitapp-session-swaps`, fuera

@@ -300,8 +300,8 @@
                     <p>{{ group.exercise.muscle }} · {{ group.exercise.equipment }}</p>
                   </div>
                   @if (hasPending(group.sets)) {
-                    <button #swapButton type="button" class="icon-button block-swap" aria-haspopup="dialog" title="Cambiar ejercicio"
-                      [attr.aria-label]="'Cambiar ' + group.exercise.name + ' por otro ejercicio'" (click)="openSubstitute(group.exercise, swapButton)"><app-icon name="swap" /></button>
+                    <button #swapButton type="button" class="block-swap" aria-haspopup="dialog"
+                      [attr.aria-label]="'Cambiar ' + group.exercise.name + ' por otro ejercicio'" (click)="openSubstitute(group.exercise, swapButton)"><app-icon name="swap" /><span>Cambiar</span></button>
                   }
                 </header>
                 @if (suggestionFor(group.id); as suggestion) {
@@ -893,24 +893,22 @@
     </div>
     <header class="swap-head">
       <h2 id="swap-title">Cambiar {{ substituting()?.name }}</h2>
-      <p id="swap-desc">Cambian solo las series que te faltan de esta sesión. Las que ya hiciste y tu rutina quedan igual.</p>
+      <p id="swap-desc">Tocá el ejercicio que vas a hacer. Cambian solo las series que te faltan de esta sesión; las que ya hiciste y tu rutina quedan igual.</p>
     </header>
-    <div role="radiogroup" aria-labelledby="swap-title" (keydown)="swapKey($event)">
     @for (section of sections; track section.title) {
       <section [attr.aria-label]="section.title + ': ' + section.detail">
         <h3 class="swap-section">{{ section.title }} <span>· {{ section.detail }}</span></h3>
-        <ul class="swap-list" role="presentation">
+        <ul class="swap-list">
           @for (row of section.rows; track row.exercise.id) {
-            <li role="presentation">
-              <button type="button" role="radio" class="swap-item" [class.is-picked]="substituteChoice() === row.exercise.id" [disabled]="row.used"
-                [attr.aria-checked]="substituteChoice() === row.exercise.id" (click)="substituteChoice.set(row.exercise.id)">
+            <li>
+              <button type="button" class="swap-item" [disabled]="row.used" (click)="substituteWith(row.exercise.id)">
                 <app-exercise-thumb [exercise]="row.exercise" />
                 <span class="swap-text">
                   <strong>{{ row.exercise.name }}</strong>
                   <small>{{ row.exercise.muscle }} · {{ row.exercise.equipment }}{{ row.used ? ' · ya está en la sesión' : '' }}</small>
                   @if (row.last) { <small class="tabular">La última vez: {{ row.last }}</small> }
                 </span>
-                <span class="swap-check" aria-hidden="true"><app-icon name="check" /></span>
+                <app-icon name="chevron" />
               </button>
             </li>
           }
@@ -919,18 +917,17 @@
     } @empty {
       <p class="swap-empty">No hay otro ejercicio parecido en la biblioteca.</p>
     }
-    </div>
-    <div class="swap-foot">
-      <button type="button" class="btn btn-outline-light" (click)="closeSheet()">Cancelar</button>
-      <button type="button" class="btn btn-primary" [disabled]="!substituteChoice()" (click)="confirmSubstitute()">{{ substituteChoice() ? 'Cambiar ejercicio' : 'Elegí un ejercicio' }}</button>
-    </div>
   </div>
 }
 
 <app-body-sprite />
 
 <div class="toast-region" role="status" aria-live="polite">
-  @if (toast()) { <div class="toast">{{ toast() }}</div> }
+  @if (toast()) {
+    <div class="toast"><span>{{ toast() }}</span>
+      @if (toastAction(); as action) { <button type="button" class="toast-action" (click)="runToastAction()">{{ action.label }}</button> }
+    </div>
+  }
 </div>
 
 @if (confirmation(); as action) {
