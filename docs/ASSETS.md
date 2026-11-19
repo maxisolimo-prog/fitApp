@@ -30,6 +30,21 @@ Los iconos se generaron localmente con antialiasing y se verificó la versión d
 
 La paleta y las referencias tipográficas de Temacy están registradas en `docs/DESIGN.md`.
 
+## Fuentes de las marcas
+
+Solo las usa la marca Fitness Group (`src/app/brands/fitnessgroup.ts`). Están en `public/brand-fonts/`, sin modificaciones, subconjunto latino, descargadas del CDN oficial de Google Fonts el 18 de noviembre de 2026. El service worker no las precarga.
+
+| Archivo | Familia | Tamaño | Descarga | Licencia |
+| --- | --- | --- | --- | --- |
+| `anton-latin.woff2` | Anton, peso 400 | 18.612 bytes | https://fonts.gstatic.com/s/anton/v27/1Ptgg87LROyAm3Kz-C8.woff2 | SIL OFL 1.1, `OFL-Anton.txt` |
+| `manrope-latin-variable.woff2` | Manrope variable, pesos 200 a 800 | 24.532 bytes | https://fonts.gstatic.com/s/manrope/v23/xn7gYHE41ni1AdIRggexSg.woff2 | SIL OFL 1.1, `OFL-Manrope.txt` |
+
+Los textos de licencia vienen del repositorio [google/fonts](https://github.com/google/fonts) (`ofl/anton/OFL.txt` y `ofl/manrope/OFL.txt`).
+
+## Referencias de las marcas Qivox y Fitness Group
+
+De [qivox.com.ar](https://qivox.com.ar/) y [fitnessgroup.ar](https://fitnessgroup.ar/) se leyeron, el 18 de noviembre de 2026, los valores de color, los nombres de las tipografías y los radios declarados en sus hojas de estilo públicas; están en `docs/DESIGN.md` ("Marcas"). No se descargó ni se incorporó ningún archivo de esos sitios: ni logos, ni fotografías, ni fuentes. Graphik, la tipografía de títulos de Qivox, es comercial y no está en FitApp. Los logos se incorporan cuando cada gimnasio los entregue, y se registran acá.
+
 ## Referencias audiovisuales investigadas
 
 `public/data/exercise-videos.json` registra los identificadores de videos publicados por Muscle & Strength y enlazados desde su propia biblioteca. Son referencias de la investigación inicial: el usuario luego precisó que busca animaciones anatómicas con músculos resaltados, como en Strong, y no videos de personas. Estos videos no constituyen los recursos visuales elegidos para la biblioteca. No se descargaron ni modificaron. Su reproducción externa requiere conexión y depende del editor y de YouTube.

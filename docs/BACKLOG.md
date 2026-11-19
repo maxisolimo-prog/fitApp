@@ -21,6 +21,10 @@ Las toma el usuario. Hasta entonces, los ítems que dependen de ellas no arranca
    probar primero B-03 a B-06 en el gimnasio y decidir después. Traba a B-12.
 4. **Carga con mancuernas: ¿por mancuerna o sumada?** Hoy la app no lo dice y el volumen calculado depende de eso.
    Propuesta: por mancuerna, que es el número que figura en la que uno agarra. Traba a B-09.
+5. **Imágenes de ejercicios con tres marcas.** El estilo pensado para B-03 (músculos en lima sobre fondo verde)
+   solo sirve para la marca FitApp. Opciones: un solo juego neutro (figura gris, fondo transparente) y que el color
+   de marca lo ponga el mapa muscular de B-02, que es SVG y lo toma solo; o un juego por marca, con el triple de
+   cupo de GPT. Propuesta: el juego neutro. Traba a B-03.
 
 ## Bloque 1: que el ejercicio se vea
 
@@ -153,6 +157,29 @@ encima de la sesión. Hoy la ficha solo se abre desde la Biblioteca, y para ir h
   semana tipo: definir cómo conviven antes de construir. Sin candados.
 - **B-17.** Reemplaza las imágenes de B-03 sin tocar las pantallas, si B-03 deja la imagen detrás de un solo
   componente. Incluye validar con un profesional que cada animación corresponde a su ejercicio.
+
+## Marcas: un solo código, tres versiones
+
+Decisión del usuario del 18 de noviembre de 2026: una versión con la estética de Qivox y otra con la de Fitness
+Group (la red de los gimnasios Manantial), además de la actual, sin duplicar el código y dejando lugar a que cada
+una tenga funciones distintas. Detalle en "Marcas" de [DESIGN.md](DESIGN.md).
+
+| # | Qué | Esfuerzo | Esquema | Estado |
+| --- | --- | --- | --- | --- |
+| B-18 | Tres marcas sobre el mismo código: tokens por rol, un archivo por marca, funciones por marca | Medio | No | Hecho el 18 de noviembre de 2026 |
+| B-19 | Logo, ícono y nombre de la app instalada por marca | Bajo | No | Espera los logos de cada gimnasio |
+| B-20 | Graphik para los títulos de Qivox | Bajo | No | Espera que Qivox entregue la tipografía con su licencia |
+| B-21 | Una dirección por marca al desplegar | Bajo | No | Con el despliegue (roadmap) |
+
+- **B-18, hecho.** Se ve con `/?marca=qivox`, `/?marca=fitnessgroup` y `/?marca=fitapp`. Colores, tipografías y
+  radios salen de la web pública de cada gimnasio; no se copió ningún archivo suyo. Cuenta e Instalación ya se
+  pueden apagar por marca (`brand.features`); hoy están activas en las tres.
+- **B-19.** Hoy la barra muestra el nombre del gimnasio en texto y la app instalada sigue llamándose FitApp con su
+  ícono lima. Con cada logo: `logo` en el archivo de la marca, un `manifest` por marca y sus íconos.
+- **B-21.** La marca ya se resuelve por subdominio (`qivox.…`, `fitnessgroup.…`). En el mismo dominio las tres
+  comparten los datos locales del navegador; en subdominios distintos, cada una guarda los suyos.
+- **Sin validar con los gimnasios.** Las dos versiones son una propuesta armada desde afuera. Publicarlas con su
+  nombre y su logo requiere su acuerdo.
 
 ## Con el módulo de gimnasios
 

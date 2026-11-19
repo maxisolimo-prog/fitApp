@@ -47,8 +47,9 @@ ya está en el entorno. Procesos largos con afinidad `0xF` y prioridad `BelowNor
 | `src/app/core/workout-store.ts` | Store con signals; toda mutación valida, persiste y deja `actionError`/`storageError`. |
 | `src/app/app.component.{ts,html}` | Shell, navegación por hash (`#home`, `#routines`, …) y vistas del alumno. |
 | `src/app/features/` | `routine-editor` (claro) y `exercise-detail` (oscuro, pestañas accesibles). |
-| `src/styles.css` | Tokens Temacy, `@font-face` Inter local y estilos globales del shell. |
-| `tests/` | Dominio, validación, store y sincronización (con API simulada). |
+| `src/app/brands/` | Una marca por archivo (`fitapp`, `qivox`, `fitnessgroup`): tokens, nombre, logo y funciones. `index.ts` resuelve y aplica la marca al arrancar. |
+| `src/styles.css` | Tokens por rol (valores por defecto: Temacy), `@font-face` locales y estilos globales del shell. |
+| `tests/` | Dominio, validación, store, sincronización (con API simulada) y marcas (contraste, elección, sin colores sueltos). |
 
 ## Reglas del proyecto
 
@@ -59,8 +60,13 @@ ya está en el entorno. Procesos largos con afinidad `0xF` y prioridad `BelowNor
 - **Cambios de esquema** en `FitAppState`: subir `version`, escribir migración desde la anterior y test de ida y vuelta.
   Hoy `STORAGE_KEY = 'fitapp-state-v1'`; romperlo borra los datos del alumno.
 - **Zoneless:** el estado que se ve en pantalla y cambia fuera de un evento de template (timers, `await`) va en `signal`.
-- **Paleta Temacy:** bosque `#142118`, deep `#0E1811`, musgo `#2C4A2E`, lima `#C8F24C`, hueso `#F7F5EE`,
-  muted `#A9B3A8` (sólo sobre oscuro), panel `#1B2A1F`. Botón principal lima con texto bosque. Sin otros acentos.
+- **Un solo código, tres marcas** (FitApp, Qivox, Fitness Group; ver "Marcas" en `docs/DESIGN.md`). Colores,
+  tipografía y radios solo con los tokens por rol de `src/styles.css` (`--dark`, `--accent`, `--on-accent`, `--bg`,
+  `--strong`, …): nunca un color escrito a mano ni un "si la marca es X" en pantallas o lógica. Lo que una marca
+  tiene o no tiene va en `brand.features`. Para verlas: `/?marca=qivox`, `/?marca=fitnessgroup`, `/?marca=fitapp`.
+- **Paleta Temacy** (marca por defecto): bosque `#142118`, deep `#0E1811`, musgo `#2C4A2E`, lima `#C8F24C`, hueso
+  `#F7F5EE`, muted `#A9B3A8` (sólo sobre oscuro), panel `#1B2A1F`. Botón principal de acento con texto oscuro. Sin
+  otros acentos dentro de una misma marca.
 - **Accesibilidad:** objetivos táctiles ≥ 44 px, foco visible, etiquetas en todos los campos, estados no sólo por color,
   `prefers-reduced-motion`.
 - **Copy** en rioplatense con voseo y acciones concretas ("Guardá", "Agregá una serie"). Sin promesas de resultados.

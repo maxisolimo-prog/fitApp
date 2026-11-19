@@ -37,6 +37,18 @@ Tras el relevamiento de `docs/COMPETENCIA.md` y pruebas del usuario en el celula
 - **Celular:** inicio rediseñado (foto a todo el ancho, accesos grandes), instalación guiada (un toque en Android, pasos en iPhone), actualización automática de versiones.
 - Revisión adversarial de la sincronización: corregidos 3 hallazgos graves (pérdida de datos, DoS) y los medios.
 
+## Cuarta entrega (18 de noviembre de 2026): tres marcas sobre un mismo código
+
+Decisión del usuario: además de la versión actual, una con la estética de Qivox y otra con la de Fitness Group
+(gimnasios Manantial), sin duplicar el código y con lugar para que cada una tenga funciones distintas.
+
+- Cada marca es un archivo en `src/app/brands/`: colores, tipografía, radios, nombre, logo y lista de funciones.
+- Se elige con `?marca=` o por subdominio; un solo build sirve a las tres.
+- Es la base de la etapa "Marca del gimnasio" del módulo de gimnasios: cuando existan las organizaciones en la
+  API, la marca pasa a ser un dato del gimnasio.
+- Falta lo que depende de cada gimnasio: logos, ícono de la app instalada y la tipografía de títulos de Qivox
+  (B-19 a B-21 en [BACKLOG.md](BACKLOG.md)). Ninguno de los dos gimnasios vio ni validó su versión.
+
 ## Estado frente a la hipótesis de producto
 
 Hipótesis: registro simple + planificación personalizada + IA conversacional, para hispanohablantes.
@@ -81,7 +93,8 @@ profe, según cantidad de socios o profes. No se fijan precios sin hablar con 2 
    siguen siendo suyos.
 4. **Panel del profe** (web, pensado para computadora): lista de socios, asignar rutina y semana tipo, ver
    asistencia, récords y evolución.
-5. **Marca del gimnasio:** logo y colores en la app del socio.
+5. **Marca del gimnasio:** logo y colores en la app del socio. La parte visual ya existe (cuarta entrega): hoy
+   la marca se elige por dirección; acá pasa a salir del gimnasio al que está vinculado el socio.
 6. **Cobro** al gimnasio, recién con precio validado.
 
 ### Análisis previo de segmentos

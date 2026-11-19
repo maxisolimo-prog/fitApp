@@ -10,17 +10,48 @@ Escena de uso: una persona consulta el celular entre series en el gimnasio, con 
 
 Fuente: [Temacy en producción](https://temacy.ar/), verificada el 16 de noviembre de 2026. Los nombres y valores siguientes corresponden a las variables CSS observadas en el HTML de producción; la copia de trabajo usada para la verificación es `.cache/temacy.html`. No sustituir esta referencia por una plantilla ni por otra versión del sitio.
 
-| Token | Valor | Uso en FitApp |
-| --- | --- | --- |
-| `--bosque` | `#142118` | Texto principal sobre claro, identidad y superficies oscuras |
-| `--deep` | `#0E1811` | Fondo oscuro de mayor profundidad |
-| `--musgo` | `#2C4A2E` | Superficies y estados secundarios verdes |
-| `--lima` | `#C8F24C` | Acción principal, selección y foco de marca |
-| `--hueso` | `#F7F5EE` | Superficie clara y texto principal sobre oscuro |
-| `--muted` | `#A9B3A8` | Texto secundario sobre superficies oscuras |
-| `--panel` | `#1B2A1F` | Paneles sobre fondo oscuro |
+Desde el 18 de noviembre de 2026 el código no nombra los colores por la paleta sino por su rol, para que la misma pantalla sirva a más de una marca (ver "Marcas"). Esta es la paleta Temacy, la de la marca por defecto, con el token que ocupa cada color:
 
-Usar texto bosque sobre los botones lima. El tono `muted` no debe usarse como texto pequeño sobre hueso: está destinado a fondos oscuros. Los estados de validación deben acompañarse con texto o iconos, sin depender solamente del color.
+| Color Temacy | Valor | Token por rol | Uso en FitApp |
+| --- | --- | --- | --- |
+| Bosque | `#142118` | `--dark`, `--ink`, `--on-accent` | Superficies oscuras, texto principal sobre claro y texto sobre el acento |
+| Deep | `#0E1811` | `--dark-deep` | Fondo oscuro de mayor profundidad (sesión en curso) |
+| Panel | `#1B2A1F` | `--dark-panel` | Paneles sobre fondo oscuro |
+| Musgo | `#2C4A2E` | `--strong`, `--dark-strong` | Íconos, avance y días hechos sobre claro; barra de descanso y serie hecha sobre oscuro |
+| Lima | `#C8F24C` | `--accent` | Acción principal, selección y foco de marca |
+| Hueso | `#F7F5EE` | `--bg`, `--on-dark` | Fondo claro y texto principal sobre oscuro |
+| Muted | `#A9B3A8` | `--muted-on-dark` | Texto secundario sobre superficies oscuras |
+
+La lista completa de tokens, con sus derivados (`--ink-2`, `--line`, `--bg-tint`, etc.), está en el bloque `:root` de `src/styles.css`.
+
+Usar texto `--on-accent` sobre los botones de acento. El tono `--muted-on-dark` no debe usarse como texto pequeño sobre claro: está destinado a fondos oscuros. Los estados de validación deben acompañarse con texto o iconos, sin depender solamente del color.
+
+## Marcas
+
+FitApp es un solo código con varias versiones. Una marca cambia el aspecto, el nombre, el logo y qué funciones están disponibles; las pantallas, el catálogo, el store y la API son los mismos. Decisión del usuario del 18 de noviembre de 2026: "un solo código, tres versiones", porque cada gimnasio puede necesitar funciones distintas.
+
+| | FitApp (por defecto) | Qivox | Fitness Group |
+| --- | --- | --- | --- |
+| Archivo | `src/app/brands/fitapp.ts` | `src/app/brands/qivox.ts` | `src/app/brands/fitnessgroup.ts` |
+| Acento | lima `#C8F24C` | amarillo `#FFBD00` | amarillo `#FFDB01` |
+| Oscuro | `#142118` | `#111111` | `#111113` |
+| Fondo claro | `#F7F5EE` | `#F6F6F4` | `#F7F6F1` |
+| Títulos | Inter | Inter 800 (en lugar de Graphik) | Anton en mayúsculas |
+| Texto | Inter | Inter | Manrope |
+| Tarjetas / botones | 14 px / 10 px | 12 px / píldora | 22 px / píldora |
+| Logo | `icons/icon.svg` | pendiente: nombre en texto | pendiente: nombre en texto |
+
+Origen de los valores, leídos el 18 de noviembre de 2026: Qivox, de la hoja de tokens pública de [qivox.com.ar](https://qivox.com.ar/) (`--qx-yellow`, `--qx-ink`, `--qx-off-white`, radios e interletra); Fitness Group, de los colores y tipografías globales de [fitnessgroup.ar](https://fitnessgroup.ar/) (`fg_yellow`, `fg_black`, `fg_light`, Anton y Manrope). Se tomaron valores, no archivos: ni logos, ni fotos, ni fuentes de esos sitios.
+
+Reglas:
+
+- **Colores, tipografía y radios solo por token.** Ninguna regla CSS escribe un color a mano; `tests/brands.test.ts` lo verifica y además comprueba el contraste AA de cada marca sobre sus fondos.
+- **Sin "si la marca es X" en pantallas ni en lógica.** El aspecto sale de los tokens; las diferencias de comportamiento, de `brand.features` (hoy `account` e `install`, las dos activas en las tres marcas).
+- **Logo y tipografía de cada gimnasio los entrega el gimnasio.** Graphik, la de títulos de Qivox, es comercial: no se copia de su web. Hasta tener el logo, la barra muestra el nombre en texto.
+- **Qué marca se ve:** `?marca=qivox` o `?marca=fitnessgroup` en la dirección (queda guardado en el dispositivo; `?marca=fitapp` vuelve a la original), o el subdominio (`qivox.…`) cuando se despliegue. Un mismo build sirve a todas.
+- **Sumar una marca:** un archivo nuevo en `src/app/brands/`, registrarlo en `index.ts` y agregar su identificador a `BrandId`. TypeScript exige todos los tokens y funciones.
+
+Pendiente por marca: nombre e ícono de la app instalada (hoy el `manifest` es el de FitApp para todas) y las imágenes de ejercicios, que no pueden llevar los colores de una sola marca.
 
 ## Tipografía
 
@@ -41,6 +72,8 @@ Configuración sugerida para la fuente disponible:
 ```
 
 Adaptar la ruta al `base href` al desplegar bajo un subdirectorio. El archivo y su licencia SIL Open Font License 1.1 se sirven localmente; no se requiere Google Fonts en tiempo de ejecución.
+
+La marca Fitness Group usa además Anton (títulos, un solo peso, en mayúsculas) y Manrope (texto, pesos 200 a 800), también locales, en `public/brand-fonts/`. El navegador las descarga solo cuando esa marca está activa y el service worker no las precarga.
 
 ## Estructura y componentes
 
