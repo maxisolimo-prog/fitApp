@@ -158,7 +158,7 @@ interface ExerciseSession {
     .back-button:hover{background:var(--detail-surface);border-color:var(--detail-muted)}
     .back-button svg{width:22px;height:22px}
     .heading-copy{min-width:0}.eyebrow,.section-kicker{font-size:10px;font-weight:650;letter-spacing:.13em;line-height:1.6;color:var(--detail-muted)}
-    .heading-copy h2{margin:7px 0 7px;font-size:26px;font-weight:630;letter-spacing:-.035em;line-height:1.2;overflow-wrap:anywhere}
+    .heading-copy h2{margin:7px 0 7px;font-family:var(--font-display);font-size:26px;font-weight:var(--display-weight,630);letter-spacing:var(--display-tracking,-.035em);text-transform:var(--display-transform,none);line-height:1.2;overflow-wrap:anywhere}
     .heading-copy p{display:flex;flex-wrap:wrap;gap:8px;margin:0;color:var(--detail-muted);font-size:13px;line-height:1.5}
     .detail-tabs{display:flex;padding:0 30px;border-bottom:1px solid var(--detail-line);gap:27px}
     .detail-tabs button{position:relative;min-height:49px;padding:12px 0 15px;color:var(--detail-muted);background:transparent;border:0;font-size:13px;font-weight:600;white-space:nowrap}

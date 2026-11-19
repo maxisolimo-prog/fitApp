@@ -9,6 +9,7 @@ import { lastSetsFor, localDate, parseLocalDate, personalRecords, plannedRoutine
 import { Routine, Profile, Workout, Exercise, WorkoutSet } from './core/models';
 import { RoutineEditorComponent } from './features/routine-editor.component';
 import { ExerciseDetailComponent } from './features/exercise-detail.component';
+import { BRAND } from './brands/brand.token';
 
 type View = 'home'|'routines'|'calendar'|'progress'|'library'|'profile'|'workout'|'editor';
 @Component({
@@ -18,6 +19,8 @@ type View = 'home'|'routines'|'calendar'|'progress'|'library'|'profile'|'workout
 })
 export class AppComponent implements OnDestroy {
   readonly store = inject(WorkoutStore);
+  /** Marca activa: nombre, logo y funciones disponibles. No cambia con la app abierta. */
+  readonly brand = inject(BRAND);
   readonly nav: {id:View; label:string; icon:string}[] = [
     {id:'home', label:'Mi espacio', icon:'home'},
     {id:'routines', label:'Mis rutinas', icon:'dumbbell'},
@@ -161,7 +164,7 @@ export class AppComponent implements OnDestroy {
   /** Records of a saved session, compared with the sessions before it (history is newest first). */
   recordsFor(workout:Workout){const history=this.store.history();const position=history.findIndex(w=>w.id===workout.id);return personalRecords(workout,position<0?history:history.slice(position+1));}
   async shareWorkout(workout:Workout){
-    const text=workoutSummaryText(workout,this.recordsFor(workout));
+    const text=workoutSummaryText(workout,this.recordsFor(workout),this.brand.name);
     if(typeof navigator.share==='function'){try{await navigator.share({text});return;}catch(error){if((error as DOMException)?.name==='AbortError')return;}}
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`,'_blank','noopener');
   }
@@ -204,7 +207,7 @@ export class AppComponent implements OnDestroy {
   @HostListener('window:online') wentOnline(){this.online.set(true);if(this.sync.account())void this.sync.syncNow();}
   @HostListener('window:offline') wentOffline(){this.online.set(false);}
   @HostListener('window:beforeinstallprompt', ['$event']) installReady(event:Event){event.preventDefault();this.installPrompt.set(event as unknown as { prompt(): Promise<unknown>; userChoice: Promise<{ outcome: string }> });}
-  @HostListener('window:appinstalled') appInstalled(){this.installed.set(true);this.installPrompt.set(null);this.notify('Listo, FitApp quedó instalada.');}
+  @HostListener('window:appinstalled') appInstalled(){this.installed.set(true);this.installPrompt.set(null);this.notify(`Listo, ${this.brand.name} quedó instalada.`);}
   ngOnDestroy(){clearInterval(this.interval);clearTimeout(this.toastTimer);}
   navigate(view:View){this.view.set(view);location.hash=view; this.selectedRoutine.set(null);this.selectedExercise.set(null);this.selectedHistory.set(null);if(view==='profile') this.profileDraft={...this.store.profile()}; window.scrollTo({top:0,behavior:'instant'});}
   notify(message:string){this.toast.set(message);clearTimeout(this.toastTimer);this.toastTimer=setTimeout(()=>this.toast.set(''),4500);}

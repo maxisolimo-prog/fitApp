@@ -3,8 +3,8 @@
 <div class="shell">
   <!-- Escritorio: barra lateral -->
   <aside class="sidebar">
-    <button type="button" class="brand" (click)="navigate('home')" aria-label="FitApp, ir a Mi espacio">
-      <img src="icons/icon.svg" alt="" width="36" height="36"><span>FitApp</span>
+    <button type="button" class="brand" (click)="navigate('home')" [attr.aria-label]="brand.name + ', ir a Mi espacio'">
+      @if (brand.logo; as logo) { <img [src]="logo" alt="" width="36" height="36"> }<span>{{ brand.name }}</span>
     </button>
     <nav class="side-nav" aria-label="Navegación principal">
       @for (item of nav; track item.id) {
@@ -32,8 +32,8 @@
 
   <!-- Móvil: barra superior -->
   <header class="topbar">
-    <button type="button" class="brand" (click)="navigate('home')" aria-label="FitApp, ir a Mi espacio">
-      <img src="icons/icon.svg" alt="" width="32" height="32"><span>FitApp</span>
+    <button type="button" class="brand" (click)="navigate('home')" [attr.aria-label]="brand.name + ', ir a Mi espacio'">
+      @if (brand.logo; as logo) { <img [src]="logo" alt="" width="32" height="32"> }<span>{{ brand.name }}</span>
     </button>
     <button type="button" class="icon-button" (click)="navigate('profile')" aria-label="Perfil y datos"
       [attr.aria-current]="view() === 'profile' ? 'page' : null">
@@ -47,7 +47,7 @@
         <button type="button" class="link" (click)="navigate('profile')">Ir a mis datos</button></div>
     }
     @if (updateReady()) {
-      <div class="banner banner-update" role="status"><app-icon name="download" /><p>Hay una versión nueva de FitApp.</p>
+      <div class="banner banner-update" role="status"><app-icon name="download" /><p>Hay una versión nueva de {{ brand.name }}.</p>
         <button type="button" class="btn btn-small btn-primary" (click)="reloadApp()">Actualizar</button></div>
     }
     @if (!online()) {
@@ -684,6 +684,7 @@
             </form>
 
             <div class="stack">
+              @if (brand.features.account) {
               <article class="card" aria-labelledby="account-title">
                 <h2 id="account-title">Cuenta</h2>
                 @if (sync.account(); as email) {
@@ -721,6 +722,7 @@
                   </form>
                 }
               </article>
+              }
 
               <article class="card" aria-labelledby="data-title">
                 <h2 id="data-title">Tus datos</h2>
@@ -744,12 +746,13 @@
                 @if (importError()) { <p class="form-error" role="alert">{{ importError() }}</p> }
               </article>
 
+              @if (brand.features.install) {
               <article class="card" aria-labelledby="install-title">
                 @if (installed()) {
-                  <h2 id="install-title">FitApp está instalada</h2>
+                  <h2 id="install-title">{{ brand.name }} está instalada</h2>
                   <p class="status"><app-icon name="check" />La estás usando como app. Abrila desde el ícono de tu pantalla de inicio.</p>
                 } @else {
-                  <h2 id="install-title">Instalá FitApp</h2>
+                  <h2 id="install-title">Instalá {{ brand.name }}</h2>
                   <p class="muted small">Queda como una app en tu pantalla de inicio, a pantalla completa. Funciona sin conexión después de la primera carga.</p>
                   @if (installPrompt() || !installHelp()) {
                     <button type="button" class="btn btn-primary" (click)="install()"><app-icon name="download" />Instalar</button>
@@ -759,7 +762,7 @@
                       <ol class="install-steps" aria-label="Pasos para instalar en iPhone">
                         <li><span class="step-badge">1</span><span>Tocá <strong>Compartir</strong> <span class="share-glyph" aria-hidden="true"><app-icon name="share" /></span> — en Safari está abajo; en Chrome, junto a la dirección.</span></li>
                         <li><span class="step-badge">2</span><span>Elegí <strong>Agregar a inicio</strong>. Si no la ves, deslizá la lista hacia abajo.</span></li>
-                        <li><span class="step-badge">3</span><span>Tocá <strong>Agregar</strong>. Listo: aparece el ícono de FitApp.</span></li>
+                        <li><span class="step-badge">3</span><span>Tocá <strong>Agregar</strong>. Listo: aparece el ícono de {{ brand.name }}.</span></li>
                       </ol>
                       <p class="muted small">En iPhone, Apple solo permite instalar apps web desde el menú Compartir.</p>
                     } @else {
@@ -772,6 +775,7 @@
                   }
                 }
               </article>
+              }
             </div>
           </div>
         </section>

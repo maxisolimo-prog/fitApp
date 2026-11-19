@@ -4,6 +4,7 @@
   "navigationRequestStrategy": "freshness",
   "assetGroups": [
     { "name": "app", "installMode": "prefetch", "resources": { "files": ["/favicon.ico", "/index.html", "/*.css", "/*.js", "/manifest.webmanifest", "/icons/**", "/fonts/**"] } },
-    { "name": "images", "installMode": "prefetch", "resources": { "files": ["/images/**"] } }
+    { "name": "images", "installMode": "prefetch", "resources": { "files": ["/images/**"] } },
+    { "name": "brand-fonts", "installMode": "lazy", "updateMode": "prefetch", "resources": { "files": ["/brand-fonts/*.woff2"] } }
   ]
 }

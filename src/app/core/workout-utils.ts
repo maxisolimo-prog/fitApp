@@ -317,11 +317,11 @@ export function personalRecords(workout: Workout, earlier: Workout[]): PersonalR
 }
 
 /** Plain-text summary to share (WhatsApp, etc.). Only real numbers from the session. */
-export function workoutSummaryText(workout: Workout, records: PersonalRecord[]): string {
+export function workoutSummaryText(workout: Workout, records: PersonalRecord[], appName = 'FitApp'): string {
   const format = (value: number) => new Intl.NumberFormat('es-AR', { maximumFractionDigits: 1 }).format(value);
   const volume = workoutVolume(workout);
   const lines = [
-    `Terminé "${workout.routineName}" en FitApp`,
+    `Terminé "${workout.routineName}" en ${appName}`,
     `${workoutDurationMinutes(workout)} min · ${workout.sets.length} ${workout.sets.length === 1 ? 'serie' : 'series'}${volume > 0 ? ` · ${format(volume)} kg levantados` : ''}`,
     ...records.map((record) => `Récord en ${record.exerciseName}: ${format(record.weight)} kg × ${record.reps} (antes ${format(record.previous)} kg)`),
   ];

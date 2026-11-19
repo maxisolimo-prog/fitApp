@@ -154,20 +154,20 @@ const MAX_EXERCISES = 50;
     .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
     .editor-header{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-bottom:26px}
     .eyebrow{font-size:10px;letter-spacing:.14em;font-weight:700;color:var(--ink-2);margin:0 0 10px}
-    h2{font-size:30px;letter-spacing:-1px;line-height:1.2;font-weight:700;margin:0 0 10px}h3{font-size:19px;letter-spacing:-.4px;margin:0}
+    h2{font-family:var(--font-display);font-size:30px;letter-spacing:var(--display-tracking,-1px);line-height:1.2;font-weight:var(--display-weight,700);text-transform:var(--display-transform,none);margin:0 0 10px}h3{font-size:19px;letter-spacing:-.4px;margin:0}
     .intro,.exercise-heading p{color:var(--ink-2);font-size:13px;line-height:1.6;margin:0}
     button,input,select,textarea{font:inherit}button{cursor:pointer;transition:background .16s,color .16s,border-color .16s}button:disabled{cursor:not-allowed;opacity:.45}
     .text-button{background:none;border:0;padding:8px 0;color:var(--ink);font-size:13px;white-space:nowrap;text-decoration:underline;text-underline-offset:4px;min-height:44px}
     .details-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:16px 20px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:22px 0}
     .name-field,.description-field{grid-column:span 2}.field{display:flex;flex-direction:column;gap:6px;min-width:0}
     .field>span{font-size:12px;font-weight:600;line-height:1.4}.optional{font-weight:400;color:var(--ink-2)}
-    input,select,textarea{width:100%;min-width:0;border:1px solid var(--line-strong);background:var(--surface);border-radius:10px;color:var(--ink);outline:none;padding:10px 12px;font-size:15px;line-height:1.4;min-height:44px}
+    input,select,textarea{width:100%;min-width:0;border:1px solid var(--line-strong);background:var(--surface);border-radius:var(--radius-field);color:var(--ink);outline:none;padding:10px 12px;font-size:15px;line-height:1.4;min-height:44px}
     textarea{resize:vertical;min-height:64px}input:focus,select:focus,textarea:focus{border-color:var(--ink);box-shadow:0 0 0 3px color-mix(in srgb, var(--strong) 18%, transparent)}
     [aria-invalid=true]{border-color:var(--danger)}.field-error{color:var(--danger);font-size:11px;line-height:1.4}.field-error:empty{display:none}
     .exercise-heading{display:flex;justify-content:space-between;align-items:center;gap:20px;margin:24px 0 14px}.exercise-heading p{margin-top:4px}
     .exercise-count{font-size:13px;color:var(--ink-2);font-variant-numeric:tabular-nums;white-space:nowrap}
     .exercise-list{list-style:none;margin:0;padding:0;display:grid;gap:10px}
-    .exercise-row fieldset{margin:0;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:var(--surface);min-width:0}
+    .exercise-row fieldset{margin:0;padding:14px 16px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);min-width:0}
     .exercise-top{display:flex;align-items:center;gap:12px}
     .row-number{display:grid;place-items:center;flex-shrink:0;width:28px;height:28px;border-radius:50%;background:var(--bg);font-size:12px;font-weight:700;color:var(--strong)}
     .exercise-title{flex:1;min-width:0;display:flex;flex-direction:column}.exercise-title strong{font-size:15px}.exercise-title small{font-size:12px;color:var(--ink-2)}
@@ -183,7 +183,7 @@ const MAX_EXERCISES = 50;
     .save-error{font-size:13px;background:var(--danger-bg);color:var(--danger-ink);padding:12px 15px;border-radius:8px;margin:20px 0}
     .editor-footer{border-top:1px solid var(--line);margin-top:24px;padding:22px 0;display:flex;align-items:center;justify-content:space-between;gap:24px}
     .editor-footer p{font-size:12px;line-height:1.6;color:var(--ink-2);max-width:340px;margin:0}.footer-actions{display:flex;gap:10px;flex-shrink:0}
-    .primary-button,.secondary-button{border-radius:10px;min-height:46px;padding:10px 18px;font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px}
+    .primary-button,.secondary-button{border-radius:var(--radius-btn);min-height:46px;padding:10px 18px;font-size:14px;font-weight:var(--btn-weight);display:flex;align-items:center;justify-content:center;gap:8px}
     .primary-button{color:var(--on-accent);background:var(--accent);border:1px solid var(--accent)}.primary-button:hover:not(:disabled){background:var(--accent-hover)}
     .secondary-button{border:1px solid var(--line);background:var(--surface);color:var(--ink)}.secondary-button:hover{border-color:var(--ink)}
     button:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
