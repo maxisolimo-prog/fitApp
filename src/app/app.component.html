@@ -326,6 +326,23 @@
                           </button>
                         </td>
                       </tr>
+                      @if (showsNote(row)) {
+                        <tr class="note-row">
+                          <td colspan="5">
+                            @if (noteEditing() === row.index) {
+                              <input #noteInput type="text" class="note-input" [id]="'set-note-' + row.index" maxlength="200" autocomplete="off" enterkeyhint="done"
+                                [value]="row.set.note ?? ''" placeholder="Por ejemplo, me costó la última"
+                                [attr.aria-label]="'Comentario de la serie ' + row.set.setNumber + ' de ' + group.exercise.name"
+                                (blur)="commitNote(row.index, noteInput.value, false)" (keydown.enter)="commitNote(row.index, noteInput.value, true)" (keydown.escape)="cancelNote(row.index)">
+                            } @else {
+                              <button type="button" class="note-button" [class.note-add]="!row.set.note" [attr.data-note-button]="row.index" (click)="editNote(row.index)"
+                                [attr.aria-label]="row.set.note ? 'Editar el comentario de la serie ' + row.set.setNumber + ' de ' + group.exercise.name + ': ' + row.set.note : 'Agregar un comentario a la serie ' + row.set.setNumber + ' de ' + group.exercise.name">
+                                <app-icon [name]="row.set.note ? 'edit' : 'plus'" /><span>{{ row.set.note || 'Comentario' }}</span>
+                              </button>
+                            }
+                          </td>
+                        </tr>
+                      }
                     }
                   </tbody>
                 </table>
@@ -540,14 +557,25 @@
             <div class="card table-card">
               <table class="data-table">
                 <caption class="sr-only">Series registradas</caption>
-                <thead><tr><th scope="col">Ejercicio</th><th scope="col">Serie</th><th scope="col">Reps</th><th scope="col">Kg</th></tr></thead>
+                <thead><tr><th scope="col">Ejercicio</th><th scope="col">Serie</th><th scope="col">Reps</th><th scope="col">Kg</th>@if (historyHasTimes()) { <th scope="col">Hora</th> }</tr></thead>
                 <tbody>
-                  @for (set of workout.sets; track $index) {
-                    <tr><th scope="row">{{ set.exerciseName }}</th><td class="tabular">{{ set.setNumber }}</td><td class="tabular">{{ set.reps }}</td><td class="tabular">{{ fmt(set.weight) }}</td></tr>
+                  @for (set of workout.sets; track $index; let i = $index) {
+                    <tr [class.has-note]="!!set.note"><th scope="row">{{ set.exerciseName }}</th><td class="tabular">{{ set.setNumber }}</td><td class="tabular">{{ set.reps }}</td><td class="tabular">{{ fmt(set.weight) }}</td>
+                      @if (historyHasTimes()) {
+                        <td class="tabular set-time">
+                          @if (set.completedAt) {
+                            {{ timeLabel(set.completedAt) }}
+                            @if (historyPauses()[i]; as pause) { <small><span class="sr-only">, </span>+{{ clock(pause) }}<span class="sr-only"> desde la serie anterior</span></small> }
+                          } @else { <span aria-hidden="true">—</span><span class="sr-only">sin hora</span> }
+                        </td>
+                      }
+                    </tr>
+                    @if (set.note) { <tr class="set-note"><td [attr.colspan]="historyHasTimes() ? 5 : 4"><span class="sr-only">Comentario: </span>{{ set.note }}</td></tr> }
                   }
                 </tbody>
               </table>
             </div>
+            @if (historyHasTimes()) { <p class="muted small note">Debajo de cada hora va el tiempo que pasó desde la serie anterior: el descanso más lo que llevó hacer la serie.</p> }
           </section>
         } @else {
           <section class="page" aria-labelledby="progress-title">

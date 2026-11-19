@@ -4,7 +4,7 @@
 [ROADMAP.md](ROADMAP.md); de dónde sale cada ítem, en [COMPETENCIA.md](COMPETENCIA.md). Armado el 17 de noviembre
 de 2026 a partir de las capturas de Fitness Online (`docs/competencia/`) y del código de ese día.
 
-La columna **Esquema** dice si el ítem cambia `FitAppState` (hoy versión 3). Los que sí exigen subir la versión,
+La columna **Esquema** dice si el ítem cambia `FitAppState` (hoy versión 4). Los que sí exigen subir la versión,
 migración con test de ida y vuelta y una migración SQL nueva en `api/migrations/`. El catálogo de ejercicios
 (`seed.ts`) no se guarda en el estado del alumno: cambiarlo no toca el esquema.
 
@@ -142,8 +142,8 @@ encima de la sesión. Hoy la ficha solo se abre desde la Biblioteca, y para ir h
 | B-07 | Duración estimada calculada y "Empezar" fijo en la previa | Bajo | No | Hecho el 19 de noviembre de 2026 |
 | B-08 | Avance de la sesión en curso en Inicio | Bajo | No | Hecho el 19 de noviembre de 2026 |
 | B-09 | Aclarar si la carga es total o por mancuerna | Bajo | No | Decisión 4 |
-| B-10 | Guardar la hora de cada serie | Medio | **Sí (v4)** | — |
-| B-11 | Comentario por serie | Bajo | **Sí (v4)** | Va en la misma migración que B-10 |
+| B-10 | Guardar la hora de cada serie | Medio | **Sí (v4)** | Hecho el 19 de noviembre de 2026 |
+| B-11 | Comentario por serie | Bajo | **Sí (v4)** | Hecho el 19 de noviembre de 2026 |
 | B-12 | Vista enfocada: un ejercicio por pantalla | Alto | No | Decisión 3, B-03 |
 
 - **B-06. Sustituir.** "Cambiar ejercicio" abre una hoja con equivalentes por movimiento (en la captura, todos son
@@ -170,8 +170,22 @@ encima de la sesión. Hoy la ficha solo se abre desde la Biblioteca, y para ir h
 - **B-09. Carga.** Texto al lado del campo Kg y en la ficha: "por mancuerna", "barra incluida", según el equipo. Solo
   cambia etiquetas: no reinterpreta lo ya registrado.
 - **B-10. Hora de cada serie.** Campo opcional en la serie. Permite mostrar el descanso real y la hora en el
-  historial. Las series viejas quedan sin hora: no se inventa.
-- **B-11. Comentario por serie.** Texto corto opcional ("me costó la última", "molestia en el hombro").
+  historial. Las series viejas quedan sin hora: no se inventa. **Hecho:** `completedAt` se anota al marcar la serie
+  y se borra al desmarcarla. El detalle de un entrenamiento muestra la hora de cada serie y, debajo, el tiempo desde
+  la serie anterior; es el descanso más lo que llevó hacer la serie, no el descanso solo. Un entrenamiento
+  anterior a la versión 4 no muestra la columna.
+- **B-11. Comentario por serie.** Texto corto opcional ("me costó la última", "molestia en el hombro"). **Hecho:**
+  hasta 200 caracteres. En la sesión, el renglón para comentar aparece debajo de la última serie completada y de
+  las que ya tienen comentario; para comentar una serie más vieja que no tiene, hoy no hay camino. Se ve en el
+  detalle del entrenamiento y en el historial de la ficha del ejercicio.
+- **B-10 y B-11, esquema.** `FitAppState` versión 4, migración `005_set_time_note.sql`. Los datos de versiones
+  anteriores cargan igual: los campos nuevos simplemente no están. Hay que reiniciar la API para que acepte la
+  versión 4. Una app instalada que todavía no se actualizó no puede leer una cuenta que ya tiene datos de la 4, y
+  la API tampoco le deja guardar encima: sus cambios quedan en el dispositivo hasta que se actualiza (lo hace sola
+  al abrirla, salvo que haya una sesión en curso). Desde esta versión, si lo guardado en el dispositivo o en la
+  cuenta es de una versión más nueva, la app avisa y no escribe nada encima. Eso no vale para las apps de la
+  versión 3 que ya estén instaladas: con dos pestañas abiertas en versiones distintas, la vieja puede pisar lo
+  que guardó la nueva. El comentario de una serie que queda sin completar no se guarda con el entrenamiento.
 - **B-12. Vista enfocada.** Un ejercicio por pantalla con su posición ("2 de 12"), imagen y tres números grandes:
   repeticiones, descanso, series. Como modo alternativo: la lista actual se queda.
 

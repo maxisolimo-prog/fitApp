@@ -3,8 +3,8 @@ import test from 'node:test';
 import '@angular/compiler';
 import { WorkoutStore } from '../src/app/core/workout-store';
 import {
-  buildWorkout, completeWorkout, createInitialState, deserializeState, isFactoryState, lastSetsFor, localDate, personalRecords, plannedRoutineId, suggestProgression, suggestWeeklyPlan, workoutSummaryText,
-  parseLocalDate, parseSessionSwaps, recordSwap, removeRoutine, serializeState, startOfWeek, substituteExercise, swapOrigin, validateState,
+  buildWorkout, cleanSetNote, completeWorkout, createInitialState, deserializeState, isFactoryState, lastSetsFor, localDate, personalRecords, plannedRoutineId, suggestProgression, suggestWeeklyPlan, workoutSummaryText,
+  parseLocalDate, parseSessionSwaps, recordSwap, removeRoutine, serializeState, setPauses, startOfWeek, substituteExercise, swapOrigin, validateState,
   STORAGE_KEY, validSetValues, weekDates, workoutDurationMinutes, workoutVolume,
 } from '../src/app/core/workout-utils';
 
@@ -85,7 +85,9 @@ test('corrupt, mismatched or invalid imports are rejected', () => {
   assert.equal(deserializeState('{broken'), null);
   assert.equal(deserializeState('null'), null);
   assert.equal(deserializeState('{}'), null);
-  assert.equal(validateState({ ...createInitialState(), version: 4 }), null);
+  // Una versión más nueva que la que conoce esta app no se adivina: se rechaza.
+  assert.equal(validateState({ ...createInitialState(), version: 5 }), null);
+  assert.equal(validateState({ ...createInitialState(), version: 0 }), null);
   const invalid = createInitialState();
   invalid.routines[0].exercises[0].weight = Number.NaN;
   assert.equal(validateState(invalid), null);
@@ -199,12 +201,12 @@ test('storage failures are visible and calendar/weight updates retain one entry 
   });
 });
 
-test('v1 data (before the weekly plan) upgrades to v3 with every day free', () => {
+test('v1 data (before the weekly plan) upgrades to the current version with every day free', () => {
   const v1 = JSON.parse(serializeState(createInitialState()));
   v1.version = 1;
   delete v1.weeklyPlan;
   const upgraded = validateState(v1)!;
-  assert.equal(upgraded.version, 3);
+  assert.equal(upgraded.version, 4);
   assert.equal(upgraded.profile.focus, 'fuerza');
   assert.equal(upgraded.profile.place, 'gimnasio');
   assert.deepEqual(upgraded.weeklyPlan, [null, null, null, null, null, null, null]);
@@ -340,6 +342,190 @@ test('substituting an exercise changes only its pending sets; completed ones and
   });
 });
 
+test('v3 data (before set time and note) upgrades to v4 without inventing either; v4 round trips with both (B-10, B-11)', () => {
+  const routine = createInitialState().routines[0];
+  const done = buildWorkout(routine, 'w-done', '2026-11-18T10:00:00.000Z');
+  done.sets[0] = { ...done.sets[0], completed: true, weight: 40 };
+  const v3 = { ...JSON.parse(serializeState(createInitialState())), version: 3, history: [completeWorkout(done, '2026-11-18T10:30:00.000Z')] };
+  const upgraded = validateState(v3)!;
+  assert.equal(upgraded.version, 4);
+  assert.deepEqual(Object.keys(upgraded.history[0].sets[0]).sort(), ['completed', 'exerciseId', 'exerciseName', 'reps', 'setNumber', 'weight']);
+
+  const state = createInitialState();
+  assert.equal(state.version, 4);
+  const withFields = buildWorkout(routine, 'w-v4', '2026-11-19T10:00:00.000Z');
+  withFields.sets[0] = { ...withFields.sets[0], completed: true, completedAt: '2026-11-19T10:05:00.000Z', note: 'Me costó la última' };
+  withFields.sets[1] = { ...withFields.sets[1], completed: true };
+  state.history = [completeWorkout(withFields, '2026-11-19T10:40:00.000Z')!];
+  state.activeWorkout = buildWorkout(routine, 'w-active', '2026-11-19T12:00:00.000Z');
+  state.activeWorkout.sets[2] = { ...state.activeWorkout.sets[2], completed: true, completedAt: '2026-11-19T12:03:00.000Z' };
+  state.activeWorkout.sets[3] = { ...state.activeWorkout.sets[3], note: 'Probar agarre ancho' };
+  assert.deepEqual(deserializeState(serializeState(state)), state, 'export and import give back exactly the same data');
+  assert.deepEqual(validateState(JSON.parse(JSON.stringify(validateState(state)))), state, 'validating twice changes nothing');
+});
+
+test('set time and note are validated strictly and kept in canonical form', () => {
+  const withSet = (change: Record<string, unknown>) => {
+    const state = createInitialState();
+    state.activeWorkout = buildWorkout(state.routines[0], 'w', '2026-11-19T10:00:00.000Z');
+    const raw = JSON.parse(serializeState(state));
+    Object.assign(raw.activeWorkout.sets[0], change);
+    return validateState(raw);
+  };
+  for (const bad of [{ completed: true, completedAt: 'ayer' }, { completed: true, completedAt: 1_700_000_000_000 }, { completed: true, completedAt: null },
+    { completed: true, completedAt: '0900-01-01T00:00:00.000Z' }, { note: 'x'.repeat(201) }, { note: 7 }, { note: null }, { note: ['hola'] }]) {
+    assert.equal(withSet(bad), null, JSON.stringify(bad).slice(0, 60));
+  }
+  const canonical = withSet({ completed: true, completedAt: '2026-11-19T07:05:00-03:00', note: '  Hombro bien  ' })!.activeWorkout!.sets[0];
+  assert.equal(canonical.completedAt, '2026-11-19T10:05:00.000Z', 'UTC with milliseconds, like the API returns');
+  assert.equal(canonical.note, 'Hombro bien');
+  // Una hora en una serie pendiente y un comentario en blanco se descartan sin invalidar el resto.
+  const cleaned = withSet({ completed: false, completedAt: '2026-11-19T10:05:00.000Z', note: '   ' })!.activeWorkout!.sets[0];
+  assert.deepEqual(Object.keys(cleaned).sort(), ['completed', 'exerciseId', 'exerciseName', 'reps', 'setNumber', 'weight']);
+  assert.equal(withSet({ note: 'x'.repeat(200) })!.activeWorkout!.sets[0].note!.length, 200);
+});
+
+test('the store stamps the time when a set is completed, clears it when unmarked and keeps short notes (B-10, B-11)', () => {
+  withStorage(() => {
+    const store = new WorkoutStore();
+    assert.equal(store.setSetNote(0, 'sin sesión'), false);
+    store.startWorkout('upper-body');
+    const before = Date.now();
+    store.toggleSet(0);
+    const stamped = store.activeWorkout()!.sets[0];
+    assert.equal(stamped.completed, true);
+    assert.ok(Date.parse(stamped.completedAt!) >= before && Date.parse(stamped.completedAt!) <= Date.now());
+    assert.equal(store.setSetNote(0, '  Me costó la última  '), true);
+    assert.equal(store.activeWorkout()!.sets[0].note, 'Me costó la última');
+    assert.equal(store.setSetNote(0, 'x'.repeat(201)), false);
+    assert.equal(store.setSetNote(99, 'hola'), false);
+    assert.equal(store.setSetNote(0.5, 'hola'), false);
+    assert.equal(store.activeWorkout()!.sets[0].note, 'Me costó la última', 'a rejected note changes nothing');
+
+    // Agregar una serie copia carga y repeticiones, no la hora ni el comentario.
+    store.addSet('bench-press');
+    const bench = store.activeWorkout()!.sets.filter((s) => s.exerciseId === 'bench-press');
+    assert.equal(bench.length, 4);
+    store.toggleSet(3);
+    store.setSetNote(3, 'Última con pausa');
+    store.addSet('bench-press');
+    const added = store.activeWorkout()!.sets.filter((s) => s.exerciseId === 'bench-press')[4];
+    assert.deepEqual(Object.keys(added).sort(), ['completed', 'exerciseId', 'exerciseName', 'reps', 'setNumber', 'weight']);
+    assert.equal(added.completed, false);
+
+    const reloaded = new WorkoutStore().activeWorkout()!.sets[0];
+    assert.deepEqual([reloaded.completedAt, reloaded.note], [stamped.completedAt, 'Me costó la última'], 'both survive a reload');
+
+    // Desmarcar borra la hora y deja el comentario; un comentario en blanco lo borra.
+    store.toggleSet(0);
+    assert.equal('completedAt' in store.activeWorkout()!.sets[0], false);
+    assert.equal(store.activeWorkout()!.sets[0].note, 'Me costó la última');
+    assert.equal(store.setSetNote(0, '   '), true);
+    assert.equal('note' in store.activeWorkout()!.sets[0], false);
+
+    const saved = store.finishWorkout()!;
+    assert.equal(saved.sets.length, 1, 'only the completed set is saved');
+    assert.equal(saved.sets[0].note, 'Última con pausa');
+    assert.ok(saved.sets[0].completedAt);
+    assert.deepEqual(new WorkoutStore().history()[0].sets[0], saved.sets[0]);
+  });
+});
+
+test('the store writes set keys in one fixed order, so equal data always serialises equally (review of v4)', () => {
+  withStorage(() => {
+    const store = new WorkoutStore();
+    store.startWorkout('upper-body');
+    // Marcar, comentar, desmarcar y volver a marcar: el caso que dejaba la hora después del comentario.
+    store.toggleSet(0);
+    store.setSetNote(0, 'Primero el comentario');
+    store.toggleSet(0);
+    store.toggleSet(0);
+    store.setSetNote(1, 'Comentario en una pendiente');
+    store.toggleSet(1);
+    store.updateSet(0, 9, 42.5);
+    store.applyLoad('bench-press', 45);
+    store.addSet('bench-press');
+    store.removeSet(3);
+    store.substituteExercise('seated-row', 'barbell-row');
+    const snapshot = store.snapshot();
+    assert.deepEqual(Object.keys(snapshot.activeWorkout!.sets[0]), ['exerciseId', 'exerciseName', 'setNumber', 'reps', 'weight', 'completed', 'completedAt', 'note']);
+    assert.equal(serializeState(snapshot), serializeState(validateState(snapshot)!), 'same text as the validated (and the server) form');
+    assert.ok(store.finishWorkout());
+    assert.equal(serializeState(store.snapshot()), serializeState(validateState(store.snapshot())!));
+  });
+});
+
+test('a note that did not change is not a change, and half an emoji is never stored (review of v4)', () => {
+  withStorage(() => {
+    const store = new WorkoutStore();
+    store.startWorkout('upper-body');
+    store.toggleSet(0);
+    let changes = 0;
+    store.onChange = () => { changes++; };
+    assert.equal(store.setSetNote(0, 'Bien'), true);
+    assert.equal(changes, 1);
+    assert.equal(store.setSetNote(0, '  Bien '), true);
+    assert.equal(changes, 1, 'same text: nothing to save or to send');
+    assert.equal(store.setSetNote(0, ''), true);
+    assert.equal(store.setSetNote(0, '   '), true);
+    assert.equal(changes, 2);
+    // Un texto pegado y recortado en 200 puede terminar en medio emoji.
+    store.setSetNote(0, 'Fuerte \uD83D');
+    assert.equal(store.activeWorkout()!.sets[0].note, 'Fuerte');
+    store.setSetNote(0, 'Fuerte \uD83D\uDCAA');
+    assert.equal(store.activeWorkout()!.sets[0].note, 'Fuerte \uD83D\uDCAA');
+    assert.equal(cleanSetNote('\uDCAA a \uD83D\uDCAA b \uD83D'), 'a \uD83D\uDCAA b');
+    const raw = JSON.parse(serializeState(store.snapshot()));
+    raw.activeWorkout.sets[0].note = 'a\uD800b';
+    assert.equal(validateState(raw)!.activeWorkout!.sets[0].note, 'ab');
+  });
+});
+
+test('data saved by a newer version of the app is never overwritten (review of v4)', () => {
+  // Al abrir: lo guardado es de una versión que esta app no conoce.
+  withStorage((storage) => {
+    const newer = JSON.stringify({ ...createInitialState(), version: 5, algoNuevo: true });
+    storage.setItem(STORAGE_KEY, newer);
+    const store = new WorkoutStore();
+    assert.match(store.storageError()!, /versión más nueva/);
+    let changes = 0;
+    store.onChange = () => { changes++; };
+    store.updateProfile({ name: 'Otro' });
+    store.startWorkout('upper-body');
+    assert.equal(storage.getItem(STORAGE_KEY), newer, 'the stored data is untouched');
+    assert.equal(changes, 0, 'and nothing is announced to the account sync');
+    assert.match(store.storageError()!, /versión más nueva/);
+  });
+  // Con la app abierta: otra pestaña, ya actualizada, guarda datos de una versión más nueva.
+  withStorage((storage) => {
+    type Listener = (event: { key: string; newValue: string | null }) => void;
+    const listeners: Listener[] = [];
+    Object.defineProperty(globalThis, 'window', { configurable: true, value: { addEventListener: (_type: string, listener: Listener) => { listeners.push(listener); } } });
+    try {
+      const store = new WorkoutStore();
+      assert.equal(store.updateProfile({ name: 'Pestaña vieja' }), true);
+      const newer = JSON.stringify({ ...createInitialState(), version: 5 });
+      storage.setItem(STORAGE_KEY, newer);
+      listeners.forEach((listener) => listener({ key: STORAGE_KEY, newValue: newer }));
+      assert.match(store.storageError()!, /versión más nueva/);
+      store.updateProfile({ name: 'No se guarda' });
+      assert.equal(storage.getItem(STORAGE_KEY), newer);
+    } finally { Reflect.deleteProperty(globalThis, 'window'); }
+  });
+  // Datos ilegibles que no son de una versión más nueva siguen dando el aviso de siempre.
+  withStorage((storage) => {
+    storage.setItem(STORAGE_KEY, '{"version":4,"roto":true}');
+    assert.match(new WorkoutStore().storageError()!, /no es válido/);
+  });
+});
+
+test('pauses between sets follow the order they were done in and skip sets without a time', () => {
+  const set = (completedAt?: string) => ({ exerciseId: 'bench-press', exerciseName: 'Press de banca', setNumber: 1, reps: 10, weight: 0, completed: true, ...(completedAt ? { completedAt } : {}) });
+  assert.deepEqual(setPauses({ sets: [set('2026-11-19T10:00:00.000Z'), set('2026-11-19T10:02:10.000Z'), set(), set('2026-11-19T10:01:00.000Z')] }), [null, 70, null, 60]);
+  assert.deepEqual(setPauses({ sets: [set(), set()] }), [null, null]);
+  assert.deepEqual(setPauses({ sets: [] }), []);
+});
+
 test('the factory state is recognised whatever the template contents, and anything the user added is not', () => {
   assert.equal(isFactoryState(createInitialState()), true);
   // Plantillas de otra versión: otra duración, otros ejercicios, alguna borrada.
@@ -437,7 +623,7 @@ test('v2 profiles get focus and place defaults; invalid values are rejected', ()
   delete v2.profile.focus;
   delete v2.profile.place;
   const upgraded = validateState(v2)!;
-  assert.deepEqual([upgraded.version, upgraded.profile.focus, upgraded.profile.place], [3, 'fuerza', 'gimnasio']);
+  assert.deepEqual([upgraded.version, upgraded.profile.focus, upgraded.profile.place], [4, 'fuerza', 'gimnasio']);
   const bad = createInitialState() as unknown as { profile: { focus: string } };
   bad.profile.focus = 'volar';
   assert.equal(validateState(bad), null);

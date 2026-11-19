@@ -5,7 +5,7 @@ import { IconComponent } from './icon.component';
 import { WorkoutStore } from './core/workout-store';
 import { SyncService, type SyncStatus } from './core/sync.service';
 import { SwUpdate } from '@angular/service-worker';
-import { estimateRoutineMinutes, lastSetsFor, localDate, parseLocalDate, parseSessionSwaps, personalRecords, plannedRoutineId, recordSwap, swapOrigin, suggestProgression, suggestWeeklyPlan, weekDates, workoutSummaryText, workoutVolume, workoutDurationMinutes, type ProgressionSuggestion, type SessionSwaps } from './core/workout-utils';
+import { estimateRoutineMinutes, lastSetsFor, localDate, parseLocalDate, parseSessionSwaps, personalRecords, plannedRoutineId, recordSwap, setPauses, swapOrigin, suggestProgression, suggestWeeklyPlan, weekDates, workoutSummaryText, workoutVolume, workoutDurationMinutes, type ProgressionSuggestion, type SessionSwaps } from './core/workout-utils';
 import { MOVEMENT_LABELS, substitutesFor } from './core/movements';
 import { Routine, Profile, Workout, Exercise, WorkoutSet } from './core/models';
 import { RoutineEditorComponent } from './features/routine-editor.component';
@@ -43,6 +43,17 @@ export class AppComponent implements OnDestroy {
   readonly sessionExercise = signal<Exercise|null>(null);
   /** Hay una hoja abierta: lo de atrás queda inactivo para el teclado y los lectores de pantalla. */
   readonly sheetOpen = computed(() => !!this.sessionExercise() || !!this.substituting());
+  /** Serie de la sesión cuyo comentario se está escribiendo (su posición en la sesión). */
+  readonly noteEditing = signal<number|null>(null);
+  /** La última serie que se completó, por hora: ahí se ofrece agregar un comentario. -1 si no hay ninguna con hora. */
+  readonly lastCompletedIndex = computed(() => {
+    let best = -1, time = '';
+    (this.store.activeWorkout()?.sets ?? []).forEach((set, index) => { if (set.completed && set.completedAt && set.completedAt >= time) { best = index; time = set.completedAt; } });
+    return best;
+  });
+  /** Entrenamiento abierto en el historial: segundos desde la serie anterior, y si alguna serie tiene hora. */
+  readonly historyPauses = computed(() => { const workout = this.selectedHistory(); return workout ? setPauses(workout) : []; });
+  readonly historyHasTimes = computed(() => this.selectedHistory()?.sets.some(set => !!set.completedAt) ?? false);
   /** Ejercicio de la sesión que se está por cambiar (hoja "Cambiar ejercicio") y el reemplazo elegido. */
   readonly substituting = signal<Exercise|null>(null);
   readonly substituteChoice = signal<string|null>(null);
@@ -186,6 +197,23 @@ export class AppComponent implements OnDestroy {
   closeSheet(){if(!this.sheetOpen())return;this.dropSheets();const trigger=this.sheetTrigger;this.sheetTrigger=null;setTimeout(()=>{if(trigger?.isConnected)trigger.focus();});}
   private dropSheets(){this.sessionExercise.set(null);this.substituting.set(null);this.substituteChoice.set(null);}
   hasPending(rows:{set:WorkoutSet}[]){return rows.some(row=>!row.set.completed);}
+  /** El renglón del comentario aparece si la serie ya tiene uno, si se está escribiendo o si es la última completada. */
+  showsNote(row:{set:WorkoutSet;index:number}){return !!row.set.note||this.noteEditing()===row.index||row.index===this.lastCompletedIndex();}
+  editNote(index:number){this.noteKey=this.setKey(index);this.noteEditing.set(index);setTimeout(()=>document.getElementById('set-note-'+index)?.focus());}
+  /** Qué serie es la que ocupa una posición: si la sesión cambia mientras se escribe, el comentario no va a otra serie. */
+  private noteKey='';
+  private setKey(index:number){const workout=this.store.activeWorkout();const set=workout?.sets[index];return workout&&set?workout.id+'|'+set.exerciseId+'|'+set.setNumber:'';}
+  /** Guarda al salir del campo o con Enter. Con Enter el foco vuelve al botón del comentario. */
+  commitNote(index:number,value:string,refocus:boolean){
+    if(this.noteEditing()!==index)return;
+    this.noteEditing.set(null);
+    if(this.setKey(index)!==this.noteKey){this.notify('La sesión cambió mientras escribías: el comentario no se guardó.');return;}
+    if(!this.store.setSetNote(index,value))this.notify(this.store.actionError()??'No se pudo guardar el comentario.');
+    if(refocus)this.focusNoteButton(index);
+  }
+  cancelNote(index:number){if(this.noteEditing()!==index)return;this.noteEditing.set(null);this.focusNoteButton(index);}
+  private focusNoteButton(index:number){setTimeout(()=>(document.querySelector('[data-note-button="'+index+'"]') as HTMLElement|null)?.focus());}
+  timeLabel(iso:string){return new Intl.DateTimeFormat('es-AR',{hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(iso));}
   openSubstitute(exercise:Exercise, trigger:HTMLElement){this.sheetTrigger=trigger;this.substituteChoice.set(null);this.substituting.set(exercise);this.focusSheet();}
   confirmSubstitute(){
     const from=this.substituting(), toId=this.substituteChoice(), workout=this.store.activeWorkout();

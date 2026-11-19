@@ -34,7 +34,16 @@ Escrituras sólo con `Content-Type: application/json` (si no, 415): junto con `S
 | PUT | `/api/state` | `{ baseRevision, state }` | 200 `{ revision }` · 409 `{ revision, state }` · 422 inválido |
 | DELETE | `/api/account` | `{ password }` | 204 · 401 |
 
-`state` es exactamente `FitAppState` v1 (`src/app/core/workout-utils.ts`), validado con `validateState`.
+`state` es exactamente `FitAppState` en su versión actual (hoy la 4, `src/app/core/workout-utils.ts`), validado con
+`validateState`, que también acepta las versiones anteriores y las actualiza. La versión 4 (migración 005) suma a
+cada serie la hora en que se completó y un comentario opcional.
+
+Al subir la versión hay que reiniciar la API: la que sigue corriendo con el código anterior responde 422 a los
+datos nuevos. Conviene publicar primero el front y reiniciar la API después: en el medio, lo peor que pasa es ese
+422, sin pérdida, y los cambios se envían cuando la API vuelve.
+
+Una app que todavía no se actualizó manda el estado en una versión anterior. La API lo rechaza con 422 y el
+mensaje "Actualizá la app": esa app no puede leer los datos de la versión actual, así que tampoco puede pisarlos.
 
 ## Decisiones
 

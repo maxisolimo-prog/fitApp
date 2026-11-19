@@ -439,6 +439,10 @@ img { max-width: 100%; }
 .data-table thead th { font-size: 12px; font-weight: 600; color: var(--ink-2); }
 .data-table tbody th { font-weight: 500; }
 .data-table tbody tr:last-child > * { border-bottom: 0; }
+/* Historial de una sesión: hora de cada serie (con el tiempo desde la anterior) y su comentario en un renglón aparte. */
+.set-time small { display: block; font-size: 11px; color: var(--ink-2); }
+.data-table tr.has-note > * { border-bottom: 0; }
+.data-table tr.set-note td { padding: 0 0 12px; text-align: left; font-size: 13px; color: var(--ink-2); white-space: pre-wrap; overflow-wrap: anywhere; }
 
 /* ---------- Biblioteca ---------- */
 .search { position: relative; display: block; }
@@ -610,6 +614,14 @@ img { max-width: 100%; }
 /* ---------- Sesión: anterior, series, notas; récords ---------- */
 .sets-table td.prev { font-size: 13px; color: var(--muted-on-dark); white-space: nowrap; width: 72px; }
 .sets-table tr.is-done td.prev { color: var(--on-dark-soft); }
+/* Comentario de una serie: un renglón debajo de la serie, solo si tiene comentario o es la última completada. */
+.sets-table tr.note-row td { width: auto; padding: 0 4px 6px; text-align: left; }
+.note-button { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; min-height: 44px; padding: 4px 8px; border: 0; border-radius: 10px; background: none; color: var(--on-dark-soft); font: inherit; font-size: 13px; line-height: 1.4; text-align: left; overflow-wrap: anywhere; }
+.note-button app-icon { width: 16px; height: 16px; color: var(--muted-on-dark); }
+.note-button:hover { color: var(--on-dark); }
+.note-add { color: var(--muted-on-dark); }
+.sets-table input.note-input { max-width: none; min-height: 44px; padding: 8px 12px; font-size: 15px; font-weight: 400; text-align: left; }
+.sets-table input.note-input::placeholder { color: var(--muted-on-dark); }
 .set-controls { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; }
 .link-light { color: var(--muted-on-dark); }
 .link-light:hover { color: var(--on-dark); }

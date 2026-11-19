@@ -83,6 +83,10 @@ La marca Fitness Group usa además Anton (títulos, un solo peso, en mayúsculas
 - Botones principales con un único estilo, etiquetas en español y foco visible. Objetivo de área táctil: al menos 44 × 44 píxeles CSS.
 - Separación por espacio y líneas antes que paneles anidados. Evitar decoración que compita con pesos, repeticiones o descanso.
 - Cambios de estado breves, de aproximadamente 150 a 200 ms, y respeto por `prefers-reduced-motion`.
+- Lo que se consulta en medio de la sesión (la ficha de un ejercicio, cambiar un ejercicio) se abre en una hoja oscura encima de la sesión, nunca saliendo de ella. La hoja muestra el descanso que está corriendo, se cierra con su botón "Volver a la sesión" o con Escape, y devuelve el foco a lo que la abrió. Mientras está abierta, lo de atrás queda inactivo.
+- En la sesión, lo opcional no ocupa lugar hasta que hace falta: el comentario de una serie es un renglón que aparece debajo de la última serie completada y de las que ya tienen uno.
+- Lo que es una estimación se muestra como tal: la duración de una rutina lleva "≈".
+- Los nombres de clase propios no pueden coincidir con una utilidad de Tailwind (`outline`, `ring`): Tailwind genera su regla y la aplica encima.
 
 ## Demostraciones de ejercicios
 

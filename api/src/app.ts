@@ -119,6 +119,7 @@ export function createApp(pool: Pool, options: AppOptions = {}) {
     const result = await saveState(pool, req.userId!, baseRevision, state);
     if (result.ok) res.json({ revision: result.revision });
     else if ('conflict' in result) res.status(409).json({ error: 'Tus datos cambiaron en otro dispositivo.', ...result.conflict });
+    else if ('outdated' in result) res.status(422).json({ error: 'Esta versión de la app es anterior a los datos de tu cuenta. Actualizá la app para seguir guardando; tus cambios quedan en este dispositivo.' });
     else res.status(422).json({ error: 'Los datos no tienen un formato FitApp válido.' });
   }));
 

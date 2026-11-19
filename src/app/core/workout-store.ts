@@ -1,9 +1,9 @@
 import { computed, Injectable, signal } from '@angular/core';
-import type { Profile, Routine, ScheduledWorkout, WeeklyPlan, WeightRecord, Workout } from './models';
+import type { Profile, Routine, ScheduledWorkout, WeeklyPlan, WeightRecord, Workout, WorkoutSet } from './models';
 import { seedExercises } from './seed';
 import {
-  buildWorkout, completeWorkout, createInitialState, deserializeState, FitAppState,
-  localDate, parseLocalDate, removeRoutine, serializeState, STORAGE_KEY, substituteExercise,
+  buildWorkout, cleanSetNote, completeWorkout, createInitialState, deserializeState, FitAppState, isNewerVersion,
+  localDate, parseLocalDate, removeRoutine, serializeState, SET_NOTE_MAX, STORAGE_KEY, substituteExercise,
   validateProfile, validateRoutine, validateState, validateWorkout, validSetValues, weekDates,
 } from './workout-utils';
 
@@ -30,7 +30,25 @@ function parseSyncMeta(value: unknown): SyncMeta | null {
   return { email: meta['email'], revision, dirty: meta['dirty'], signedIn: meta['signedIn'] };
 }
 
-/** The stored entry is FitAppState v1 plus an optional `sync` field that validateState ignores. */
+const NEWER_VERSION = 'Estos datos se guardaron con una versión más nueva de la app. Actualizá la app para seguir: hasta entonces no se guarda ningún cambio, así no se pisa nada.';
+
+/** true si lo guardado es de una versión posterior a la de esta app: no es basura, es algo que esta app no sabe leer. */
+function storedByNewerVersion(raw: string): boolean {
+  try { return isNewerVersion(JSON.parse(raw)); } catch { return false; }
+}
+
+/**
+ * Una serie con las claves siempre en el mismo orden (el de `validateWorkout` y la API). Dos copias con los mismos
+ * datos tienen que dar el mismo texto: la sincronización las compara así.
+ */
+function orderedSet(set: WorkoutSet, completed: boolean, completedAt: string | undefined, note: string | undefined): WorkoutSet {
+  return {
+    exerciseId: set.exerciseId, exerciseName: set.exerciseName, setNumber: set.setNumber, reps: set.reps, weight: set.weight,
+    completed, ...(completedAt ? { completedAt } : {}), ...(note ? { note } : {}),
+  };
+}
+
+/** The stored entry is FitAppState plus an optional `sync` field that validateState ignores. */
 function parseStored(raw: string): { state: FitAppState; sync: SyncMeta | null } | null {
   if (raw.length > 20_000_000) return null;
   try {
@@ -60,6 +78,8 @@ export class WorkoutStore {
 
   /** Account sync bookkeeping; null when this device does not follow an account (or its data could not be read). */
   private sync: SyncMeta | null = null;
+  /** Lo guardado es de una versión más nueva: esta app no escribe nada encima hasta que se actualice. */
+  private frozen = false;
 
   constructor() {
     try {
@@ -67,6 +87,7 @@ export class WorkoutStore {
       if (saved !== null) {
         const restored = parseStored(saved);
         if (restored) { this.applyState(restored.state); this.sync = restored.sync; }
+        else if (storedByNewerVersion(saved)) { this.frozen = true; this.storageError.set(NEWER_VERSION); }
         // Without valid data the sync metadata is not trusted either: the account copy must not be overwritten.
         else this.storageError.set('No pudimos recuperar los datos guardados: el archivo local no es válido. Podés importar una copia de seguridad o ingresar a tu cuenta.');
       }
@@ -188,7 +209,23 @@ export class WorkoutStore {
   toggleSet(index: number): boolean {
     const workout = this.activeWorkout();
     if (!workout || !Number.isInteger(index) || !workout.sets[index]) return this.fail('No encontramos esa serie.');
-    this.activeWorkout.set({ ...workout, sets: workout.sets.map((set, position) => position === index ? { ...set, completed: !set.completed } : set) });
+    // La hora se anota al completar y se borra al desmarcar: nunca queda una hora en una serie pendiente.
+    this.activeWorkout.set({ ...workout, sets: workout.sets.map((set, position) => position !== index ? set
+      : orderedSet(set, !set.completed, set.completed ? undefined : new Date().toISOString(), set.note)) });
+    this.persist();
+    return true;
+  }
+
+  /** Comentario corto de una serie de la sesión en curso. En blanco lo borra. */
+  setSetNote(index: number, note: string): boolean {
+    const workout = this.activeWorkout();
+    if (!workout || !Number.isInteger(index) || !workout.sets[index]) return this.fail('No encontramos esa serie.');
+    if (typeof note !== 'string' || note.length > SET_NOTE_MAX) return this.fail(`El comentario puede tener hasta ${SET_NOTE_MAX} caracteres.`);
+    const text = cleanSetNote(note);
+    // Abrir y cerrar el campo sin cambiar nada no cuenta como un cambio (no hay nada que enviar a la cuenta).
+    if (text === (workout.sets[index].note ?? '')) { this.actionError.set(null); return true; }
+    this.activeWorkout.set({ ...workout, sets: workout.sets.map((set, position) => position !== index ? set
+      : orderedSet(set, set.completed, set.completedAt, text || undefined)) });
     this.persist();
     return true;
   }
@@ -201,7 +238,11 @@ export class WorkoutStore {
     if (!ofExercise.length) return this.fail('No encontramos ese ejercicio en la sesión.');
     if (ofExercise.length >= 30 || workout.sets.length >= 500) return this.fail('Llegaste al máximo de series para este ejercicio.');
     const last = ofExercise.at(-1)!;
-    const added = { ...last.set, setNumber: ofExercise.length + 1, completed: false };
+    // Campo por campo: la serie nueva no hereda la hora ni el comentario de la que copia.
+    const added: WorkoutSet = {
+      exerciseId: last.set.exerciseId, exerciseName: last.set.exerciseName, setNumber: ofExercise.length + 1,
+      reps: last.set.reps, weight: last.set.weight, completed: false,
+    };
     const sets = [...workout.sets.slice(0, last.index + 1), added, ...workout.sets.slice(last.index + 1)];
     this.activeWorkout.set({ ...workout, sets });
     this.persist();
@@ -307,7 +348,7 @@ export class WorkoutStore {
   /** Called when another tab changed the stored data and this tab reloaded it. */
   onExternalChange: (() => void) | null = null;
 
-  /** Current data as a FitAppState v1 snapshot. */
+  /** Current data as a FitAppState snapshot (current version). */
   snapshot(): FitAppState {
     return this.state();
   }
@@ -339,7 +380,11 @@ export class WorkoutStore {
   private reloadFrom(raw: string | null): void {
     if (raw === null) return;
     const parsed = parseStored(raw);
-    if (!parsed) return;
+    if (!parsed) {
+      // La otra pestaña ya corre una versión más nueva: esta deja de escribir para no pisar lo que guarde.
+      if (storedByNewerVersion(raw)) { this.frozen = true; this.storageError.set(NEWER_VERSION); }
+      return;
+    }
     this.applyState(parsed.state);
     this.sync = parsed.sync;
     this.onExternalChange?.();
@@ -347,7 +392,7 @@ export class WorkoutStore {
 
   private state(): FitAppState {
     return {
-      version: 3, profile: this.profile(), routines: this.routines(), history: this.history(),
+      version: 4, profile: this.profile(), routines: this.routines(), history: this.history(),
       schedule: this.schedule(), weeklyPlan: this.weeklyPlan(), weights: this.weights(), activeWorkout: this.activeWorkout(),
     };
   }
@@ -365,6 +410,8 @@ export class WorkoutStore {
   /** notify = a user change: it is marked pending for sync in the same write. */
   private persist(notify = true): void {
     this.actionError.set(null);
+    // Nada se escribe ni se envía a la cuenta: lo guardado es de una versión que esta app no sabe leer.
+    if (this.frozen) { this.storageError.set(NEWER_VERSION); return; }
     if (notify && this.sync && !this.sync.dirty) this.sync = { ...this.sync, dirty: true };
     try {
       if (typeof localStorage === 'undefined') throw new Error('Storage unavailable');

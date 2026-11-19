@@ -6,9 +6,31 @@ import { defaultProfile, seedExercises, seedRoutines } from './seed';
 
 export const STORAGE_KEY = 'fitapp-state-v1';
 
-/** Current format. v1 had no weeklyPlan, v2 no profile focus/place; validateState upgrades both. */
+/** Versión actual de FitAppState. La API rechaza guardar una anterior y la app no pisa datos de una posterior. */
+export const STATE_VERSION = 4;
+
+/** Largo máximo del comentario de una serie; es también el de la columna `workout_sets.note` de la API. */
+export const SET_NOTE_MAX = 200;
+
+/**
+ * Forma canónica de un comentario: sin mitades sueltas de un emoji (un texto pegado y recortado puede dejarlas, y
+ * la base las guardaría distinto) y sin espacios en los extremos.
+ */
+export function cleanSetNote(value: string): string {
+  return value.replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, '').trim();
+}
+
+/** true si los datos dicen ser de una versión de FitAppState posterior a la que conoce esta app. */
+export function isNewerVersion(value: unknown): boolean {
+  return record(value) && number(value['version'], STATE_VERSION + 1, Number.MAX_SAFE_INTEGER, true);
+}
+
+/**
+ * Current format. v1 had no weeklyPlan, v2 no profile focus/place, v3 no time or note per set; validateState
+ * upgrades all of them (the newer fields are simply absent in older data).
+ */
 export interface FitAppState {
-  version: 3;
+  version: 4;
   profile: Profile;
   routines: Routine[];
   history: Workout[];
@@ -100,7 +122,7 @@ export function plannedRoutineId(state: Pick<FitAppState, 'schedule' | 'weeklyPl
 
 export function createInitialState(): FitAppState {
   return {
-    version: 3,
+    version: 4,
     profile: { ...defaultProfile },
     routines: seedRoutines.map((routine) => ({ ...routine, exercises: routine.exercises.map((exercise) => ({ ...exercise })) })),
     history: [],
@@ -211,11 +233,19 @@ export function validateWorkout(value: unknown, active: boolean): Workout | null
   for (const candidate of value['sets']) {
     if (!record(candidate) || !text(candidate['exerciseId'], 100) || !exerciseIds.has(candidate['exerciseId']) || !text(candidate['exerciseName'], 100)
       || !number(candidate['setNumber'], 1, 30, true) || !validSetValues(candidate['reps'], candidate['weight'])
-      || typeof candidate['completed'] !== 'boolean' || (!active && !candidate['completed'])) return null;
+      || typeof candidate['completed'] !== 'boolean' || (!active && !candidate['completed'])
+      || (candidate['completedAt'] !== undefined && !timestamp(candidate['completedAt']))
+      || (candidate['note'] !== undefined && !text(candidate['note'], SET_NOTE_MAX, true))) return null;
+    const note = candidate['note'] === undefined ? '' : cleanSetNote(candidate['note']);
     sets.push({
       exerciseId: candidate['exerciseId'], exerciseName: candidate['exerciseName'],
       setNumber: candidate['setNumber'], reps: candidate['reps'] as number,
       weight: candidate['weight'] as number, completed: candidate['completed'],
+      // La hora solo vale en una serie completada: en una pendiente se descarta, no invalida el resto. Forma
+      // canónica (UTC con milisegundos), igual que la que devuelve la API.
+      ...(candidate['completed'] && candidate['completedAt'] !== undefined ? { completedAt: new Date(candidate['completedAt']).toISOString() } : {}),
+      // Un comentario en blanco es lo mismo que no tenerlo.
+      ...(note ? { note } : {}),
     });
   }
   return {
@@ -229,7 +259,7 @@ export function validateWorkout(value: unknown, active: boolean): Workout | null
 
 /** Strictly reconstruct known fields: imported objects are never assigned to app state. */
 export function validateState(value: unknown): FitAppState | null {
-  if (!record(value) || ![1, 2, 3].includes(value['version'] as number) || !Array.isArray(value['routines'])
+  if (!record(value) || ![1, 2, 3, 4].includes(value['version'] as number) || !Array.isArray(value['routines'])
     || !Array.isArray(value['history']) || !Array.isArray(value['schedule']) || !Array.isArray(value['weights'])
     || value['routines'].length < 1 || value['routines'].length > 200 || value['history'].length > 10_000
     || value['schedule'].length > 5000 || value['weights'].length > 10_000) return null;
@@ -275,7 +305,7 @@ export function validateState(value: unknown): FitAppState | null {
   // Calendar and weights are kept in date order everywhere (store and API).
   schedule.sort((a, b) => a.date.localeCompare(b.date));
   weights.sort((a, b) => a.date.localeCompare(b.date));
-  return { version: 3, profile, routines, history, schedule, weeklyPlan, weights, activeWorkout };
+  return { version: 4, profile, routines, history, schedule, weeklyPlan, weights, activeWorkout };
 }
 
 export function serializeState(value: FitAppState): string {
@@ -386,6 +416,23 @@ export function recordSwap(current: SessionSwaps | null, workoutId: string, from
 /** Ejercicio de la rutina al que corresponde un ejercicio de la sesión: él mismo, o el que reemplazó. */
 export function swapOrigin(current: SessionSwaps | null, workoutId: string, exerciseId: string): string {
   return current?.workoutId === workoutId && Object.hasOwn(current.swaps, exerciseId) ? current.swaps[exerciseId] : exerciseId;
+}
+
+/**
+ * Segundos entre que se completó cada serie y la que se completó antes, en el orden en que se hicieron. Incluye el
+ * descanso y lo que llevó hacer la serie. null en la primera y en las series sin hora (anteriores a la versión 4).
+ * El resultado va en el mismo orden que `workout.sets`.
+ */
+export function setPauses(workout: Pick<Workout, 'sets'>): (number | null)[] {
+  const timed = workout.sets
+    .map((set, index) => ({ index, time: set.completedAt ? Date.parse(set.completedAt) : Number.NaN }))
+    .filter((entry) => Number.isFinite(entry.time))
+    .sort((a, b) => a.time - b.time || a.index - b.index);
+  const pauses: (number | null)[] = workout.sets.map(() => null);
+  for (let position = 1; position < timed.length; position++) {
+    pauses[timed[position].index] = Math.round((timed[position].time - timed[position - 1].time) / 1000);
+  }
+  return pauses;
 }
 
 export interface PersonalRecord {

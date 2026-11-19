@@ -1,6 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { WorkoutStore, type SyncMeta } from './workout-store';
-import { createInitialState, isFactoryState, serializeState, type FitAppState } from './workout-utils';
+import { createInitialState, isFactoryState, isNewerVersion, serializeState, validateState, type FitAppState } from './workout-utils';
 
 export type SyncStatus = 'local' | 'checking' | 'syncing' | 'synced' | 'offline' | 'error' | 'conflict';
 
@@ -16,6 +16,12 @@ interface ApiResult { status: number; data: Record<string, unknown> | null }
 
 const DEBOUNCE_MS = 1500;
 const EXPIRED = 'Tu sesión venció. Ingresá de nuevo para sincronizar.';
+const NEWER_ACCOUNT = 'Tu cuenta tiene datos de una versión más nueva de la app. Actualizá la app para sincronizar; tus cambios quedan en este dispositivo.';
+
+/** Same data must give the same text whatever order its keys were written in: both copies go through the validator. */
+function canonical(state: FitAppState): string {
+  return serializeState(validateState(state) ?? state);
+}
 
 /**
  * Optional account sync. The device keeps working with localStorage; when signed in, every local
@@ -197,7 +203,10 @@ export class SyncService {
   private serverIsNewer(revision: number, server: FitAppState): void {
     const meta = this.meta;
     if (!meta) return;
-    if (meta.dirty && serializeState(server) !== serializeState(this.store.snapshot())) {
+    // Data this app cannot read is never offered as a choice: "use the account" would fail and "keep this device"
+    // would overwrite newer data. Updating the app is the only way forward.
+    if (isNewerVersion(server)) { this.status.set('error'); this.error.set(NEWER_ACCOUNT); return; }
+    if (meta.dirty && canonical(server) !== canonical(this.store.snapshot())) {
       this.conflict.set({ revision, server, serverWorkouts: server.history.length, localWorkouts: this.store.history().length });
       this.status.set('conflict');
       return;

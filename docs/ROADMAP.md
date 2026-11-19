@@ -50,6 +50,24 @@ Decisión del usuario: además de la versión actual, una con la estética de Qi
 - Falta lo que depende de ellos: su acuerdo para publicar con su nombre y su logo, y la tipografía de títulos de
   Qivox (B-19 a B-21 en [BACKLOG.md](BACKLOG.md)). Ninguno de los dos gimnasios vio ni validó su versión.
 
+## Quinta entrega (19 de noviembre de 2026): el ejercicio se ve y la sesión acompaña
+
+Sale del análisis de Fitness Online (`docs/COMPETENCIA.md`). Detalle de cada ítem en [BACKLOG.md](BACKLOG.md).
+
+- **Músculos y mapa muscular** (B-01, B-02): principales y secundarios de los 43 ejercicios, y un cuerpo de frente
+  y de espalda en la ficha.
+- **Miniaturas** en biblioteca, rutina, sesión y selector del editor (B-04): el mapa muscular en chico, hasta que
+  haya imágenes.
+- **Ficha del ejercicio desde la sesión** (B-05), sin salir ni perder lo cargado.
+- **Cambiar un ejercicio** por otro del mismo movimiento durante la sesión (B-06).
+- **Duración estimada** calculada con series y descansos, y "Empezar" siempre a mano en el celular (B-07).
+- **Avance de la sesión** en Inicio (B-08).
+- **Hora y comentario por serie** (B-10, B-11): FitAppState v4, migración 005.
+- Dos revisiones adversariales del dominio (`store-guardian`). La primera encontró que cambiar la duración de las
+  plantillas hacía aparecer un conflicto falso al ingresar a una cuenta desde un dispositivo vacío; corregido.
+- **Sin validar:** la clasificación de músculos, los movimientos equivalentes y los tiempos de la duración estimada
+  son generales y no los revisó un profesional. Nada de esto se probó todavía en un gimnasio ni en un teléfono real.
+
 ## Estado frente a la hipótesis de producto
 
 Hipótesis: registro simple + planificación personalizada + IA conversacional, para hispanohablantes.
@@ -127,12 +145,13 @@ Los tres primeros salen del análisis de Fitness Online del 17 de noviembre de 2
    principales y secundarios, miniaturas en todas las listas y la ficha del ejercicio a un toque desde la sesión.
    No cambia el esquema ni exige comprar licencias. El usuario decidió que las imágenes las cree GPT; el dibujo de
    línea de licencia abierta queda como reserva. Falta generar una imagen de prueba y que apruebe el estilo: la
-   cuenta de ChatGPT quedó sin cupo hasta el 20 de noviembre de 2026. **Hecho el 18 de noviembre:** músculos de los
-   43 ejercicios (B-01) y mapa muscular en la ficha (B-02). Siguen las miniaturas (B-04), la ficha desde la sesión
-   (B-05) y las imágenes (B-03).
+   cuenta de ChatGPT quedó sin cupo hasta el 20 de noviembre de 2026. **Hecho** (quinta entrega): músculos, mapa
+   muscular, miniaturas y ficha desde la sesión. Faltan las imágenes (B-03); el prompt para pedirlas está en
+   [PROMPT-IMAGENES.md](PROMPT-IMAGENES.md).
 2. **La sesión en el gimnasio** (B-06 a B-12). Sustituir un ejercicio cuando la máquina está ocupada, duración
    estimada calculada, avance de la sesión en curso, aclarar si la carga es total o por mancuerna, hora y comentario
    por serie (FitAppState v4). La vista de un ejercicio por pantalla se decide después de probar lo anterior.
+   **Hecho** (quinta entrega) todo menos B-09 y B-12, que esperan una decisión del usuario.
 3. **Animaciones anatómicas con licencia comercial** (B-17). Solo si las imágenes del punto 1 no alcanzan o se
    quiere movimiento. Validar su correspondencia con ejercicios y técnica con un profesional.
    **Requiere comprar la licencia.**

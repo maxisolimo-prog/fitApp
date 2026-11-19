@@ -128,6 +128,43 @@ test('a device left empty by an earlier version (other template durations) still
   assert.equal(server.puts, 0, 'the account is not overwritten');
 }));
 
+test('the same data with its keys written in another order is not a conflict (review of v4)', () => withStorage(async () => {
+  const store = new WorkoutStore();
+  finishOneWorkout(store);
+  const local = store.snapshot();
+  const reordered = JSON.parse(JSON.stringify(local)) as FitAppState;
+  reordered.history = reordered.history.map((workout) => ({
+    ...workout, sets: workout.sets.map((set) => Object.fromEntries(Object.entries(set).reverse()) as unknown as typeof set),
+  }));
+  assert.notEqual(JSON.stringify(reordered), JSON.stringify(local));
+  const server = new FakeServer();
+  server.state = reordered;
+  server.revision = 7;
+  const sync = new SyncService(store, server.fetch);
+  await sync.login('a@b.co', 'una-clave-larga');
+  assert.equal(sync.status(), 'synced');
+  assert.equal(sync.conflict(), null);
+  assert.equal(server.puts, 0);
+}));
+
+test('an account with data from a newer app version is neither offered as a choice nor overwritten (review of v4)', () => withStorage(async () => {
+  const server = new FakeServer();
+  server.state = { ...accountState(), version: 5 } as unknown as FitAppState;
+  server.revision = 3;
+  const store = new WorkoutStore();
+  store.updateProfile({ name: 'Local' });
+  const sync = new SyncService(store, server.fetch);
+  await sync.login('a@b.co', 'una-clave-larga');
+  assert.equal(sync.status(), 'error');
+  assert.equal(sync.conflict(), null, 'no dialog: either answer would lose data');
+  assert.match(sync.error()!, /Actualizá la app/);
+  store.updateProfile({ name: 'Local otra vez' });
+  sync.flush();
+  await sync.syncNow();
+  assert.equal(server.puts, 0, 'the account is never overwritten');
+  assert.equal(store.profile().name, 'Local otra vez', 'local changes stay on the device');
+}));
+
 test('logging in on a device with its own data asks which copy to keep', () => withStorage(async () => {
   const server = new FakeServer();
   server.state = accountState();

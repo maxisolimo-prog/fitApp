@@ -58,9 +58,14 @@ function sampleState() {
   const done = buildWorkout(state.routines[0], 'workout-done', '2026-11-15T12:00:00.000Z');
   done.sets[0].completed = true;
   done.sets[0].weight = 22.5;
+  // v4: hora y comentario de la serie; la segunda queda sin ninguno de los dos, como una serie anterior a v4.
+  done.sets[0].completedAt = '2026-11-15T12:10:05.123Z';
+  done.sets[0].note = 'Me costó la última 💪';
+  done.sets[1].completed = true;
   state.history = [completeWorkout(done, '2026-11-15T12:40:00.000Z')!];
   state.activeWorkout = buildWorkout(state.routines[1], 'workout-active', '2026-11-16T13:00:00.000Z');
   state.activeWorkout.sets[1].completed = true;
+  state.activeWorkout.sets[1].completedAt = '2026-11-16T13:04:00.000Z';
   state.schedule = [{ id: 'plan-1', date: '2026-11-17', routineId: 'lower-body' }];
   state.weeklyPlan = ['upper-body', null, 'lower-body', null, 'full-body', null, null];
   state.weights = [{ id: 'weight-1', date: '2026-11-16', weight: 68.5 }];
@@ -128,6 +133,11 @@ test('stale revisions get 409 with the current server data; invalid states get 4
   invalid.routines[0].exercises[0].exerciseId = 'inexistente';
   assert.equal((await client.call('PUT', '/api/state', { baseRevision: 1, state: invalid })).status, 422);
   assert.equal((await client.call('PUT', '/api/state', { baseRevision: 1 })).status, 422);
+  // Una app sin actualizar (estado de una versión anterior) no puede pisar la cuenta: tiene que actualizarse.
+  const outdated = await client.call('PUT', '/api/state', { baseRevision: 1, state: { ...createInitialState(), version: 3 } });
+  assert.equal(outdated.status, 422);
+  assert.match(outdated.data.error, /Actualizá la app/);
+  assert.deepEqual((await client.call('GET', '/api/state')).data, { revision: 1, state });
   assert.equal((await client.call('PUT', '/api/state', { state })).status, 400);
   assert.deepEqual((await client.call('GET', '/api/state')).data, { revision: 1, state });
 });

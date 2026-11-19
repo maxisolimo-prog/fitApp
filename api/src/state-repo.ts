@@ -1,6 +1,6 @@
 import type { Pool, PoolConnection, RowDataPacket } from 'mysql2/promise';
 import type { FitnessLevel, Routine, RoutineCategory, ScheduledWorkout, TrainingFocus, TrainingPlace, WeightRecord, Workout, WorkoutSet } from '../../src/app/core/models.ts';
-import { validateState, type FitAppState } from '../../src/app/core/workout-utils.ts';
+import { STATE_VERSION, validateState, type FitAppState } from '../../src/app/core/workout-utils.ts';
 import { fromSqlDateTime, toSqlDateTime, transaction } from './db.ts';
 
 type Row = RowDataPacket & Record<string, unknown>;
@@ -23,7 +23,7 @@ async function insertMany(db: PoolConnection, table: string, columns: string[], 
 
 export interface StoredState { revision: number; state: FitAppState | null }
 
-/** Rebuilds FitAppState v3 from the relational rows. revision 0 means the account has no data yet. */
+/** Rebuilds FitAppState (current version) from the relational rows. revision 0 means the account has no data yet. */
 export async function loadState(db: Executor, userId: number): Promise<StoredState> {
   const [user] = await rows(db, 'SELECT name, goal, level, weekly_goal, weight, focus, place, revision FROM users WHERE id = ?', [userId]);
   if (!user) throw new Error('Usuario inexistente');
@@ -33,7 +33,7 @@ export async function loadState(db: Executor, userId: number): Promise<StoredSta
   const routineRows = await rows(db, 'SELECT id, name, description, category, duration, level, custom FROM routines WHERE user_id = ? ORDER BY position', [userId]);
   const exerciseRows = await rows(db, 'SELECT routine_id, exercise_id, sets, reps, weight, rest_seconds FROM routine_exercises WHERE user_id = ? ORDER BY routine_id, position', [userId]);
   const workoutRows = await rows(db, 'SELECT id, is_active, routine_id, routine_name, started_at, finished_at, notes FROM workouts WHERE user_id = ? ORDER BY position', [userId]);
-  const setRows = await rows(db, 'SELECT workout_id, exercise_id, exercise_name, set_number, reps, weight, completed FROM workout_sets WHERE user_id = ? ORDER BY workout_id, position', [userId]);
+  const setRows = await rows(db, 'SELECT workout_id, exercise_id, exercise_name, set_number, reps, weight, completed, completed_at, note FROM workout_sets WHERE user_id = ? ORDER BY workout_id, position', [userId]);
   const scheduleRows = await rows(db, 'SELECT id, date, routine_id FROM scheduled_workouts WHERE user_id = ? ORDER BY date', [userId]);
   const weightRows = await rows(db, 'SELECT id, date, weight FROM weight_records WHERE user_id = ? ORDER BY date', [userId]);
   const planRows = await rows(db, 'SELECT weekday, routine_id FROM weekly_plan WHERE user_id = ?', [userId]);
@@ -54,7 +54,11 @@ export async function loadState(db: Executor, userId: number): Promise<StoredSta
   const setsByWorkout = new Map<string, WorkoutSet[]>();
   for (const row of setRows) {
     const list = setsByWorkout.get(String(row['workout_id'])) ?? [];
-    list.push({ exerciseId: String(row['exercise_id']), exerciseName: String(row['exercise_name']), setNumber: Number(row['set_number']), reps: Number(row['reps']), weight: Number(row['weight']), completed: Number(row['completed']) === 1 });
+    list.push({
+      exerciseId: String(row['exercise_id']), exerciseName: String(row['exercise_name']), setNumber: Number(row['set_number']), reps: Number(row['reps']), weight: Number(row['weight']), completed: Number(row['completed']) === 1,
+      ...(row['completed_at'] === null ? {} : { completedAt: fromSqlDateTime(String(row['completed_at'])) }),
+      ...(row['note'] === null ? {} : { note: String(row['note']) }),
+    });
     setsByWorkout.set(String(row['workout_id']), list);
   }
   let activeWorkout: Workout | null = null;
@@ -75,7 +79,7 @@ export async function loadState(db: Executor, userId: number): Promise<StoredSta
   const weights: WeightRecord[] = weightRows.map((row) => ({ id: String(row['id']), date: String(row['date']), weight: Number(row['weight']) }));
 
   const state: FitAppState = {
-    version: 3,
+    version: 4,
     profile: { name: String(user['name']), goal: String(user['goal']), level: user['level'] as FitnessLevel, weeklyGoal: Number(user['weekly_goal']), weight: user['weight'] === null ? null : Number(user['weight']), focus: user['focus'] as TrainingFocus, place: user['place'] as TrainingPlace },
     routines, history, schedule, weeklyPlan, weights, activeWorkout,
   };
@@ -85,16 +89,26 @@ export async function loadState(db: Executor, userId: number): Promise<StoredSta
 /** DATETIME accepts years 1000–9999; anything outside 1970–9999 is not a real session anyway. */
 function storableTimestamps(state: FitAppState): boolean {
   const ok = (iso: string | null) => iso === null || (Date.parse(iso) >= 0 && Date.parse(iso) < Date.UTC(10000, 0, 1));
-  return [...state.history, ...(state.activeWorkout ? [state.activeWorkout] : [])].every((w) => ok(w.startedAt) && ok(w.finishedAt));
+  return [...state.history, ...(state.activeWorkout ? [state.activeWorkout] : [])]
+    .every((w) => ok(w.startedAt) && ok(w.finishedAt) && w.sets.every((s) => ok(s.completedAt ?? null)));
 }
 
-export type SaveResult = { ok: true; revision: number } | { ok: false; conflict: StoredState } | { ok: false; invalid: true };
+export type SaveResult = { ok: true; revision: number } | { ok: false; conflict: StoredState } | { ok: false; invalid: true } | { ok: false; outdated: true };
+
+/** true si los datos vienen de una app anterior a la versión actual del estado. */
+function fromOlderApp(input: unknown): boolean {
+  const version = input !== null && typeof input === 'object' ? (input as { version?: unknown }).version : undefined;
+  return typeof version === 'number' && Number.isInteger(version) && version >= 1 && version < STATE_VERSION;
+}
 
 /**
  * Replaces the user's data with a validated snapshot, but only if baseRevision matches the stored
  * revision (optimistic concurrency). The row lock on users serialises concurrent saves.
  */
 export async function saveState(pool: Pool, userId: number, baseRevision: number, input: unknown): Promise<SaveResult> {
+  // Una app sin actualizar no puede leer los datos de la versión actual, así que tampoco puede pisarlos: si
+  // guardara, se perderían lo que otro dispositivo ya subió y los campos que ella no conoce.
+  if (fromOlderApp(input)) return { ok: false, outdated: true };
   const state = validateState(input);
   if (!state || !storableTimestamps(state)) return { ok: false, invalid: true };
   return transaction(pool, async (db) => {
@@ -118,8 +132,9 @@ export async function saveState(pool: Pool, userId: number, baseRevision: number
     const workouts = [...state.history.map((w) => ({ w, active: 0 })), ...(state.activeWorkout ? [{ w: state.activeWorkout, active: 1 }] : [])];
     await insertMany(db, 'workouts', ['user_id', 'id', 'position', 'is_active', 'routine_id', 'routine_name', 'started_at', 'finished_at', 'notes'],
       workouts.map(({ w, active }, i) => [userId, w.id, i, active, w.routineId, w.routineName, toSqlDateTime(w.startedAt), w.finishedAt === null ? null : toSqlDateTime(w.finishedAt), w.notes ?? null]));
-    await insertMany(db, 'workout_sets', ['user_id', 'workout_id', 'position', 'exercise_id', 'exercise_name', 'set_number', 'reps', 'weight', 'completed'],
-      workouts.flatMap(({ w }) => w.sets.map((s, i) => [userId, w.id, i, s.exerciseId, s.exerciseName, s.setNumber, s.reps, s.weight, s.completed ? 1 : 0])));
+    await insertMany(db, 'workout_sets', ['user_id', 'workout_id', 'position', 'exercise_id', 'exercise_name', 'set_number', 'reps', 'weight', 'completed', 'completed_at', 'note'],
+      workouts.flatMap(({ w }) => w.sets.map((s, i) => [userId, w.id, i, s.exerciseId, s.exerciseName, s.setNumber, s.reps, s.weight, s.completed ? 1 : 0,
+        s.completedAt === undefined ? null : toSqlDateTime(s.completedAt), s.note ?? null])));
 
     await insertMany(db, 'scheduled_workouts', ['user_id', 'id', 'date', 'routine_id'], state.schedule.map((s) => [userId, s.id, s.date, s.routineId]));
     await insertMany(db, 'weight_records', ['user_id', 'id', 'date', 'weight'], state.weights.map((w) => [userId, w.id, w.date, w.weight]));

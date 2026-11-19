@@ -58,6 +58,13 @@ export interface WorkoutSet {
   reps: number;
   weight: number;
   completed: boolean;
+  /**
+   * Momento en que se marcó como completada (ISO 8601, v4). Falta en las series pendientes y en las registradas
+   * antes de la versión 4: no se inventa.
+   */
+  completedAt?: string;
+  /** Comentario corto del alumno sobre la serie (v4). */
+  note?: string;
 }
 
 export interface Workout {
