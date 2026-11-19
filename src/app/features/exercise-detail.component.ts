@@ -144,7 +144,7 @@ interface ExerciseSession {
     </article>
   `,
   styles: `
-    :host{display:block;color:#F7F5EE;font-family:inherit;--detail-bg:#142118;--detail-deep:#0E1811;--detail-surface:#1B2A1F;--detail-text:#F7F5EE;--detail-muted:#A9B3A8;--detail-accent:#C8F24C;--detail-line:#344238}
+    :host{display:block;color:var(--on-dark);font-family:inherit;--detail-bg:var(--dark);--detail-deep:var(--dark-deep);--detail-surface:var(--dark-panel);--detail-text:var(--on-dark);--detail-muted:var(--muted-on-dark);--detail-accent:var(--accent);--detail-line:var(--line-dark)}
     *,*::before,*::after{box-sizing:border-box}
     button,a,select,summary{-webkit-tap-highlight-color:transparent}
     button,select{font:inherit}
@@ -169,7 +169,7 @@ interface ExerciseSession {
     .reference-top{display:flex;align-items:center;justify-content:space-between;gap:12px}.reference-type{font-size:9px;letter-spacing:.12em;border:1px solid var(--detail-line);padding:3px 6px;border-radius:4px;color:var(--detail-muted)}
     .animation-link{display:flex;align-items:center;gap:17px;min-height:110px;color:var(--detail-text);text-decoration:none;border-radius:8px}
     .animation-link:hover{color:var(--detail-accent)}.animation-link>span:nth-child(2){flex:1}.animation-link strong{display:block;font-weight:600;font-size:17px;line-height:1.35;letter-spacing:-.02em}.animation-link>span>span{display:block;color:var(--detail-muted);font-size:12px;margin-top:6px}
-    .play-icon{display:grid;place-items:center;flex-shrink:0;width:54px;height:54px;border:1px solid var(--detail-accent);border-radius:50%;color:var(--detail-accent);background:#C8F24C0A}.play-icon svg{width:23px;height:23px;margin-left:-3px}
+    .play-icon{display:grid;place-items:center;flex-shrink:0;width:54px;height:54px;border:1px solid var(--detail-accent);border-radius:50%;color:var(--detail-accent);background:color-mix(in srgb, var(--accent) 4%, transparent)}.play-icon svg{width:23px;height:23px;margin-left:-3px}
     .external-icon{flex-shrink:0;width:18px;height:18px;color:var(--detail-muted)}.reference-panel>p{margin:0;color:var(--detail-muted);font-size:11px;line-height:1.5}
     .movement-panel{background:var(--detail-deep);border-radius:12px;padding:22px}.movement-panel>p{margin:12px 0 14px;font-size:15px;line-height:1.65;max-width:50ch}
     .inline-action{display:inline-flex;align-items:center;gap:16px;background:none;border:0;padding:10px 0;color:var(--detail-accent);font-size:13px;font-weight:600;text-decoration:none}.inline-action:hover{color:var(--detail-text)}.inline-action>span{font-size:18px}
