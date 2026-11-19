@@ -39,19 +39,19 @@ FitApp es un solo código con varias versiones. Una marca cambia el aspecto, el 
 | Títulos | Inter | Inter 800 (en lugar de Graphik) | Anton en mayúsculas |
 | Texto | Inter | Inter | Manrope |
 | Tarjetas / botones | 14 px / 10 px | 12 px / píldora | 22 px / píldora |
-| Logo | `icons/icon.svg` | pendiente: nombre en texto | pendiente: nombre en texto |
+| Logo en la barra | ícono propio y nombre | logotipo de su web | insignia de su web y nombre |
 
-Origen de los valores, leídos el 18 de noviembre de 2026: Qivox, de la hoja de tokens pública de [qivox.com.ar](https://qivox.com.ar/) (`--qx-yellow`, `--qx-ink`, `--qx-off-white`, radios e interletra); Fitness Group, de los colores y tipografías globales de [fitnessgroup.ar](https://fitnessgroup.ar/) (`fg_yellow`, `fg_black`, `fg_light`, Anton y Manrope). Se tomaron valores, no archivos: ni logos, ni fotos, ni fuentes de esos sitios.
+Origen de los valores, leídos el 18 de noviembre de 2026: Qivox, de la hoja de tokens pública de [qivox.com.ar](https://qivox.com.ar/) (`--qx-yellow`, `--qx-ink`, `--qx-off-white`, radios e interletra); Fitness Group, de los colores y tipografías globales de [fitnessgroup.ar](https://fitnessgroup.ar/) (`fg_yellow`, `fg_black`, `fg_light`, Anton y Manrope). De esos sitios se tomaron valores y, después, los logos (ver las reglas); ni fotos ni fuentes.
 
 Reglas:
 
 - **Colores, tipografía y radios solo por token.** Ninguna regla CSS escribe un color a mano; `tests/brands.test.ts` lo verifica y además comprueba el contraste AA de cada marca sobre sus fondos.
 - **Sin "si la marca es X" en pantallas ni en lógica.** El aspecto sale de los tokens; las diferencias de comportamiento, de `brand.features` (hoy `account` e `install`, las dos activas en las tres marcas).
-- **Logo y tipografía de cada gimnasio los entrega el gimnasio.** Graphik, la de títulos de Qivox, es comercial: no se copia de su web. Hasta tener el logo, la barra muestra el nombre en texto.
+- **Los logos son de cada gimnasio.** Por pedido del usuario se usan los de sus webs públicas (`public/brand-logos/`, registrados en `docs/ASSETS.md`) para mostrar las versiones. No hay autorización registrada: publicarlas requiere el acuerdo de cada gimnasio, que además puede entregar sus archivos originales. Graphik, la tipografía de títulos de Qivox, es comercial y no se copia de su web.
 - **Qué marca se ve:** `?marca=qivox` o `?marca=fitnessgroup` en la dirección (queda guardado en el dispositivo; `?marca=fitapp` vuelve a la original), o el subdominio (`qivox.…`) cuando se despliegue. Un mismo build sirve a todas.
 - **Sumar una marca:** un archivo nuevo en `src/app/brands/`, registrarlo en `index.ts` y agregar su identificador a `BrandId`. TypeScript exige todos los tokens y funciones.
 
-Pendiente por marca: nombre e ícono de la app instalada (hoy el `manifest` es el de FitApp para todas) y las imágenes de ejercicios, que no pueden llevar los colores de una sola marca.
+Cada marca tiene su `manifest` (`manifest.qivox.webmanifest`, `manifest.fitnessgroup.webmanifest`): la app instalada lleva su nombre y su ícono y abre con su marca; la pestaña usa su ícono. Pendiente: las imágenes de ejercicios, que no pueden llevar los colores de una sola marca.
 
 ## Tipografía
 

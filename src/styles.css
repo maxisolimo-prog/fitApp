@@ -116,7 +116,11 @@ img { max-width: 100%; }
 .page { display: flex; flex-direction: column; gap: 20px; }
 
 .brand { display: flex; align-items: center; gap: 10px; background: none; border: 0; padding: 4px; color: inherit; font: inherit; font-weight: 700; font-size: 18px; letter-spacing: -0.02em; }
-.brand img { border-radius: 9px; }
+.brand img { border-radius: 9px; object-fit: contain; }
+.brand img.brand-wordmark { border-radius: 0; }
+/* En la barra del celular el logo va un poco más chico, con la misma proporción. */
+.topbar .brand img { height: 32px; width: auto; }
+.topbar .brand img.brand-wordmark { height: 28px; }
 .brand span { font-family: var(--font-display); letter-spacing: var(--display-tracking, -0.02em); text-transform: var(--display-transform, none); }
 
 .topbar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; height: 60px; padding: 0 12px; background: var(--dark); color: var(--on-dark); }

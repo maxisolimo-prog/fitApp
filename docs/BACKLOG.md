@@ -167,15 +167,17 @@ una tenga funciones distintas. Detalle en "Marcas" de [DESIGN.md](DESIGN.md).
 | # | Qué | Esfuerzo | Esquema | Estado |
 | --- | --- | --- | --- | --- |
 | B-18 | Tres marcas sobre el mismo código: tokens por rol, un archivo por marca, funciones por marca | Medio | No | Hecho el 18 de noviembre de 2026 |
-| B-19 | Logo, ícono y nombre de la app instalada por marca | Bajo | No | Espera los logos de cada gimnasio |
+| B-19 | Logo, ícono y nombre de la app instalada por marca | Bajo | No | Hecho el 18 de noviembre de 2026 con los logos de sus webs; falta el acuerdo de cada gimnasio |
 | B-20 | Graphik para los títulos de Qivox | Bajo | No | Espera que Qivox entregue la tipografía con su licencia |
 | B-21 | Una dirección por marca al desplegar | Bajo | No | Con el despliegue (roadmap) |
 
 - **B-18, hecho.** Se ve con `/?marca=qivox`, `/?marca=fitnessgroup` y `/?marca=fitapp`. Colores, tipografías y
-  radios salen de la web pública de cada gimnasio; no se copió ningún archivo suyo. Cuenta e Instalación ya se
+  radios salen de la web pública de cada gimnasio. Cuenta e Instalación ya se
   pueden apagar por marca (`brand.features`); hoy están activas en las tres.
-- **B-19.** Hoy la barra muestra el nombre del gimnasio en texto y la app instalada sigue llamándose FitApp con su
-  ícono lima. Con cada logo: `logo` en el archivo de la marca, un `manifest` por marca y sus íconos.
+- **B-19, hecho.** Pedido del usuario ("le faltan los logos"). La barra muestra el logotipo de Qivox y la insignia de
+  Fitness Group; la pestaña y la app instalada llevan el ícono y el nombre de cada una. Los archivos salen de sus
+  webs públicas (`docs/ASSETS.md`) y no hay autorización registrada: sirven para mostrar las versiones, no para
+  publicarlas. El ícono instalable no tiene variante con zona segura ("maskable"): hace falta el arte original.
 - **B-21.** La marca ya se resuelve por subdominio (`qivox.…`, `fitnessgroup.…`). En el mismo dominio las tres
   comparten los datos locales del navegador; en subdominios distintos, cada una guarda los suyos.
 - **Sin validar con los gimnasios.** Las dos versiones son una propuesta armada desde afuera. Publicarlas con su

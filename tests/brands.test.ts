@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import test from 'node:test';
 import {
@@ -132,16 +132,21 @@ test('la marca sale del parámetro, después del subdominio, después de lo guar
   assert.equal(resolveBrandId({ search: '?marca=fitapp', stored: 'qivox' }), 'fitapp');
 });
 
-interface FakeDocument { attributes: Record<string, string>; vars: Record<string, string>; themeColor: string; title: string }
+interface FakeDocument { attributes: Record<string, string>; vars: Record<string, string>; themeColor: string; title: string; links: Record<string, Record<string, string>> }
 function fakeWindow(search: string, hostname: string, stored: Record<string, string>, storageFails = false) {
-  const state: FakeDocument = { attributes: {}, vars: {}, themeColor: '', title: '' };
+  const state: FakeDocument = { attributes: {}, vars: {}, themeColor: '', title: '', links: {} };
   const document = {
     documentElement: {
       setAttribute: (name: string, value: string) => { state.attributes[name] = value; },
       style: { setProperty: (name: string, value: string) => { state.vars[name] = value; } },
     },
-    querySelector: (selector: string) => selector === 'meta[name="theme-color"]'
-      ? { setAttribute: (_name: string, value: string) => { state.themeColor = value; } } : null,
+    querySelector: (selector: string) => {
+      if (selector === 'meta[name="theme-color"]') return { setAttribute: (_name: string, value: string) => { state.themeColor = value; } };
+      const link = /^link\[rel="([a-z-]+)"\]$/.exec(selector);
+      if (!link) return null;
+      const attributes = (state.links[link[1]] ??= {});
+      return { setAttribute: (name: string, value: string) => { attributes[name] = value; } };
+    },
     set title(value: string) { state.title = value; },
   };
   const localStorage = {
@@ -159,6 +164,31 @@ test('aplicar una marca fija variables, color del navegador y título', () => {
   assert.equal(state.vars['--display-transform'], 'uppercase');
   assert.equal(state.themeColor, '#111113');
   assert.equal(state.title, 'Fitness Group · Cada sesión cuenta');
+  assert.deepEqual(state.links['icon'], { href: 'brand-logos/fitnessgroup-icon-192.png', type: 'image/png' });
+  assert.equal(state.links['apple-touch-icon']['href'], 'brand-logos/fitnessgroup-icon-192.png');
+  assert.equal(state.links['manifest']['href'], 'manifest.fitnessgroup.webmanifest');
+
+  applyBrand(BRANDS.fitapp, win.document);
+  assert.deepEqual(state.links['icon'], { href: 'icons/icon.svg', type: 'image/svg+xml' });
+  assert.equal(state.links['manifest']['href'], 'manifest.webmanifest');
+});
+
+test('el logo, los íconos y el manifest de cada marca existen y coinciden con ella', () => {
+  for (const brand of brands) {
+    const files = [brand.icons.favicon, brand.icons.touch, brand.manifest, ...(brand.logo ? [brand.logo.src] : [])];
+    for (const file of files) assert.ok(existsSync(join('public', file)), `${brand.id}: falta public/${file}`);
+
+    const manifest = JSON.parse(readFileSync(join('public', brand.manifest), 'utf8'));
+    assert.equal(manifest.short_name, brand.name);
+    assert.equal(manifest.theme_color, brand.tokens.dark);
+    assert.equal(manifest.background_color, brand.tokens.dark);
+    for (const icon of manifest.icons) assert.ok(existsSync(join('public', icon.src)), `${brand.id}: falta public/${icon.src}`);
+    // La app instalada tiene que abrir con su marca aunque se haya borrado lo guardado.
+    if (brand.id !== DEFAULT_BRAND_ID) {
+      assert.equal(resolveBrandId({ search: new URL(manifest.start_url, 'https://ejemplo.com/').search }), brand.id);
+      assert.equal(manifest.id, manifest.start_url);
+    }
+  }
 });
 
 test('la marca elegida con ?marca= queda guardada y sigue sin el parámetro', () => {

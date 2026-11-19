@@ -6,13 +6,16 @@ const inter = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui
  * Qivox Smart Gym. Colores, radios e interletra tomados de los tokens públicos de qivox.com.ar el 18 de
  * noviembre de 2026 (docs/DESIGN.md, "Marcas").
  *
- * Pendiente de que el gimnasio lo entregue: el logo (por eso `logo: null`) y Graphik, su tipografía de títulos,
- * que es comercial y no se puede copiar de su web. Mientras tanto los títulos van en Inter extra negrita.
+ * El logo y el ícono son los de su web pública (docs/ASSETS.md): son de Qivox y publicar esta versión requiere su
+ * acuerdo. Pendiente de que el gimnasio la entregue: Graphik, su tipografía de títulos, que es comercial y no se
+ * puede copiar de su web. Mientras tanto los títulos van en Inter extra negrita.
  */
 export const qivox: Brand = {
   id: 'qivox',
   name: 'Qivox',
-  logo: null,
+  logo: { src: 'brand-logos/qivox-logo.png', width: 100, height: 32, wordmark: true },
+  icons: { favicon: 'brand-logos/qivox-icon-192.png', touch: 'brand-logos/qivox-icon-192.png' },
+  manifest: 'manifest.qivox.webmanifest',
   tokens: {
     dark: '#111111',
     darkDeep: '#0A0A0A',

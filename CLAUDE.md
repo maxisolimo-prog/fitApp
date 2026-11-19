@@ -71,7 +71,8 @@ ya está en el entorno. Procesos largos con afinidad `0xF` y prioridad `BelowNor
   `prefers-reduced-motion`.
 - **Copy** en rioplatense con voseo y acciones concretas ("Guardá", "Agregá una serie"). Sin promesas de resultados.
 - **Licencias:** no descargar ni incrustar GIF/animaciones de Gym Visual u otros sin licencia. Registrar todo recurso
-  nuevo en `docs/ASSETS.md`.
+  nuevo en `docs/ASSETS.md`. Única excepción, decidida por el usuario: los logos de Qivox y Fitness Group en
+  `public/brand-logos/`, tomados de sus webs para mostrar sus versiones; no publicarlas sin el acuerdo de cada gimnasio.
 - Fuera de alcance (no simular como si existiera): Google Login, recuperación de contraseña, pagos, IA, portal de entrenador.
 
 ## Agentes del proyecto (`.claude/agents/`)

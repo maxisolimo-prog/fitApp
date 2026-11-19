@@ -54,13 +54,19 @@ export function brandCssVars(brand: Brand): Record<string, string> {
   return vars;
 }
 
-/** Aplica la marca al documento: variables CSS, color de la barra del navegador y título de la pestaña. */
+/** Aplica la marca al documento: variables CSS, color de la barra del navegador, título, ícono y manifest. */
 export function applyBrand(brand: Brand, doc: Document): void {
   const root = doc.documentElement;
   root.setAttribute('data-brand', brand.id);
   for (const [name, value] of Object.entries(brandCssVars(brand))) root.style.setProperty(name, value);
   doc.querySelector('meta[name="theme-color"]')?.setAttribute('content', brand.tokens.dark);
   doc.title = `${brand.name} · Cada sesión cuenta`;
+
+  const favicon = doc.querySelector('link[rel="icon"]');
+  favicon?.setAttribute('href', brand.icons.favicon);
+  favicon?.setAttribute('type', brand.icons.favicon.endsWith('.svg') ? 'image/svg+xml' : 'image/png');
+  doc.querySelector('link[rel="apple-touch-icon"]')?.setAttribute('href', brand.icons.touch);
+  doc.querySelector('link[rel="manifest"]')?.setAttribute('href', brand.manifest);
 }
 
 /**

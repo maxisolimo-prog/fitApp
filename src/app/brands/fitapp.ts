@@ -9,7 +9,9 @@ const inter = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui
 export const fitapp: Brand = {
   id: 'fitapp',
   name: 'FitApp',
-  logo: 'icons/icon.svg',
+  logo: { src: 'icons/icon.svg', width: 36, height: 36, wordmark: false },
+  icons: { favicon: 'icons/icon.svg', touch: 'icons/icon-192.png' },
+  manifest: 'manifest.webmanifest',
   tokens: {
     dark: '#142118',
     darkDeep: '#0E1811',

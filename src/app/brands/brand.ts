@@ -66,12 +66,25 @@ export interface BrandTokens {
   radiusField: string;
 }
 
+/** Logo de la barra. Rutas dentro de `public/`; `width` y `height` son las medidas con que se dibuja en la barra lateral. */
+export interface BrandLogo {
+  src: string;
+  width: number;
+  height: number;
+  /** `true` si el logo ya trae el nombre escrito: la barra no lo repite en texto. */
+  wordmark: boolean;
+}
+
 export interface Brand {
   id: BrandId;
   /** Nombre visible en la barra, el título de la pestaña y los textos que nombran a la app. */
   name: string;
-  /** Ruta del logo dentro de `public/`. Con `null` se muestra solo el nombre en texto. */
-  logo: string | null;
+  /** Con `null` se muestra solo el nombre en texto. */
+  logo: BrandLogo | null;
+  /** Ícono de la pestaña y de "Agregar a inicio" en iPhone. */
+  icons: { favicon: string; touch: string };
+  /** Manifest de la app instalada: nombre, colores e íconos de esta marca. */
+  manifest: string;
   tokens: BrandTokens;
   features: BrandFeatures;
 }

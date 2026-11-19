@@ -4,13 +4,15 @@ import type { Brand } from './brand';
  * Fitness Group (red de gimnasios de Córdoba: Manantial y otros). Colores, tipografías y radios tomados de los
  * estilos globales de fitnessgroup.ar el 18 de noviembre de 2026 (docs/DESIGN.md, "Marcas").
  *
- * Anton y Manrope son libres (SIL OFL) y están en `public/brand-fonts/`. Pendiente de que el gimnasio lo
- * entregue: el logo (por eso `logo: null`).
+ * Anton y Manrope son libres (SIL OFL) y están en `public/brand-fonts/`. El logo es el de su web pública
+ * (docs/ASSETS.md): es de Fitness Group y publicar esta versión requiere su acuerdo.
  */
 export const fitnessgroup: Brand = {
   id: 'fitnessgroup',
   name: 'Fitness Group',
-  logo: null,
+  logo: { src: 'brand-logos/fitnessgroup-icon-192.png', width: 40, height: 40, wordmark: false },
+  icons: { favicon: 'brand-logos/fitnessgroup-icon-192.png', touch: 'brand-logos/fitnessgroup-icon-192.png' },
+  manifest: 'manifest.fitnessgroup.webmanifest',
   tokens: {
     dark: '#111113',
     darkDeep: '#0A0A0C',

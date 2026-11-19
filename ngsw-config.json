@@ -3,8 +3,8 @@
   "index": "/index.html",
   "navigationRequestStrategy": "freshness",
   "assetGroups": [
-    { "name": "app", "installMode": "prefetch", "resources": { "files": ["/favicon.ico", "/index.html", "/*.css", "/*.js", "/manifest.webmanifest", "/icons/**", "/fonts/**"] } },
+    { "name": "app", "installMode": "prefetch", "resources": { "files": ["/favicon.ico", "/index.html", "/*.css", "/*.js", "/manifest.webmanifest", "/manifest.*.webmanifest", "/icons/**", "/fonts/**"] } },
     { "name": "images", "installMode": "prefetch", "resources": { "files": ["/images/**"] } },
-    { "name": "brand-fonts", "installMode": "lazy", "updateMode": "prefetch", "resources": { "files": ["/brand-fonts/*.woff2"] } }
+    { "name": "brand-assets", "installMode": "lazy", "updateMode": "prefetch", "resources": { "files": ["/brand-fonts/*.woff2", "/brand-logos/**"] } }
   ]
 }

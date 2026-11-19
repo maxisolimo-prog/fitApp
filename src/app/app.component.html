@@ -4,7 +4,8 @@
   <!-- Escritorio: barra lateral -->
   <aside class="sidebar">
     <button type="button" class="brand" (click)="navigate('home')" [attr.aria-label]="brand.name + ', ir a Mi espacio'">
-      @if (brand.logo; as logo) { <img [src]="logo" alt="" width="36" height="36"> }<span>{{ brand.name }}</span>
+      @if (brand.logo; as logo) { <img [src]="logo.src" alt="" [attr.width]="logo.width" [attr.height]="logo.height" [class.brand-wordmark]="logo.wordmark"> }
+      @if (!brand.logo?.wordmark) { <span>{{ brand.name }}</span> }
     </button>
     <nav class="side-nav" aria-label="Navegación principal">
       @for (item of nav; track item.id) {
@@ -33,7 +34,8 @@
   <!-- Móvil: barra superior -->
   <header class="topbar">
     <button type="button" class="brand" (click)="navigate('home')" [attr.aria-label]="brand.name + ', ir a Mi espacio'">
-      @if (brand.logo; as logo) { <img [src]="logo" alt="" width="32" height="32"> }<span>{{ brand.name }}</span>
+      @if (brand.logo; as logo) { <img [src]="logo.src" alt="" [attr.width]="logo.width" [attr.height]="logo.height" [class.brand-wordmark]="logo.wordmark"> }
+      @if (!brand.logo?.wordmark) { <span>{{ brand.name }}</span> }
     </button>
     <button type="button" class="icon-button" (click)="navigate('profile')" aria-label="Perfil y datos"
       [attr.aria-current]="view() === 'profile' ? 'page' : null">

@@ -43,7 +43,21 @@ Los textos de licencia vienen del repositorio [google/fonts](https://github.com/
 
 ## Referencias de las marcas Qivox y Fitness Group
 
-De [qivox.com.ar](https://qivox.com.ar/) y [fitnessgroup.ar](https://fitnessgroup.ar/) se leyeron, el 18 de noviembre de 2026, los valores de color, los nombres de las tipografías y los radios declarados en sus hojas de estilo públicas; están en `docs/DESIGN.md` ("Marcas"). No se descargó ni se incorporó ningún archivo de esos sitios: ni logos, ni fotografías, ni fuentes. Graphik, la tipografía de títulos de Qivox, es comercial y no está en FitApp. Los logos se incorporan cuando cada gimnasio los entregue, y se registran acá.
+De [qivox.com.ar](https://qivox.com.ar/) y [fitnessgroup.ar](https://fitnessgroup.ar/) se leyeron, el 18 de noviembre de 2026, los valores de color, los nombres de las tipografías y los radios declarados en sus hojas de estilo públicas; están en `docs/DESIGN.md` ("Marcas"). No se incorporaron fotografías ni fuentes de esos sitios. Graphik, la tipografía de títulos de Qivox, es comercial y no está en FitApp.
+
+## Logos de Qivox y Fitness Group
+
+Incorporados el 18 de noviembre de 2026 por pedido del usuario, para mostrar la versión de cada gimnasio. Son marcas de sus dueños, descargadas de sus webs públicas. **No hay licencia ni autorización registrada:** sirven para la demostración; publicar cualquiera de las dos versiones requiere el acuerdo del gimnasio. Es una excepción decidida por el usuario a la regla de no incorporar recursos sin licencia. Están en `public/brand-logos/` y el service worker los baja solo para la marca que los usa.
+
+| Archivo | Contenido | Tamaño | Origen | Cambios |
+| --- | --- | --- | --- | --- |
+| `qivox-logo.png` | Logotipo "QIVOX Smart Gym" amarillo, fondo transparente | 374 × 120, 16.531 bytes | https://qivox.com.ar/wp-content/themes/astra-child/assets/img/logo-qivox.png (900 × 289) | Reducido |
+| `qivox-icon-192.png` | Ícono "Q" amarillo | 192 × 192, 5.105 bytes | https://qivox.com.ar/wp-content/uploads/2026/08/cropped-full-elements-QIVOX-46-2-192x192.png | Ninguno |
+| `qivox-icon-512.png` | Ícono "Q" amarillo | 512 × 512, 14.090 bytes | https://qivox.com.ar/wp-content/uploads/2026/08/cropped-full-elements-QIVOX-46-2.png | Ninguno |
+| `fitnessgroup-icon-192.png` | Insignia "Fitness Group" gris y amarilla | 192 × 192, 21.642 bytes | https://fitnessgroup.ar/wp-content/uploads/2025/08/logo-png.png (1080 × 1080) | Margen transparente recortado, centrado y reducido |
+| `fitnessgroup-icon-512.png` | La misma insignia | 512 × 512, 69.682 bytes | El mismo archivo | Los mismos |
+
+El dibujo de los logos no se modificó: solo tamaño y margen. Los usan la barra de la app, el ícono de la pestaña y los `manifest` de cada marca (`public/manifest.qivox.webmanifest`, `public/manifest.fitnessgroup.webmanifest`).
 
 ## Referencias audiovisuales investigadas
 

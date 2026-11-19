@@ -1,0 +1,16 @@
+{
+  "name": "Qivox · Tu espacio de entrenamiento",
+  "short_name": "Qivox",
+  "description": "Rutinas, sesiones y progreso a tu ritmo.",
+  "lang": "es",
+  "id": "./?marca=qivox",
+  "start_url": "./?marca=qivox",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#111111",
+  "theme_color": "#111111",
+  "icons": [
+    { "src": "brand-logos/qivox-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "brand-logos/qivox-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

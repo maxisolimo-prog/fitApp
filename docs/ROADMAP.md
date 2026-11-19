@@ -46,8 +46,9 @@ Decisión del usuario: además de la versión actual, una con la estética de Qi
 - Se elige con `?marca=` o por subdominio; un solo build sirve a las tres.
 - Es la base de la etapa "Marca del gimnasio" del módulo de gimnasios: cuando existan las organizaciones en la
   API, la marca pasa a ser un dato del gimnasio.
-- Falta lo que depende de cada gimnasio: logos, ícono de la app instalada y la tipografía de títulos de Qivox
-  (B-19 a B-21 en [BACKLOG.md](BACKLOG.md)). Ninguno de los dos gimnasios vio ni validó su versión.
+- Logos, ícono de pestaña y app instalada por marca, con los archivos de las webs públicas de cada gimnasio.
+- Falta lo que depende de ellos: su acuerdo para publicar con su nombre y su logo, y la tipografía de títulos de
+  Qivox (B-19 a B-21 en [BACKLOG.md](BACKLOG.md)). Ninguno de los dos gimnasios vio ni validó su versión.
 
 ## Estado frente a la hipótesis de producto
 
