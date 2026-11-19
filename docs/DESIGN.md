@@ -85,7 +85,7 @@ La marca Fitness Group usa además Anton (títulos, un solo peso, en mayúsculas
 - Cambios de estado breves, de aproximadamente 150 a 200 ms, y respeto por `prefers-reduced-motion`.
 - Lo que se consulta en medio de la sesión (la ficha de un ejercicio, cambiar un ejercicio) se abre en una hoja oscura encima de la sesión, nunca saliendo de ella. La hoja muestra el descanso que está corriendo, se cierra con su botón "Volver a la sesión", con Escape o con el botón Atrás del teléfono, y devuelve el foco a lo que la abrió. Mientras está abierta, lo de atrás queda inactivo.
 - En la sesión, lo opcional no ocupa lugar hasta que hace falta: el comentario de una serie se agrega desde un botón debajo de la tabla del ejercicio y queda debajo de su serie.
-- Nada de lo que aparece al completar una serie puede mover la fila que el alumno está tocando.
+- Nada de lo que aparece al completar una serie puede mover la fila que el alumno está tocando. Por eso el descanso flota abajo, al alcance del pulgar, en lugar de ocupar un lugar en la página.
 - Una duración entre series ("+45 s", "+2 min 10 s") nunca se escribe con el formato de una hora del día.
 - Lo que es una estimación se muestra como tal: la duración de una rutina lleva "≈".
 - Los nombres de clase propios no pueden coincidir con una utilidad de Tailwind (`outline`, `ring`): Tailwind genera su regla y la aplica encima.

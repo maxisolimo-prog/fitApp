@@ -323,7 +323,8 @@ img { max-width: 100%; }
 }
 
 /* ---------- Sesión activa (oscura para el gimnasio) ---------- */
-.workout { background: var(--dark-deep); color: var(--on-dark); border-radius: calc(var(--radius) + 4px); padding: 20px 16px 24px; margin: -4px -6px 0; }
+/* El margen de abajo deja lugar para el descanso, que flota sobre el final de la tarjeta. */
+.workout { background: var(--dark-deep); color: var(--on-dark); border-radius: calc(var(--radius) + 4px); padding: 20px 16px 96px; margin: -4px -6px 0; }
 .workout :focus-visible { outline-color: var(--accent); }
 .workout .eyebrow { color: var(--accent); }
 .workout-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 20px; }
@@ -332,12 +333,14 @@ img { max-width: 100%; }
 .workout-stats dt { font-size: 11px; color: var(--muted-on-dark); text-transform: uppercase; letter-spacing: 0.08em; }
 .workout-stats dd { margin: 2px 0 0; font-size: 24px; font-weight: 650; }
 
-.rest-bar { position: sticky; top: 68px; z-index: 5; display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; background: var(--dark-strong); }
+/* El descanso flota abajo, al alcance del pulgar, fuera del flujo de la página: que aparezca o que termine no mueve
+   las series. Antes iba arriba de la lista y corría toda la tabla justo cuando el alumno marcaba una serie. */
+.rest-bar { position: fixed; z-index: 18; left: 12px; right: 12px; bottom: calc(var(--bottom-nav) + 12px + env(safe-area-inset-bottom)); max-width: 520px; margin-inline: auto; display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line-dark); background: var(--dark-strong); color: var(--on-dark); box-shadow: 0 8px 24px color-mix(in srgb, var(--dark-deep) 45%, transparent); }
 .rest-bar > app-icon { width: 24px; height: 24px; color: var(--accent); }
 .rest-time { flex: 1; display: flex; flex-direction: column; }
 .rest-time small { font-size: 11px; color: var(--on-dark-soft); text-transform: uppercase; letter-spacing: 0.08em; }
 .rest-time strong { font-size: 26px; line-height: 1.1; }
-@media (min-width: 960px) { .rest-bar { top: 16px; } }
+@media (min-width: 960px) { .rest-bar { left: calc(var(--sidebar) + 48px); right: 48px; bottom: 24px; } }
 
 .exercise-block { background: var(--dark-panel); border-radius: var(--radius); padding: 16px; }
 .exercise-block header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
