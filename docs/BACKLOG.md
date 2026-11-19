@@ -8,6 +8,11 @@ La columna **Esquema** dice si el ítem cambia `FitAppState` (hoy versión 4). L
 migración con test de ida y vuelta y una migración SQL nueva en `api/migrations/`. El catálogo de ejercicios
 (`seed.ts`) no se guarda en el estado del alumno: cambiarlo no toca el esquema.
 
+Varios ítems dicen "falta la revisión de un profesional". Todo lo que hay que revisar (músculos, indicaciones,
+reemplazos, tiempos de la duración, sugerencia de progresión, rutinas iniciales y semana sugerida) está reunido en
+[REVISION-PROFESIONAL.md](REVISION-PROFESIONAL.md), escrito para pasárselo a un profe o a un kinesiólogo. Sale del
+catálogo: si el catálogo cambia, hay que volver a armarlo.
+
 ## Decisiones abiertas
 
 Las toma el usuario. Hasta entonces, los ítems que dependen de ellas no arrancan.
