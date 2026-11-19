@@ -38,6 +38,11 @@ export class AppComponent implements OnDestroy {
   readonly selectedRoutine = signal<Routine|null>(null);
   readonly selectedExercise = signal<Exercise|null>(null);
   readonly selectedHistory = signal<Workout|null>(null);
+  /** Ficha de un ejercicio abierta encima de la sesión. La sesión sigue montada debajo: no se pierde nada de lo cargado. */
+  readonly sessionExercise = signal<Exercise|null>(null);
+  /** Hay una hoja abierta: lo de atrás queda inactivo para el teclado y los lectores de pantalla. */
+  readonly sheetOpen = computed(() => !!this.sessionExercise());
+  private sheetTrigger: HTMLElement|null = null;
   readonly confirmation = signal<'discard'|'delete'|'import'|null>(null);
   readonly weekOffset = signal(0);
   readonly restUntil = signal(this.savedRest());
@@ -155,6 +160,12 @@ export class AppComponent implements OnDestroy {
     if(this.swUpdate.isEnabled) void this.swUpdate.checkForUpdate().catch(()=>false);
   }
 
+  openSessionExercise(exercise:Exercise, trigger:HTMLElement){this.sheetTrigger=trigger;this.sessionExercise.set(exercise);this.focusSheet();}
+  /** Cierra la hoja abierta y devuelve el foco a quien la abrió. */
+  closeSheet(){if(!this.sheetOpen())return;this.sessionExercise.set(null);const trigger=this.sheetTrigger;this.sheetTrigger=null;setTimeout(()=>{if(trigger?.isConnected)trigger.focus();});}
+  private focusSheet(){setTimeout(()=>(document.querySelector('.sheet [data-sheet-focus]') as HTMLElement|null)?.focus());}
+  @HostListener('document:keydown.escape') escapePressed(){if(!this.confirmation()&&!this.sync.conflict())this.closeSheet();}
+
   /** Last session's completed sets per exercise of the active workout ("Anterior"). */
   readonly previousByExercise = computed(() => {
     const workout = this.store.activeWorkout();
@@ -210,13 +221,13 @@ export class AppComponent implements OnDestroy {
   private savedRest(){try{return Number(localStorage.getItem('fitapp-rest-until'))||0;}catch{return 0;}}
 
   initialView():View { const hash=location.hash.slice(1); return ['home','routines','calendar','progress','library','profile','workout','editor'].includes(hash)?hash as View:'home'; }
-  @HostListener('window:hashchange') hashChanged(){this.view.set(this.initialView());}
+  @HostListener('window:hashchange') hashChanged(){this.view.set(this.initialView());this.sessionExercise.set(null);}
   @HostListener('window:online') wentOnline(){this.online.set(true);if(this.sync.account())void this.sync.syncNow();}
   @HostListener('window:offline') wentOffline(){this.online.set(false);}
   @HostListener('window:beforeinstallprompt', ['$event']) installReady(event:Event){event.preventDefault();this.installPrompt.set(event as unknown as { prompt(): Promise<unknown>; userChoice: Promise<{ outcome: string }> });}
   @HostListener('window:appinstalled') appInstalled(){this.installed.set(true);this.installPrompt.set(null);this.notify(`Listo, ${this.brand.name} quedó instalada.`);}
   ngOnDestroy(){clearInterval(this.interval);clearTimeout(this.toastTimer);}
-  navigate(view:View){this.view.set(view);location.hash=view; this.selectedRoutine.set(null);this.selectedExercise.set(null);this.selectedHistory.set(null);if(view==='profile') this.profileDraft={...this.store.profile()}; window.scrollTo({top:0,behavior:'instant'});}
+  navigate(view:View){this.view.set(view);location.hash=view; this.sessionExercise.set(null);this.selectedRoutine.set(null);this.selectedExercise.set(null);this.selectedHistory.set(null);if(view==='profile') this.profileDraft={...this.store.profile()}; window.scrollTo({top:0,behavior:'instant'});}
   notify(message:string){this.toast.set(message);clearTimeout(this.toastTimer);this.toastTimer=setTimeout(()=>this.toast.set(''),4500);}
   exercise(id:string){return this.store.exercises().find(e=>e.id===id)!;}
   routine(id:string){return this.store.routines().find(r=>r.id===id);}

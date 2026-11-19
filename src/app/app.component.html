@@ -1,6 +1,6 @@
 <a class="skip-link" href="#contenido">Saltar al contenido</a>
 
-<div class="shell">
+<div class="shell" [attr.inert]="sheetOpen() ? '' : null">
   <!-- Escritorio: barra lateral -->
   <aside class="sidebar">
     <button type="button" class="brand" (click)="navigate('home')" [attr.aria-label]="brand.name + ', ir a Mi espacio'">
@@ -286,9 +286,9 @@
             @for (group of workoutGroups(); track group.id) {
               <article class="exercise-block" [attr.aria-labelledby]="'block-' + group.id">
                 <header>
-                  <app-exercise-thumb [exercise]="group.exercise" />
+                  <app-exercise-thumb [exercise]="group.exercise" (click)="openSessionExercise(group.exercise, nameButton)" />
                   <div class="block-title">
-                    <h2 [id]="'block-' + group.id">{{ group.exercise.name }}</h2>
+                    <h2 [id]="'block-' + group.id"><button #nameButton type="button" class="block-name" aria-haspopup="dialog" (click)="openSessionExercise(group.exercise, nameButton)">{{ group.exercise.name }}<span class="sr-only">, ver la ficha</span><app-icon name="info" /></button></h2>
                     <p>{{ group.exercise.muscle }} · {{ group.exercise.equipment }}</p>
                   </div>
                 </header>
@@ -818,6 +818,19 @@
     }
   </nav>
 </div>
+
+@if (sessionExercise(); as exercise) {
+  <div class="sheet-overlay" (click)="closeSheet()" aria-hidden="true"></div>
+  <div class="sheet" role="dialog" aria-modal="true" [attr.aria-label]="'Ficha de ' + exercise.name">
+    <div class="sheet-bar">
+      <button type="button" class="btn btn-small btn-outline-light" data-sheet-focus (click)="closeSheet()"><app-icon name="left" />Volver a la sesión</button>
+      @if (restSeconds() > 0) {
+        <p class="sheet-rest" role="timer" aria-label="Descanso"><app-icon name="clock" /><span class="tabular">{{ clock(restSeconds()) }}</span></p>
+      }
+    </div>
+    <app-exercise-detail [exercise]="exercise" [embedded]="true" (closed)="closeSheet()" />
+  </div>
+}
 
 <app-body-sprite />
 

@@ -24,9 +24,11 @@ interface ExerciseSession {
   template: `
     <article class="exercise-detail" [attr.aria-labelledby]="prefix() + '-title'">
       <header class="detail-header">
-        <button type="button" class="back-button" (click)="closed.emit()" aria-label="Volver a la biblioteca">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg>
-        </button>
+        @if (!embedded()) {
+          <button type="button" class="back-button" (click)="closed.emit()" aria-label="Volver a la biblioteca">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg>
+          </button>
+        }
         <div class="heading-copy">
           <span class="eyebrow">BIBLIOTECA DE EJERCICIOS</span>
           <h2 [id]="prefix() + '-title'">{{ exercise().name }}</h2>
@@ -209,6 +211,8 @@ interface ExerciseSession {
 })
 export class ExerciseDetailComponent {
   readonly exercise = input.required<Exercise>();
+  /** Dentro de una hoja que ya trae su propio botón para volver (la ficha abierta desde la sesión). */
+  readonly embedded = input(false);
   @Output() readonly closed = new EventEmitter<void>();
   readonly store = inject(WorkoutStore);
   readonly activeTab = signal<DetailTab>('overview');

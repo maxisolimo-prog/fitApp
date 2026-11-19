@@ -37,7 +37,7 @@ consumen el cupo de la cuenta de ChatGPT del usuario.
 | B-02 | Mapa muscular propio y solapa "Músculos" en la ficha | Medio | No | Hecho el 18 de noviembre de 2026 |
 | B-03 | Imagen de cada ejercicio, creada con GPT | Medio | No | B-01, cupo de GPT, estilo aprobado |
 | B-04 | Miniaturas en las listas | Bajo | No | Hecho el 19 de noviembre de 2026 |
-| B-05 | Abrir la ficha del ejercicio desde la sesión | Medio | No | — |
+| B-05 | Abrir la ficha del ejercicio desde la sesión | Medio | No | Hecho el 19 de noviembre de 2026 |
 
 ### B-01. Músculos principales y secundarios
 
@@ -124,6 +124,10 @@ encima de la sesión. Hoy la ficha solo se abre desde la Biblioteca, y para ir h
 
 - **Listo cuando:** la ficha abre y cierra sin perder lo cargado ni frenar el descanso, Escape la cierra y el foco
   vuelve al nombre del ejercicio.
+- **Hecho.** El nombre del ejercicio (y su miniatura) abre la ficha en una hoja encima de la sesión, que sigue
+  montada debajo. La hoja muestra el descanso que está corriendo. Mientras está abierta, lo de atrás queda inactivo
+  para el teclado y los lectores de pantalla. **Falta:** el botón Atrás del teléfono no cierra la hoja, sale de la
+  sesión (que no se pierde); le pasa lo mismo al selector de ejercicios del editor.
 
 ## Bloque 2: la sesión en el gimnasio
 
