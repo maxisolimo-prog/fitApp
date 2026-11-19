@@ -104,6 +104,30 @@ test('logging in on a fresh device takes the account data without asking', () =>
   assert.equal(server.puts, 0);
 }));
 
+test('a device left empty by an earlier version (other template durations) still takes the account data without asking', () => withStorage(async (storage) => {
+  // Hasta B-07 las plantillas guardaban 45, 40, 35 y 25 minutos. Cerrar sesión deja guardado el estado de fábrica
+  // de la versión que corría en ese momento.
+  const old = createInitialState();
+  old.routines.forEach((routine, index) => { routine.duration = [45, 40, 35, 25][index]; });
+  storage.setItem(STORAGE_KEY, JSON.stringify(old));
+  const server = new FakeServer();
+  const account = accountState();
+  const done = buildWorkout(account.routines[0], 'w-account', '2026-11-10T10:00:00.000Z');
+  done.sets[0].completed = true;
+  account.history = [completeWorkout(done, '2026-11-10T10:40:00.000Z')!];
+  server.state = account;
+  server.revision = 4;
+  const store = new WorkoutStore();
+  assert.equal(store.routines()[0].duration, 45);
+  const sync = new SyncService(store, server.fetch);
+  await sync.login('a@b.co', 'una-clave-larga');
+  assert.equal(sync.status(), 'synced', 'no false conflict');
+  assert.equal(sync.conflict(), null);
+  assert.equal(store.profile().name, 'Desde la cuenta');
+  assert.equal(store.history().length, 1);
+  assert.equal(server.puts, 0, 'the account is not overwritten');
+}));
+
 test('logging in on a device with its own data asks which copy to keep', () => withStorage(async () => {
   const server = new FakeServer();
   server.state = accountState();

@@ -376,6 +376,11 @@ export const seedExercises: Exercise[] = [
   ] },
 ];
 
+/**
+ * Plantillas iniciales. Se pueden corregir entre versiones, pero no conviene renombrar ni quitar un id: un
+ * dispositivo que todavía tiene esa plantilla dejaría de contar como "sin datos" al ingresar a una cuenta
+ * (`isFactoryState` en workout-utils.ts).
+ */
 export const seedRoutines: Routine[] = [
   {
     id: 'upper-body',

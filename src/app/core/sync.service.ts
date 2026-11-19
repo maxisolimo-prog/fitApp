@@ -1,6 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { WorkoutStore, type SyncMeta } from './workout-store';
-import { createInitialState, serializeState, type FitAppState } from './workout-utils';
+import { createInitialState, isFactoryState, serializeState, type FitAppState } from './workout-utils';
 
 export type SyncStatus = 'local' | 'checking' | 'syncing' | 'synced' | 'offline' | 'error' | 'conflict';
 
@@ -285,7 +285,8 @@ export class SyncService {
     this.account.set(meta?.signedIn ? meta.email : null);
   }
 
+  /** Nothing of the user's on this device. Not a text comparison with today's templates: see isFactoryState. */
   private isPristine(): boolean {
-    return serializeState(this.store.snapshot()) === serializeState(createInitialState());
+    return isFactoryState(this.store.snapshot());
   }
 }

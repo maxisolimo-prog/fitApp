@@ -3,7 +3,7 @@ import test from 'node:test';
 import '@angular/compiler';
 import { WorkoutStore } from '../src/app/core/workout-store';
 import {
-  buildWorkout, completeWorkout, createInitialState, deserializeState, lastSetsFor, localDate, personalRecords, plannedRoutineId, suggestProgression, suggestWeeklyPlan, workoutSummaryText,
+  buildWorkout, completeWorkout, createInitialState, deserializeState, isFactoryState, lastSetsFor, localDate, personalRecords, plannedRoutineId, suggestProgression, suggestWeeklyPlan, workoutSummaryText,
   parseLocalDate, parseSessionSwaps, recordSwap, removeRoutine, serializeState, startOfWeek, substituteExercise, swapOrigin, validateState,
   STORAGE_KEY, validSetValues, weekDates, workoutDurationMinutes, workoutVolume,
 } from '../src/app/core/workout-utils';
@@ -338,6 +338,32 @@ test('substituting an exercise changes only its pending sets; completed ones and
     const saved = store.finishWorkout()!;
     assert.deepEqual(saved.sets.map((s) => [s.exerciseId, s.setNumber]), [['push-up', 1], ['bench-press', 1]]);
   });
+});
+
+test('the factory state is recognised whatever the template contents, and anything the user added is not', () => {
+  assert.equal(isFactoryState(createInitialState()), true);
+  // Plantillas de otra versión: otra duración, otros ejercicios, alguna borrada.
+  const older = createInitialState();
+  older.routines[0].duration = 45;
+  older.routines[1].exercises = older.routines[1].exercises.slice(0, 2);
+  older.routines.pop();
+  assert.equal(isFactoryState(older), true);
+  const changed: [string, (state: ReturnType<typeof createInitialState>) => void][] = [
+    ['profile', (state) => { state.profile.name = 'Maxi'; }],
+    ['profile weight', (state) => { state.profile.weight = 70; }],
+    ['custom routine', (state) => { state.routines.push({ ...state.routines[0], id: 'custom-1', custom: true }); }],
+    ['unknown routine id', (state) => { state.routines.push({ ...state.routines[0], id: 'otra' }); }],
+    ['history', (state) => { state.history = [completeWorkout({ ...buildWorkout(state.routines[0], 'w'), sets: buildWorkout(state.routines[0], 'w').sets.map((set) => ({ ...set, completed: true })) })!]; }],
+    ['active workout', (state) => { state.activeWorkout = buildWorkout(state.routines[0], 'w'); }],
+    ['weekly plan', (state) => { state.weeklyPlan[2] = 'upper-body'; }],
+    ['one-off rest day', (state) => { state.schedule = [{ id: 'p', date: '2026-11-20', routineId: null }]; }],
+    ['weight record', (state) => { state.weights = [{ id: 'k', date: '2026-11-19', weight: 70 }]; }],
+  ];
+  for (const [label, change] of changed) {
+    const state = createInitialState();
+    change(state);
+    assert.equal(isFactoryState(state), false, label);
+  }
 });
 
 test('renumbering never writes a session that would not load again (review of B-06)', () => {

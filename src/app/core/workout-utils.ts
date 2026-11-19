@@ -111,6 +111,24 @@ export function createInitialState(): FitAppState {
   };
 }
 
+/**
+ * true cuando en el estado no hay nada cargado por el alumno: es el de fábrica. Sirve al ingresar a una cuenta, para
+ * tomar sus datos sin preguntar cuando el dispositivo está vacío.
+ *
+ * De las rutinas solo mira que sean plantillas (no creadas por el alumno) y que su id sea el de una plantilla. No
+ * compara su contenido con el de hoy: las plantillas cambian entre versiones (la duración pasó a calcularse en
+ * B-07) y un dispositivo con las de una versión anterior sigue sin tener nada del alumno. El alumno no puede editar
+ * una plantilla: al personalizarla se guarda una rutina nueva, marcada como propia. Haber borrado plantillas, sin
+ * nada más, tampoco cuenta como datos.
+ */
+export function isFactoryState(state: FitAppState): boolean {
+  const templates = new Set(seedRoutines.map((routine) => routine.id));
+  return state.history.length === 0 && state.schedule.length === 0 && state.weights.length === 0
+    && state.activeWorkout === null && state.weeklyPlan.every((slot) => slot === null)
+    && (Object.keys(defaultProfile) as (keyof Profile)[]).every((key) => state.profile[key] === defaultProfile[key])
+    && state.routines.every((routine) => !routine.custom && templates.has(routine.id));
+}
+
 function record(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
