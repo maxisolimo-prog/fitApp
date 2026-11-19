@@ -13,6 +13,7 @@ import { ExerciseDetailComponent } from './features/exercise-detail.component';
 import { ExerciseThumbComponent } from './features/exercise-thumb.component';
 import { BodySpriteComponent } from './features/body-sprite';
 import { BRAND } from './brands/brand.token';
+import { BackClose } from './back-close';
 
 type View = 'home'|'routines'|'calendar'|'progress'|'library'|'profile'|'workout'|'editor';
 @Component({
@@ -153,16 +154,11 @@ export class AppComponent implements OnDestroy {
     offline:'Sin conexión: se envía al volver', error:'No se pudo sincronizar', conflict:'Elegí qué datos conservar',
   };
 
-  /** La hoja abierta ocupa una entrada del historial del navegador: el botón Atrás del teléfono la cierra en lugar de salir de la sesión. */
-  private sheetInHistory = false;
-  /** Vueltas atrás que pidió la app misma al cerrar una hoja: no son del alumno. */
-  private ownBacks = 0;
-  private pushSheetHistory(){if(this.sheetInHistory)return;try{history.pushState({fitappSheet:true},'');this.sheetInHistory=true;}catch{}}
-  private popSheetHistory(){if(!this.sheetInHistory)return;this.sheetInHistory=false;this.ownBacks++;try{history.back();}catch{this.ownBacks--;}}
-  @HostListener('window:popstate') historyBack(){
-    if(this.ownBacks>0){this.ownBacks--;return;}
-    if(this.sheetInHistory){this.sheetInHistory=false;this.closeSheet();}
-  }
+  private readonly backClose = inject(BackClose);
+  /** La hoja abierta ocupa una entrada del historial (ver BackClose): el botón Atrás del teléfono la cierra en lugar de salir de la sesión. */
+  private closeSheetLayer: (() => void) | null = null;
+  private pushSheetHistory(){if(this.closeSheetLayer)return;this.closeSheetLayer=this.backClose.open(()=>{this.closeSheetLayer=null;this.closeSheet();});}
+  private popSheetHistory(){const close=this.closeSheetLayer;this.closeSheetLayer=null;close?.();}
   /** "Saltar al contenido" mueve el foco sin tocar la dirección: cambiar el hash se tomaría como ir a Inicio. */
   skipToContent(event:Event){event.preventDefault();document.getElementById('contenido')?.focus();}
 

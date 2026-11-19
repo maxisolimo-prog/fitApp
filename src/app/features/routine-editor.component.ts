@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output, computed, inject, signal, type OnChanges } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { Exercise, FitnessLevel, Routine, RoutineCategory, RoutineExercise } from '../core/models';
+import { BackClose } from '../back-close';
 import { WorkoutStore } from '../core/workout-store';
 import { estimateRoutineMinutes } from '../core/workout-utils';
 import { ExerciseThumbComponent } from './exercise-thumb.component';
@@ -213,6 +214,9 @@ export class RoutineEditorComponent implements OnChanges {
   @Output() readonly saved = new EventEmitter<void>();
   @Output() readonly cancelled = new EventEmitter<void>();
   readonly store = inject(WorkoutStore);
+  private readonly backClose = inject(BackClose);
+  /** El selector abierto ocupa una entrada del historial: el botón Atrás del teléfono lo cierra sin salir del editor. */
+  private closePickerLayer: (() => void) | null = null;
   readonly categories: RoutineCategory[] = ['Fuerza', 'Movilidad', 'Resistencia'];
   readonly levels: FitnessLevel[] = ['Principiante', 'Intermedio', 'Avanzado'];
   name = '';
@@ -293,10 +297,19 @@ export class RoutineEditorComponent implements OnChanges {
     this.picked.set(new Set());
     this.pickerSearch.set('');
     this.pickerOpen.set(true);
+    this.closePickerLayer ??= this.backClose.open(() => { this.closePickerLayer = null; this.closePicker(); });
     setTimeout(() => document.getElementById('picker-search-input')?.focus());
   }
 
-  closePicker(): void { this.pickerOpen.set(false); }
+  /** Cierra el selector y devuelve el foco al botón que lo abrió. */
+  closePicker(): void {
+    const close = this.closePickerLayer;
+    this.closePickerLayer = null;
+    close?.();
+    if (!this.pickerOpen()) return;
+    this.pickerOpen.set(false);
+    setTimeout(() => document.querySelector<HTMLElement>('app-routine-editor .add-button')?.focus());
+  }
 
   togglePick(id: string): void {
     if (this.isUsed(id)) return;
@@ -310,7 +323,7 @@ export class RoutineEditorComponent implements OnChanges {
   confirmPick(): void {
     const ids = this.store.exercises().map((exercise) => exercise.id).filter((id) => this.picked().has(id) && !this.isUsed(id));
     this.entries = [...this.entries, ...ids.map((exerciseId) => ({ exerciseId, sets: 3, reps: 10, weight: 0, restSeconds: 60 }))];
-    this.pickerOpen.set(false);
+    this.closePicker();
   }
 
   move(index: number, delta: number): void {
