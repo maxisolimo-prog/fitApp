@@ -1,8 +1,10 @@
-import { Component, EventEmitter, Output, computed, inject, input, signal } from '@angular/core';
+import { Component, EventEmitter, Output, computed, effect, inject, input, signal } from '@angular/core';
 import type { Exercise, WorkoutSet } from '../core/models';
+import { muscleSentence } from '../core/muscles';
 import { WorkoutStore } from '../core/workout-store';
+import { MuscleMapComponent } from './muscle-map.component';
 
-type DetailTab = 'overview' | 'history' | 'instructions';
+type DetailTab = 'overview' | 'muscles' | 'history' | 'instructions';
 type Metric = 'weight' | 'volume' | 'reps';
 
 interface ExerciseSession {
@@ -18,6 +20,7 @@ interface ExerciseSession {
 @Component({
   selector: 'app-exercise-detail',
   standalone: true,
+  imports: [MuscleMapComponent],
   template: `
     <article class="exercise-detail" [attr.aria-labelledby]="prefix() + '-title'">
       <header class="detail-header">
@@ -112,6 +115,17 @@ interface ExerciseSession {
         <footer class="exercise-meta"><span>Grupo muscular <strong>{{ exercise().muscle }}</strong></span><span>Equipamiento <strong>{{ exercise().equipment }}</strong></span></footer>
       </section>
 
+      <section class="tab-panel muscles-panel" role="tabpanel" [id]="prefix() + '-panel-muscles'"
+        [attr.aria-labelledby]="prefix() + '-tab-muscles'" [hidden]="activeTab() !== 'muscles'" tabindex="0">
+        <div class="panel-heading"><span class="section-kicker">QUÉ TRABAJA</span><h3>Músculos</h3><p>Los que hacen el trabajo principal y los que acompañan el movimiento.</p></div>
+        @if (musclesOpened()) { <app-muscle-map [primary]="exercise().primaryMuscles" [secondary]="exercise().secondaryMuscles" /> }
+        <dl class="muscle-lists">
+          <div><dt><span class="swatch swatch-primary" aria-hidden="true"></span>Principales</dt><dd>{{ primaryNames() }}</dd></div>
+          <div><dt><span class="swatch swatch-secondary" aria-hidden="true"></span>Secundarios</dt><dd>{{ secondaryNames() || 'Ninguno para destacar' }}</dd></div>
+        </dl>
+        <p class="technique-note">Es una guía general: cuánto trabaja cada músculo cambia con la técnica, la carga y cada cuerpo.</p>
+      </section>
+
       <section class="tab-panel history-panel" role="tabpanel" [id]="prefix() + '-panel-history'"
         [attr.aria-labelledby]="prefix() + '-tab-history'" [hidden]="activeTab() !== 'history'" tabindex="0">
         <div class="panel-heading"><span class="section-kicker">CADA SERIE CUENTA</span><h3>Tu historial</h3><p>Las series completadas de este ejercicio, en un solo lugar.</p></div>
@@ -181,13 +195,15 @@ interface ExerciseSession {
     .chart-data{margin:0 0 8px}.chart-data summary{display:list-item;color:var(--detail-muted);cursor:pointer;font-size:11px;padding:9px 0;min-height:38px}.chart-data summary:hover{color:var(--detail-text)}.chart-data table{margin-top:8px}
     .empty-progress{display:flex;align-items:center;flex-direction:column;text-align:center;padding:23px 12px 32px;background:var(--detail-deep);border-radius:10px}.empty-icon{width:38px;height:38px;color:var(--detail-accent);margin:2px 0 17px}.empty-progress h4{font-size:16px;font-weight:550;letter-spacing:-.015em;margin:0 0 9px;line-height:1.45}.empty-progress p{color:var(--detail-muted);font-size:13px;line-height:1.7;max-width:39ch;margin:0}.empty-footnote{color:var(--detail-muted);font-size:10px;line-height:1.7;margin-top:21px;max-width:42ch}
     .exercise-meta{display:grid;grid-template-columns:1fr 1fr;gap:20px;border-top:1px solid var(--detail-line);margin-top:27px;padding:20px 0 24px}.exercise-meta>span{color:var(--detail-muted);font-size:10px;line-height:1.5}.exercise-meta strong{display:block;color:var(--detail-text);font-size:13px;font-weight:500;margin-top:5px}
-    .panel-heading{padding:3px 0 24px}.panel-heading h3{margin-top:5px}.panel-heading>p{color:var(--detail-muted);font-size:13px;line-height:1.7;margin:9px 0 0;max-width:52ch}.history-panel,.instructions-panel{padding-bottom:28px}
+    .panel-heading{padding:3px 0 24px}.panel-heading h3{margin-top:5px}.panel-heading>p{color:var(--detail-muted);font-size:13px;line-height:1.7;margin:9px 0 0;max-width:52ch}.history-panel,.instructions-panel,.muscles-panel{padding-bottom:28px}
+    .muscle-lists{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:22px 0 0;padding-top:20px;border-top:1px solid var(--detail-line)}.muscle-lists div{min-width:0}.muscle-lists dt{display:flex;align-items:center;gap:8px;color:var(--detail-muted);font-size:11px;line-height:1.5}.muscle-lists dd{margin:6px 0 0;color:var(--detail-text);font-size:14px;font-weight:500;line-height:1.45}
+    .swatch{flex-shrink:0;width:12px;height:12px;border-radius:3px}.swatch-primary{background:var(--detail-accent)}.swatch-secondary{border:1.5px solid var(--detail-accent);background:color-mix(in srgb,var(--detail-accent) 16%,transparent)}
     .history-list{border-top:1px solid var(--detail-line)}.history-session{border-bottom:1px solid var(--detail-line)}.history-session>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:20px 0;cursor:pointer}.history-session>summary::-webkit-details-marker{display:none}.history-session>summary>span:first-child{display:flex;flex-direction:column;gap:6px}.history-session>summary strong{font-size:14px;font-weight:550}.history-session>summary>span>span{color:var(--detail-muted);font-size:11px}.history-summary{display:flex;gap:14px;align-items:center;flex-shrink:0;color:var(--detail-muted);font-size:11px}.history-summary svg{width:15px;height:15px;transition:transform 160ms ease-out}.history-session[open] .history-summary svg{transform:rotate(180deg)}
     table{border-collapse:collapse;width:100%;font-size:12px;font-variant-numeric:tabular-nums}th,td{padding:11px 10px;text-align:right;border-bottom:1px solid var(--detail-line)}th:first-child,td:first-child{text-align:left;padding-left:0}th:last-child,td:last-child{padding-right:0}thead th{font-weight:500;color:var(--detail-muted);font-size:10px}tbody th{font-weight:500}.completed-dot{display:inline-block;width:5px;height:5px;vertical-align:middle;border-radius:50%;background:var(--detail-accent);margin-right:12px}.history-total{display:flex;justify-content:space-between;gap:18px;padding:16px 0 20px;font-size:11px;color:var(--detail-muted)}.history-total strong{font-size:12px;color:var(--detail-text);font-weight:500}.history-empty{margin-top:3px;padding-top:28px}.empty-mark{font-size:39px;font-weight:400;letter-spacing:-.06em;color:var(--detail-accent);margin-bottom:18px;line-height:1}.history-empty .inline-action{margin-top:14px}
     .instruction-list{list-style:none;padding:0;margin:0}.instruction-list li{display:flex;align-items:flex-start;gap:20px;padding:22px 0;border-top:1px solid var(--detail-line)}.step-number{color:var(--detail-accent);font-size:14px;font-variant-numeric:tabular-nums;font-weight:500;line-height:1.75;padding-top:1px;min-width:22px}.instruction-list p{margin:0;color:var(--detail-text);font-size:14px;line-height:1.75;max-width:56ch}
     .source-link{display:flex;align-items:center;gap:16px;text-decoration:none;color:var(--detail-text);border:1px solid var(--detail-line);border-radius:9px;padding:17px 18px;margin-top:14px}.source-link:hover{border-color:var(--detail-accent);background:var(--detail-surface)}.source-symbol{font-size:24px;color:var(--detail-accent)}.source-link>span:last-child{display:flex;flex-direction:column;gap:6px}.source-link strong{font-weight:550;font-size:12px}.source-link>span>span{font-size:11px;color:var(--detail-muted)}.technique-note{color:var(--detail-muted);font-size:11px;line-height:1.7;margin:24px 0 0;max-width:58ch}
     .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-    @media(max-width:540px){.exercise-detail{border-radius:16px}.detail-header{padding:22px 20px 20px;gap:12px}.back-button{flex-basis:36px;width:36px;height:36px}.heading-copy h2{font-size:23px}.eyebrow{font-size:9px}.detail-tabs{padding:0 20px;gap:25px}.detail-tabs button{font-size:12px}.tab-panel{padding:22px 20px 0}.history-panel,.instructions-panel{padding-bottom:24px}.reference-panel{padding:16px}.reference-type{font-size:8px}.section-kicker{font-size:9px}.animation-link{gap:12px;min-height:112px}.animation-link strong{font-size:15px}.play-icon{width:44px;height:44px}.animation-link>span>span{font-size:11px}.external-icon{width:16px;height:16px}.reference-panel>p{font-size:10px}.progress-header{margin-top:28px;gap:10px}h3{font-size:18px}.metric-field select{padding-left:10px;font-size:11px}.record-line p strong{font-size:32px}.session-count{max-width:100px}.chart-footer{font-size:9px}.empty-progress{padding:24px 14px}.empty-progress h4{font-size:15px}.empty-progress p{font-size:12px}.instruction-list li{gap:15px}.instruction-list p{font-size:13px}.source-link{padding:15px 13px}.source-link strong{font-size:11px}}
+    @media(max-width:540px){.exercise-detail{border-radius:16px}.detail-header{padding:22px 20px 20px;gap:12px}.back-button{flex-basis:36px;width:36px;height:36px}.heading-copy h2{font-size:23px}.eyebrow{font-size:9px}.detail-tabs{padding:0 20px;gap:18px}.detail-tabs button{font-size:12px}.tab-panel{padding:22px 20px 0}.history-panel,.instructions-panel,.muscles-panel{padding-bottom:24px}.muscle-lists{gap:14px}.muscle-lists dd{font-size:13px}.reference-panel{padding:16px}.reference-type{font-size:8px}.section-kicker{font-size:9px}.animation-link{gap:12px;min-height:112px}.animation-link strong{font-size:15px}.play-icon{width:44px;height:44px}.animation-link>span>span{font-size:11px}.external-icon{width:16px;height:16px}.reference-panel>p{font-size:10px}.progress-header{margin-top:28px;gap:10px}h3{font-size:18px}.metric-field select{padding-left:10px;font-size:11px}.record-line p strong{font-size:32px}.session-count{max-width:100px}.chart-footer{font-size:9px}.empty-progress{padding:24px 14px}.empty-progress h4{font-size:15px}.empty-progress p{font-size:12px}.instruction-list li{gap:15px}.instruction-list p{font-size:13px}.source-link{padding:15px 13px}.source-link strong{font-size:11px}}
     @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;scroll-behavior:auto!important}}
   `,
 })
@@ -199,9 +215,14 @@ export class ExerciseDetailComponent {
   readonly metric = signal<Metric>('weight');
   readonly tabs: { id: DetailTab; label: string }[] = [
     { id: 'overview', label: 'Resumen' },
+    { id: 'muscles', label: 'Músculos' },
     { id: 'history', label: 'Historial' },
-    { id: 'instructions', label: 'Cómo hacerlo' },
+    { id: 'instructions', label: 'Técnica' },
   ];
+  /** El mapa se dibuja (y su archivo se descarga) recién la primera vez que se abre la solapa. */
+  readonly musclesOpened = signal(false);
+  readonly primaryNames = computed(() => muscleSentence(this.exercise().primaryMuscles));
+  readonly secondaryNames = computed(() => muscleSentence(this.exercise().secondaryMuscles));
   readonly prefix = computed(() => `exercise-detail-${this.exercise().id}`);
   readonly sessions = computed<ExerciseSession[]>(() => this.store.history()
     .map((workout) => {
@@ -241,6 +262,10 @@ export class ExerciseDetailComponent {
     const indices = [...new Set([0, Math.floor((points.length - 1) / 2), points.length - 1])];
     return indices.map((index) => ({ ...points[index], anchor: points.length === 1 ? 'middle' : index === 0 ? 'start' : index === points.length - 1 ? 'end' : 'middle' }));
   });
+
+  constructor() {
+    effect(() => { if (this.activeTab() === 'muscles') this.musclesOpened.set(true); });
+  }
 
   setMetric(event: Event): void {
     const value = (event.target as HTMLSelectElement).value;

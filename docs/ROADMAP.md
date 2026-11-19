@@ -58,7 +58,7 @@ Hipótesis: registro simple + planificación personalizada + IA conversacional, 
 | --- | --- | --- |
 | Perfil, objetivos y nivel | MVP | Hecho: objetivo principal, días por semana, lugar (gimnasio / casa con pesas / sin equipo) y nivel |
 | Rutinas y calendario semanal | MVP | Hecho |
-| Biblioteca con videos | MVP | Parcial: 43 ejercicios con texto, sin imágenes. Plan: imágenes creadas con GPT y mapa muscular propio; animaciones compradas solo si hace falta (ver "Próximos incrementos") |
+| Biblioteca con videos | MVP | Parcial: 43 ejercicios con texto y mapa muscular propio (principales y secundarios), sin imágenes del movimiento. Plan: imágenes creadas con GPT; animaciones compradas solo si hace falta (ver "Próximos incrementos") |
 | Registro de series, pesos y repeticiones | MVP | Hecho |
 | Estadísticas y evolución | MVP | Hecho |
 | Adaptación automática de rutinas | 2ª fase | Primera parte hecha: semana tipo sugerida según el perfil y progresión de cargas por reglas (subir, mantener o +1 repetición), siempre con confirmación del usuario |
@@ -127,7 +127,9 @@ Los tres primeros salen del análisis de Fitness Online del 17 de noviembre de 2
    principales y secundarios, miniaturas en todas las listas y la ficha del ejercicio a un toque desde la sesión.
    No cambia el esquema ni exige comprar licencias. El usuario decidió que las imágenes las cree GPT; el dibujo de
    línea de licencia abierta queda como reserva. Falta generar una imagen de prueba y que apruebe el estilo: la
-   cuenta de ChatGPT quedó sin cupo hasta el 20 de noviembre de 2026.
+   cuenta de ChatGPT quedó sin cupo hasta el 20 de noviembre de 2026. **Hecho el 18 de noviembre:** músculos de los
+   43 ejercicios (B-01) y mapa muscular en la ficha (B-02). Siguen las miniaturas (B-04), la ficha desde la sesión
+   (B-05) y las imágenes (B-03).
 2. **La sesión en el gimnasio** (B-06 a B-12). Sustituir un ejercicio cuando la máquina está ocupada, duración
    estimada calculada, avance de la sesión en curso, aclarar si la carga es total o por mancuerna, hora y comentario
    por serie (FitAppState v4). La vista de un ejercicio por pantalla se decide después de probar lo anterior.

@@ -70,6 +70,17 @@ El dibujo de los logos no se modificó: solo tamaño y margen. Los usan la barra
 
 Verificación realizada el 16 de noviembre de 2026: el oEmbed público de YouTube devolvió HTTP 200 y atribución a Muscle & Strength para ambos videos. Los metadatos públicos del reproductor indicaron una duración de 50 segundos para press de banca y 43 segundos para sentadilla goblet, ambos con `playableInEmbed: true`. Esto confirma la disponibilidad declarada en esa fecha; la reproducción real también debe verificarse en el navegador de destino.
 
+## Mapa muscular
+
+`src/app/features/muscle-map.data.ts` contiene los trazos SVG del cuerpo, de frente y de espalda, tomados de [react-native-body-highlighter](https://github.com/HichamELBSI/react-native-body-highlighter) versión 3.2.0 (commit `8ed39ac`), archivos `assets/bodyFront.ts`, `assets/bodyBack.ts` y el contorno de `components/SvgMaleWrapper.tsx`. Licencia MIT, Copyright (c) 2022 ELABBASSI Hicham. Incorporado el 18 de noviembre de 2026.
+
+- Se copiaron los trazos, no la dependencia (es para React Native). No se usan los colores de la biblioteca ni la figura femenina.
+- Cambios: los lados izquierdo y derecho de cada parte se unieron en un solo trazo. El dibujo no se modificó.
+- El archivo es generado: no se edita a mano. Lleva el texto de la licencia en su encabezado.
+- El aviso de copyright y el texto de la licencia viajan con la app en `public/licenses/react-native-body-highlighter-MIT.txt`.
+
+Los músculos de cada ejercicio (`primaryMuscles`, `secondaryMuscles` en `seed.ts`) son una clasificación propia. Se cruzó con [free-exercise-db](https://github.com/yuhonas/free-exercise-db) (dominio público) para detectar errores; no se copiaron sus datos, sus textos ni sus fotos.
+
 ## Capturas de la competencia
 
 `docs/competencia/fitness-online-0*.jpeg` son siete capturas de la app Fitness Online aportadas por el usuario el 17 de noviembre de 2026. Son referencia interna para `docs/COMPETENCIA.md`: están fuera de `public/`, la app no las sirve, y ni las capturas ni las imágenes que contienen se usan o recortan como recursos de FitApp.

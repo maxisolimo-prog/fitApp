@@ -2,11 +2,21 @@
 export type FitnessLevel = 'Principiante' | 'Intermedio' | 'Avanzado';
 export type RoutineCategory = 'Fuerza' | 'Movilidad' | 'Resistencia';
 
+/** Zonas que el mapa muscular puede dibujar. Nombres y orden en `muscles.ts`. */
+export type MuscleId =
+  | 'trapezius' | 'deltoids' | 'chest' | 'upper-back' | 'lower-back' | 'biceps' | 'triceps' | 'forearm'
+  | 'abs' | 'obliques' | 'gluteal' | 'quadriceps' | 'hamstring' | 'adductors' | 'calves' | 'tibialis';
+
 export interface Exercise {
   id: string;
   name: string;
+  /** Grupo para filtros y listas ("Pecho", "Piernas"). El detalle por músculo está en los dos campos siguientes. */
   muscle: string;
   equipment: string;
+  /** Músculos que hacen el trabajo principal. Al menos uno. */
+  primaryMuscles: MuscleId[];
+  /** Músculos que ayudan a mover. Puede estar vacío. */
+  secondaryMuscles: MuscleId[];
   instructions: string[];
   image?: string;
 }

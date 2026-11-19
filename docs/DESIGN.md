@@ -92,6 +92,15 @@ Las fichas públicas de [press de banca](https://gymvisual.com/animated-gifs/151
 
 Al integrar animaciones licenciadas, incluir pausa/reproducción, controles accesibles y una descripción del movimiento. Respetar la preferencia de movimiento reducido. Mostrar solo medios correspondientes al ejercicio exacto.
 
+### Mapa muscular
+
+Mientras no haya imagen del movimiento, la ficha muestra qué músculos trabaja el ejercicio sobre un cuerpo de frente y de espalda (solapa "Músculos"). Reglas:
+
+- Principales rellenos con el acento de la marca; secundarios con contorno y relleno tenue. La diferencia no depende solo del color: al lado va la lista en texto y la leyenda repite las dos formas.
+- El dibujo lleva descripción para lectores de pantalla con los mismos músculos.
+- Es una guía general, no una medición: sin porcentajes. La clasificación está pendiente de revisión por un profesional.
+- Solo se pueden marcar las 16 zonas de `src/app/core/muscles.ts`, que son las que trae el dibujo.
+
 ## Lenguaje y contenido
 
 Usar español rioplatense conciso: “Empezá”, “Guardá”, “Agregá una serie”. Las instrucciones de ejercicios deben ser comprensibles, sin promesas de resultados ni atribuir personalización que todavía no exista. Los registros y estadísticas deben surgir de los datos del alumno; el estado inicial no debe inventar actividad, peso ni logros.

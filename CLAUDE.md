@@ -42,11 +42,12 @@ ya está en el entorno. Procesos largos con afinidad `0xF` y prioridad `BelowNor
 | `src/app/core/sync.service.ts` | Cuenta opcional y sincronización por revisión (conflicto → el alumno elige). |
 | `api/src/` | Express: `app.ts` rutas, `auth.ts` scrypt/sesiones/límites, `state-repo.ts` SQL ↔ `FitAppState`. |
 | `api/migrations/` | SQL versionado; nunca editar uno aplicado, agregar `00N_*.sql`. |
-| `src/app/core/seed.ts` | 43 ejercicios y 4 plantillas. Cargas en 0: nunca inventar pesos ni historial. |
+| `src/app/core/seed.ts` | 43 ejercicios (con músculos principales y secundarios) y 4 plantillas. Cargas en 0: nunca inventar pesos ni historial. |
+| `src/app/core/muscles.ts` | Lista cerrada de 16 músculos (los que el mapa puede dibujar), nombres y textos. |
 | `src/app/core/workout-utils.ts` | Funciones puras: fechas locales, volumen, validación estricta, serialización. |
 | `src/app/core/workout-store.ts` | Store con signals; toda mutación valida, persiste y deja `actionError`/`storageError`. |
 | `src/app/app.component.{ts,html}` | Shell, navegación por hash (`#home`, `#routines`, …) y vistas del alumno. |
-| `src/app/features/` | `routine-editor` (claro) y `exercise-detail` (oscuro, pestañas accesibles). |
+| `src/app/features/` | `routine-editor` (claro), `exercise-detail` (oscuro, pestañas accesibles) y `muscle-map` (mapa muscular; sus trazos están en `muscle-map.data.ts`, generado y con licencia MIT: no editar a mano). |
 | `src/app/brands/` | Una marca por archivo (`fitapp`, `qivox`, `fitnessgroup`): tokens, nombre, logo y funciones. `index.ts` resuelve y aplica la marca al arrancar. |
 | `src/styles.css` | Tokens por rol (valores por defecto: Temacy), `@font-face` locales y estilos globales del shell. |
 | `tests/` | Dominio, validación, store, sincronización (con API simulada) y marcas (contraste, elección, sin colores sueltos). |

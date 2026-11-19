@@ -5,6 +5,10 @@ import type { Exercise, Profile, Routine } from './models';
  * Template loads start at 0: users enter their actual load before recording sets.
  * All repetitions refer to controlled movements; unilateral counts are per side.
  * No completed workouts, weight measurements or achievements are pre-populated.
+ *
+ * Músculos: `primaryMuscles` hace el trabajo principal y `secondaryMuscles` ayuda a mover; no se listan los que
+ * solo estabilizan. Es una clasificación general, cruzada con free-exercise-db (dominio público) el 18 de noviembre
+ * de 2026, y está pendiente de revisión por un profesional, igual que las indicaciones.
  */
 export const seedExercises: Exercise[] = [
   {
@@ -12,6 +16,8 @@ export const seedExercises: Exercise[] = [
     name: 'Press de banca',
     muscle: 'Pecho',
     equipment: 'Barra',
+    primaryMuscles: ['chest'],
+    secondaryMuscles: ['deltoids', 'triceps'],
     instructions: [
       'Apoyá los pies en el suelo y mantené la espalda estable sobre el banco.',
       'Bajá la barra con control hacia el pecho, sin rebotes.',
@@ -23,6 +29,8 @@ export const seedExercises: Exercise[] = [
     name: 'Press inclinado con mancuernas',
     muscle: 'Pecho',
     equipment: 'Mancuernas',
+    primaryMuscles: ['chest'],
+    secondaryMuscles: ['deltoids', 'triceps'],
     instructions: [
       'Ajustá el banco a una inclinación cómoda y apoyá bien los pies.',
       'Bajá las mancuernas a los lados del pecho dentro de un recorrido cómodo.',
@@ -34,6 +42,8 @@ export const seedExercises: Exercise[] = [
     name: 'Remo en polea',
     muscle: 'Espalda',
     equipment: 'Polea',
+    primaryMuscles: ['upper-back'],
+    secondaryMuscles: ['biceps', 'trapezius', 'deltoids'],
     instructions: [
       'Sentate con la espalda estable y las rodillas ligeramente flexionadas.',
       'Llevá el agarre hacia el torso con los codos cerca del cuerpo.',
@@ -45,6 +55,8 @@ export const seedExercises: Exercise[] = [
     name: 'Jalón al pecho',
     muscle: 'Espalda',
     equipment: 'Polea',
+    primaryMuscles: ['upper-back'],
+    secondaryMuscles: ['biceps', 'forearm'],
     instructions: [
       'Ajustá el apoyo de las piernas y elegí un agarre cómodo.',
       'Llevá la barra hacia la parte alta del pecho, por delante de la cabeza.',
@@ -56,6 +68,8 @@ export const seedExercises: Exercise[] = [
     name: 'Press de hombros',
     muscle: 'Hombros',
     equipment: 'Mancuernas',
+    primaryMuscles: ['deltoids'],
+    secondaryMuscles: ['triceps', 'trapezius'],
     instructions: [
       'Sentate con la espalda apoyada y las mancuernas cerca de los hombros.',
       'Empujá hacia arriba dentro de un recorrido cómodo.',
@@ -67,6 +81,8 @@ export const seedExercises: Exercise[] = [
     name: 'Elevaciones laterales',
     muscle: 'Hombros',
     equipment: 'Mancuernas',
+    primaryMuscles: ['deltoids'],
+    secondaryMuscles: ['trapezius'],
     instructions: [
       'Sostené las mancuernas a los lados y flexioná apenas los codos.',
       'Elevá los brazos hasta una altura cómoda, sin encoger los hombros.',
@@ -78,6 +94,8 @@ export const seedExercises: Exercise[] = [
     name: 'Curl de bíceps',
     muscle: 'Bíceps',
     equipment: 'Mancuernas',
+    primaryMuscles: ['biceps'],
+    secondaryMuscles: ['forearm'],
     instructions: [
       'Mantené los pies firmes y los codos cerca del torso.',
       'Flexioná los codos para subir las mancuernas sin balancearte.',
@@ -89,6 +107,8 @@ export const seedExercises: Exercise[] = [
     name: 'Extensión de tríceps',
     muscle: 'Tríceps',
     equipment: 'Polea',
+    primaryMuscles: ['triceps'],
+    secondaryMuscles: [],
     instructions: [
       'Colocate frente a la polea con los codos cerca del cuerpo.',
       'Extendé los brazos hacia abajo sin mover los hombros.',
@@ -100,6 +120,8 @@ export const seedExercises: Exercise[] = [
     name: 'Sentadilla goblet',
     muscle: 'Piernas',
     equipment: 'Mancuerna',
+    primaryMuscles: ['quadriceps'],
+    secondaryMuscles: ['gluteal', 'hamstring', 'adductors'],
     instructions: [
       'Sostené una mancuerna cerca del pecho y apoyá firmemente los pies.',
       'Flexioná caderas y rodillas hasta una profundidad cómoda.',
@@ -111,6 +133,8 @@ export const seedExercises: Exercise[] = [
     name: 'Prensa de piernas',
     muscle: 'Piernas',
     equipment: 'Máquina',
+    primaryMuscles: ['quadriceps'],
+    secondaryMuscles: ['gluteal', 'hamstring'],
     instructions: [
       'Ajustá el asiento y mantené la espalda y la pelvis apoyadas.',
       'Acercá la plataforma hasta un recorrido cómodo sin despegar la pelvis.',
@@ -122,6 +146,8 @@ export const seedExercises: Exercise[] = [
     name: 'Peso muerto rumano',
     muscle: 'Cadena posterior',
     equipment: 'Mancuernas',
+    primaryMuscles: ['hamstring', 'gluteal'],
+    secondaryMuscles: ['lower-back'],
     instructions: [
       'Sostené las mancuernas delante del cuerpo con las rodillas algo flexionadas.',
       'Llevá la cadera hacia atrás y bajá las cargas cerca de las piernas.',
@@ -133,6 +159,8 @@ export const seedExercises: Exercise[] = [
     name: 'Zancada hacia atrás',
     muscle: 'Piernas',
     equipment: 'Peso corporal',
+    primaryMuscles: ['quadriceps'],
+    secondaryMuscles: ['gluteal', 'hamstring'],
     instructions: [
       'De pie, llevá una pierna hacia atrás y buscá una posición estable.',
       'Flexioná ambas rodillas dentro de un recorrido cómodo.',
@@ -144,6 +172,8 @@ export const seedExercises: Exercise[] = [
     name: 'Puente de glúteos',
     muscle: 'Glúteos',
     equipment: 'Peso corporal',
+    primaryMuscles: ['gluteal'],
+    secondaryMuscles: ['hamstring'],
     instructions: [
       'Acostate boca arriba con las rodillas flexionadas y los pies apoyados.',
       'Elevá la pelvis contrayendo los glúteos, sin arquear de más la espalda.',
@@ -155,6 +185,8 @@ export const seedExercises: Exercise[] = [
     name: 'Flexiones de brazos',
     muscle: 'Pecho',
     equipment: 'Peso corporal',
+    primaryMuscles: ['chest'],
+    secondaryMuscles: ['deltoids', 'triceps'],
     instructions: [
       'Apoyá las manos en el suelo o en una superficie elevada y estable.',
       'Bajá el pecho con el cuerpo alineado y los codos en una posición cómoda.',
@@ -166,6 +198,8 @@ export const seedExercises: Exercise[] = [
     name: 'Bird dog',
     muscle: 'Core',
     equipment: 'Peso corporal',
+    primaryMuscles: ['lower-back'],
+    secondaryMuscles: ['gluteal', 'abs', 'deltoids'],
     instructions: [
       'Apoyá manos y rodillas, manteniendo la espalda estable.',
       'Extendé un brazo y la pierna contraria sin girar la pelvis.',
@@ -177,6 +211,8 @@ export const seedExercises: Exercise[] = [
     name: 'Dead bug',
     muscle: 'Core',
     equipment: 'Peso corporal',
+    primaryMuscles: ['abs'],
+    secondaryMuscles: ['obliques'],
     instructions: [
       'Acostate boca arriba con los brazos elevados y las rodillas flexionadas.',
       'Extendé lentamente un brazo y la pierna contraria, manteniendo estable el torso.',
@@ -184,137 +220,137 @@ export const seedExercises: Exercise[] = [
     ],
   },
   // ---- Catálogo ampliado (16 de noviembre de 2026). Indicaciones generales: validar con un profesional. ----
-  { id: 'dumbbell-fly', name: 'Aperturas con mancuernas', muscle: 'Pecho', equipment: 'Mancuernas', instructions: [
+  { id: 'dumbbell-fly', name: 'Aperturas con mancuernas', muscle: 'Pecho', equipment: 'Mancuernas', primaryMuscles: ['chest'], secondaryMuscles: ['deltoids'], instructions: [
     'Acostate en el banco con las mancuernas arriba del pecho y los codos apenas flexionados.',
     'Abrí los brazos en arco hasta sentir estiramiento en el pecho, sin bajar de más.',
     'Volvé por el mismo arco, como si abrazaras un árbol, sin chocar las mancuernas.',
   ] },
-  { id: 'chest-press-machine', name: 'Press de pecho en máquina', muscle: 'Pecho', equipment: 'Máquina', instructions: [
+  { id: 'chest-press-machine', name: 'Press de pecho en máquina', muscle: 'Pecho', equipment: 'Máquina', primaryMuscles: ['chest'], secondaryMuscles: ['deltoids', 'triceps'], instructions: [
     'Ajustá el asiento para que las manijas queden a la altura del pecho.',
     'Empujá hacia adelante sin bloquear de golpe los codos.',
     'Volvé despacio hasta un recorrido cómodo, con la espalda apoyada.',
   ] },
-  { id: 'cable-crossover', name: 'Cruce de poleas', muscle: 'Pecho', equipment: 'Polea', instructions: [
+  { id: 'cable-crossover', name: 'Cruce de poleas', muscle: 'Pecho', equipment: 'Polea', primaryMuscles: ['chest'], secondaryMuscles: ['deltoids'], instructions: [
     'Parate entre las poleas con un pie adelante y el torso apenas inclinado.',
     'Llevá las manos hacia adelante y abajo hasta juntarlas frente al pecho.',
     'Volvé con control hasta sentir el estiramiento, sin dejar que las poleas tiren de vos.',
   ] },
-  { id: 'barbell-row', name: 'Remo con barra', muscle: 'Espalda', equipment: 'Barra', instructions: [
+  { id: 'barbell-row', name: 'Remo con barra', muscle: 'Espalda', equipment: 'Barra', primaryMuscles: ['upper-back'], secondaryMuscles: ['biceps', 'trapezius', 'deltoids', 'lower-back'], instructions: [
     'Inclinate desde la cadera con la espalda recta y las rodillas algo flexionadas.',
     'Llevá la barra hacia el abdomen juntando los omóplatos.',
     'Bajá con control. Si se te redondea la espalda, bajá la carga.',
   ] },
-  { id: 'one-arm-row', name: 'Remo con mancuerna a una mano', muscle: 'Espalda', equipment: 'Mancuerna', instructions: [
+  { id: 'one-arm-row', name: 'Remo con mancuerna a una mano', muscle: 'Espalda', equipment: 'Mancuerna', primaryMuscles: ['upper-back'], secondaryMuscles: ['biceps', 'trapezius', 'deltoids'], instructions: [
     'Apoyá una mano y una rodilla en el banco, con la espalda paralela al piso.',
     'Llevá la mancuerna hacia la cadera con el codo cerca del cuerpo.',
     'Bajá despacio sin girar el torso. Las repeticiones son por lado.',
   ] },
-  { id: 'assisted-pull-up', name: 'Dominadas asistidas', muscle: 'Espalda', equipment: 'Máquina', instructions: [
+  { id: 'assisted-pull-up', name: 'Dominadas asistidas', muscle: 'Espalda', equipment: 'Máquina', primaryMuscles: ['upper-back'], secondaryMuscles: ['biceps', 'forearm'], instructions: [
     'Elegí un contrapeso que te permita completar las repeticiones con buena técnica.',
     'Tirá llevando el pecho hacia la barra, sin balancearte.',
     'Bajá con control hasta extender los brazos.',
   ] },
-  { id: 'pull-up', name: 'Dominadas', muscle: 'Espalda', equipment: 'Peso corporal', instructions: [
+  { id: 'pull-up', name: 'Dominadas', muscle: 'Espalda', equipment: 'Peso corporal', primaryMuscles: ['upper-back'], secondaryMuscles: ['biceps', 'forearm'], instructions: [
     'Colgate de la barra con un agarre algo más ancho que los hombros.',
     'Subí llevando el pecho hacia la barra, sin patear ni balancearte.',
     'Bajá despacio hasta extender los brazos. Si no llegás, usá asistencia.',
   ] },
-  { id: 'overhead-press', name: 'Press militar con barra', muscle: 'Hombros', equipment: 'Barra', instructions: [
+  { id: 'overhead-press', name: 'Press militar con barra', muscle: 'Hombros', equipment: 'Barra', primaryMuscles: ['deltoids'], secondaryMuscles: ['triceps', 'trapezius'], instructions: [
     'De pie, con la barra apoyada adelante de los hombros y el abdomen firme.',
     'Empujá la barra hacia arriba pasando cerca de la cara.',
     'Bajá con control sin arquear la zona lumbar.',
   ] },
-  { id: 'rear-delt-fly', name: 'Vuelos posteriores', muscle: 'Hombros', equipment: 'Mancuernas', instructions: [
+  { id: 'rear-delt-fly', name: 'Vuelos posteriores', muscle: 'Hombros', equipment: 'Mancuernas', primaryMuscles: ['deltoids'], secondaryMuscles: ['trapezius'], instructions: [
     'Inclinate desde la cadera con la espalda recta y las mancuernas colgando.',
     'Abrí los brazos hacia los lados con los codos apenas flexionados.',
     'Bajá lento, sin usar impulso del torso.',
   ] },
-  { id: 'face-pull', name: 'Face pull', muscle: 'Hombros', equipment: 'Polea', instructions: [
+  { id: 'face-pull', name: 'Face pull', muscle: 'Hombros', equipment: 'Polea', primaryMuscles: ['deltoids'], secondaryMuscles: ['trapezius'], instructions: [
     'Con la polea a la altura de la cara, tomá la cuerda con las palmas hacia adentro.',
     'Tirá hacia la frente separando las manos y abriendo los codos.',
     'Volvé con control sin dejar que la polea te lleve.',
   ] },
-  { id: 'barbell-curl', name: 'Curl con barra', muscle: 'Bíceps', equipment: 'Barra', instructions: [
+  { id: 'barbell-curl', name: 'Curl con barra', muscle: 'Bíceps', equipment: 'Barra', primaryMuscles: ['biceps'], secondaryMuscles: ['forearm'], instructions: [
     'De pie, con la barra a la altura de los muslos y los codos pegados al cuerpo.',
     'Flexioná los codos para subir la barra sin balancear la espalda.',
     'Bajá despacio hasta extender los brazos.',
   ] },
-  { id: 'hammer-curl', name: 'Curl martillo', muscle: 'Bíceps', equipment: 'Mancuernas', instructions: [
+  { id: 'hammer-curl', name: 'Curl martillo', muscle: 'Bíceps', equipment: 'Mancuernas', primaryMuscles: ['biceps'], secondaryMuscles: ['forearm'], instructions: [
     'Sostené las mancuernas con las palmas mirándose entre sí.',
     'Subí flexionando los codos, sin moverlos hacia adelante.',
     'Bajá con control y mantené las muñecas firmes.',
   ] },
-  { id: 'overhead-triceps', name: 'Extensión de tríceps sobre la cabeza', muscle: 'Tríceps', equipment: 'Mancuerna', instructions: [
+  { id: 'overhead-triceps', name: 'Extensión de tríceps sobre la cabeza', muscle: 'Tríceps', equipment: 'Mancuerna', primaryMuscles: ['triceps'], secondaryMuscles: [], instructions: [
     'Sentado o de pie, sostené una mancuerna con las dos manos por encima de la cabeza.',
     'Bajala por detrás de la cabeza flexionando solo los codos.',
     'Extendé los brazos sin abrir los codos ni arquear la espalda.',
   ] },
-  { id: 'bench-dip', name: 'Fondos en banco', muscle: 'Tríceps', equipment: 'Peso corporal', instructions: [
+  { id: 'bench-dip', name: 'Fondos en banco', muscle: 'Tríceps', equipment: 'Peso corporal', primaryMuscles: ['triceps'], secondaryMuscles: ['deltoids', 'chest'], instructions: [
     'Apoyá las manos en el borde de un banco detrás tuyo, con las piernas adelante.',
     'Bajá flexionando los codos hasta un recorrido cómodo para los hombros.',
     'Empujá para subir. Flexioná las rodillas para hacerlo más fácil.',
   ] },
-  { id: 'back-squat', name: 'Sentadilla con barra', muscle: 'Piernas', equipment: 'Barra', instructions: [
+  { id: 'back-squat', name: 'Sentadilla con barra', muscle: 'Piernas', equipment: 'Barra', primaryMuscles: ['quadriceps'], secondaryMuscles: ['gluteal', 'hamstring', 'adductors', 'lower-back'], instructions: [
     'Apoyá la barra sobre la parte alta de la espalda y separá los pies al ancho de hombros.',
     'Bajá llevando la cadera atrás y abajo, con las rodillas en línea con los pies.',
     'Subí empujando el piso. Usá soportes de seguridad en el rack.',
   ] },
-  { id: 'leg-extension', name: 'Extensión de cuádriceps', muscle: 'Piernas', equipment: 'Máquina', instructions: [
+  { id: 'leg-extension', name: 'Extensión de cuádriceps', muscle: 'Piernas', equipment: 'Máquina', primaryMuscles: ['quadriceps'], secondaryMuscles: [], instructions: [
     'Ajustá el respaldo para que la rodilla quede alineada con el eje de la máquina.',
     'Extendé las piernas sin despegar la cadera del asiento.',
     'Bajá despacio, sin dejar caer el peso.',
   ] },
-  { id: 'leg-curl', name: 'Curl femoral', muscle: 'Piernas', equipment: 'Máquina', instructions: [
+  { id: 'leg-curl', name: 'Curl femoral', muscle: 'Piernas', equipment: 'Máquina', primaryMuscles: ['hamstring'], secondaryMuscles: ['calves'], instructions: [
     'Ajustá la máquina para que el rodillo quede sobre los tobillos.',
     'Flexioná las rodillas llevando los talones hacia los glúteos.',
     'Volvé con control hasta casi extender las piernas.',
   ] },
-  { id: 'calf-raise', name: 'Elevación de talones', muscle: 'Piernas', equipment: 'Máquina', instructions: [
+  { id: 'calf-raise', name: 'Elevación de talones', muscle: 'Piernas', equipment: 'Máquina', primaryMuscles: ['calves'], secondaryMuscles: [], instructions: [
     'Apoyá la punta de los pies en el borde con los talones libres.',
     'Subí en puntas de pie lo más alto que puedas.',
     'Bajá lento hasta sentir el estiramiento de la pantorrilla.',
   ] },
-  { id: 'bulgarian-split-squat', name: 'Sentadilla búlgara', muscle: 'Piernas', equipment: 'Mancuernas', instructions: [
+  { id: 'bulgarian-split-squat', name: 'Sentadilla búlgara', muscle: 'Piernas', equipment: 'Mancuernas', primaryMuscles: ['quadriceps'], secondaryMuscles: ['gluteal', 'hamstring'], instructions: [
     'Apoyá el empeine de un pie en un banco detrás tuyo y adelantá el otro.',
     'Bajá flexionando la rodilla de adelante, con el torso estable.',
     'Subí empujando con la pierna de adelante. Las repeticiones son por lado.',
   ] },
-  { id: 'hip-thrust', name: 'Hip thrust', muscle: 'Glúteos', equipment: 'Barra', instructions: [
+  { id: 'hip-thrust', name: 'Hip thrust', muscle: 'Glúteos', equipment: 'Barra', primaryMuscles: ['gluteal'], secondaryMuscles: ['hamstring'], instructions: [
     'Apoyá la parte alta de la espalda en un banco, con la barra sobre la cadera y una almohadilla.',
     'Elevá la cadera apretando los glúteos hasta alinear tronco y muslos.',
     'Bajá con control sin arquear de más la zona lumbar.',
   ] },
-  { id: 'cable-kickback', name: 'Patada de glúteo en polea', muscle: 'Glúteos', equipment: 'Polea', instructions: [
+  { id: 'cable-kickback', name: 'Patada de glúteo en polea', muscle: 'Glúteos', equipment: 'Polea', primaryMuscles: ['gluteal'], secondaryMuscles: ['hamstring'], instructions: [
     'Colocá la tobillera en la polea baja y apoyá las manos en la máquina.',
     'Llevá la pierna hacia atrás apretando el glúteo, sin arquear la espalda.',
     'Volvé despacio. Las repeticiones son por lado.',
   ] },
-  { id: 'hip-abduction', name: 'Abducción de cadera en máquina', muscle: 'Glúteos', equipment: 'Máquina', instructions: [
+  { id: 'hip-abduction', name: 'Abducción de cadera en máquina', muscle: 'Glúteos', equipment: 'Máquina', primaryMuscles: ['gluteal'], secondaryMuscles: [], instructions: [
     'Sentate con la espalda apoyada y las almohadillas por fuera de las rodillas.',
     'Abrí las piernas empujando hacia afuera, con control.',
     'Volvé lento sin dejar que las placas choquen.',
   ] },
-  { id: 'deadlift', name: 'Peso muerto con barra', muscle: 'Cadena posterior', equipment: 'Barra', instructions: [
+  { id: 'deadlift', name: 'Peso muerto con barra', muscle: 'Cadena posterior', equipment: 'Barra', primaryMuscles: ['gluteal', 'hamstring', 'lower-back'], secondaryMuscles: ['quadriceps', 'trapezius', 'upper-back', 'forearm'], instructions: [
     'Con la barra sobre la mitad del pie, tomala con la espalda recta y el pecho alto.',
     'Subí empujando el piso y extendiendo cadera y rodillas a la vez, con la barra cerca del cuerpo.',
     'Bajá con la misma técnica. Si la espalda se redondea, bajá la carga.',
   ] },
-  { id: 'back-extension', name: 'Hiperextensiones', muscle: 'Cadena posterior', equipment: 'Banco', instructions: [
+  { id: 'back-extension', name: 'Hiperextensiones', muscle: 'Cadena posterior', equipment: 'Banco', primaryMuscles: ['lower-back'], secondaryMuscles: ['gluteal', 'hamstring'], instructions: [
     'Ubicate en el banco con la cadera apoyada y los pies trabados.',
     'Bajá el torso flexionando la cadera, con la espalda recta.',
     'Subí hasta alinear el cuerpo, sin hiperextender la zona lumbar.',
   ] },
-  { id: 'crunch', name: 'Abdominales crunch', muscle: 'Core', equipment: 'Peso corporal', instructions: [
+  { id: 'crunch', name: 'Abdominales crunch', muscle: 'Core', equipment: 'Peso corporal', primaryMuscles: ['abs'], secondaryMuscles: ['obliques'], instructions: [
     'Acostate boca arriba con las rodillas flexionadas y las manos a los costados de la cabeza.',
     'Despegá los hombros del piso contrayendo el abdomen, sin tirar del cuello.',
     'Bajá despacio y repetí.',
   ] },
-  { id: 'leg-raise', name: 'Elevación de piernas', muscle: 'Core', equipment: 'Peso corporal', instructions: [
+  { id: 'leg-raise', name: 'Elevación de piernas', muscle: 'Core', equipment: 'Peso corporal', primaryMuscles: ['abs'], secondaryMuscles: ['obliques'], instructions: [
     'Acostate boca arriba con las manos debajo de la cadera.',
     'Elevá las piernas hasta un ángulo cómodo con la zona lumbar apoyada.',
     'Bajalas despacio sin despegar la espalda. Flexioná las rodillas para hacerlo más fácil.',
   ] },
-  { id: 'pallof-press', name: 'Pallof press', muscle: 'Core', equipment: 'Polea', instructions: [
+  { id: 'pallof-press', name: 'Pallof press', muscle: 'Core', equipment: 'Polea', primaryMuscles: ['obliques', 'abs'], secondaryMuscles: ['deltoids'], instructions: [
     'Parate de costado a la polea con el agarre frente al pecho.',
     'Extendé los brazos hacia adelante sin dejar que el torso gire.',
     'Volvé al pecho con control. Las repeticiones son por lado.',

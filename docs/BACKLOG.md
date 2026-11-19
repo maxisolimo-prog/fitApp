@@ -33,10 +33,10 @@ consumen el cupo de la cuenta de ChatGPT del usuario.
 
 | # | Qué | Esfuerzo | Esquema | Depende de |
 | --- | --- | --- | --- | --- |
-| B-01 | Músculos principales y secundarios de los 43 ejercicios | Bajo | No | — |
-| B-02 | Mapa muscular propio y solapa "Músculos" en la ficha | Medio | No | B-01 |
+| B-01 | Músculos principales y secundarios de los 43 ejercicios | Bajo | No | Hecho el 18 de noviembre de 2026 |
+| B-02 | Mapa muscular propio y solapa "Músculos" en la ficha | Medio | No | Hecho el 18 de noviembre de 2026 |
 | B-03 | Imagen de cada ejercicio, creada con GPT | Medio | No | B-01, cupo de GPT, estilo aprobado |
-| B-04 | Miniaturas en las listas | Bajo | No | B-03, o B-02 si no hay imagen |
+| B-04 | Miniaturas en las listas | Bajo | No | Destrabado: puede usar el mapa de B-02 |
 | B-05 | Abrir la ficha del ejercicio desde la sesión | Medio | No | — |
 
 ### B-01. Músculos principales y secundarios
@@ -49,6 +49,11 @@ lista cerrada: las zonas que el mapa de B-02 puede dibujar. `muscle` queda como 
   secundarios de más de 800 ejercicios, en dominio público.
 - **Listo cuando:** los 43 ejercicios tienen ambos campos, un test verifica que todo músculo usado está en la lista
   cerrada, y queda anotado que falta la revisión de un profesional (igual que las indicaciones).
+- **Hecho.** Lista cerrada de 16 zonas en `src/app/core/muscles.ts`. Criterio: principal es el que hace el trabajo;
+  secundario, el que ayuda a mover; los que solo estabilizan no se listan. Cruzado con free-exercise-db: el músculo
+  principal coincide en los 42 ejercicios que tienen equivalente ahí (bird dog no lo tiene). **Falta la revisión de
+  un profesional.** El dibujo no trae romboides, flexores de cadera, abductores ni manguito rotador: la abducción de
+  cadera marca glúteos y la elevación de piernas, abdominales.
 
 ### B-02. Mapa muscular propio
 
@@ -62,6 +67,12 @@ contorno. Va en una solapa nueva "Músculos" de la ficha y, en chico, como image
 - **Listo cuando:** el mapa se entiende sin depender del color (lista de texto "Principales" y "Secundarios" al
   lado), tiene descripción para lectores de pantalla y el origen queda registrado en `docs/ASSETS.md` con el aviso
   de copyright de la licencia MIT.
+- **Hecho.** Solapa "Músculos" en la ficha: principales rellenos, secundarios con contorno, lista en texto y
+  descripción para lectores de pantalla. Toma el color de acento de cada marca. El dibujo (59 kB) va en un archivo
+  aparte, fuera de la carga inicial: se pide al abrir la solapa y el service worker lo deja guardado para usarlo
+  sin conexión. Si la descarga falla, la solapa ofrece "Reintentar" y la lista en texto sigue visible. La versión 3.2.0 del dibujo no trae "abductores", que figuraba en
+  la lista de arriba. Para que entren cuatro solapas en el celular, "Cómo hacerlo" pasó a llamarse "Técnica".
+  Queda para B-04 la versión en chico para las listas, sobre fondo claro.
 
 ### B-03. Imagen de cada ejercicio, creada con GPT
 
