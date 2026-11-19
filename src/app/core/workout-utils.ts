@@ -62,6 +62,26 @@ export function workoutDurationMinutes(workout: Pick<Workout, 'startedAt' | 'fin
   return Number.isFinite(difference) ? Math.max(0, Math.round(difference / 60_000)) : 0;
 }
 
+/**
+ * Suposiciones para estimar cuánto dura una rutina. No son mediciones: por eso la duración se muestra con "≈".
+ * Una serie de unas 10 repeticiones controladas lleva alrededor de 45 s; cambiar de ejercicio (ir al equipo,
+ * cargar el peso), alrededor de un minuto.
+ */
+export const WORK_SECONDS_PER_SET = 45;
+export const SETUP_SECONDS_PER_EXERCISE = 60;
+
+/**
+ * Duración estimada de una rutina, en minutos redondeados a 5: por cada serie, el trabajo más su descanso; por
+ * cada ejercicio, el armado. Entre 5 y 600, el rango que acepta `validateRoutine`. Ignora valores a medio escribir.
+ */
+export function estimateRoutineMinutes(routine: Pick<Routine, 'exercises'>): number {
+  const seconds = routine.exercises.reduce((total, entry) => {
+    if (!number(entry.sets, 1, 30) || !number(entry.restSeconds, 0, 3600)) return total;
+    return total + SETUP_SECONDS_PER_EXERCISE + entry.sets * (WORK_SECONDS_PER_SET + entry.restSeconds);
+  }, 0);
+  return Math.min(600, Math.max(5, Math.round(seconds / 300) * 5));
+}
+
 export function emptyWeeklyPlan(): WeeklyPlan {
   return [null, null, null, null, null, null, null];
 }

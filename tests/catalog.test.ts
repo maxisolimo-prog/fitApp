@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { isMuscleId, MUSCLE_IDS, MUSCLE_LABELS, muscleNames, muscleSentence } from '../src/app/core/muscles';
-import { seedExercises } from '../src/app/core/seed';
+import { seedExercises, seedRoutines } from '../src/app/core/seed';
+import { estimateRoutineMinutes, SETUP_SECONDS_PER_EXERCISE, WORK_SECONDS_PER_SET } from '../src/app/core/workout-utils';
 import { focusSide, thumbView } from '../src/app/features/muscle-focus';
 import { BODY_BACK, BODY_FRONT, BODY_OUTLINE, BODY_VIEWBOX } from '../src/app/features/muscle-map.data';
 
@@ -64,6 +65,24 @@ test('la miniatura mira cada músculo del lado donde el dibujo lo trae, con un r
   assert.equal(thumbView(['quadriceps']).side, 'front');
   assert.equal(thumbView(['hamstring']).side, 'back');
   assert.equal(typeof thumbView([]).viewBox, 'string');
+});
+
+test('la duración estimada sale de series, descansos y armado, redondeada a 5 minutos', () => {
+  const entry = (sets: number, restSeconds: number) => ({ exerciseId: 'bench-press', sets, reps: 10, weight: 0, restSeconds });
+  // 4 series × (45 s de trabajo + 75 s de descanso) + 60 s de armado = 540 s = 9 min, que redondea a 10.
+  assert.equal(SETUP_SECONDS_PER_EXERCISE + 4 * (WORK_SECONDS_PER_SET + 75), 540);
+  assert.equal(estimateRoutineMinutes({ exercises: [entry(4, 75)] }), 10);
+  assert.equal(estimateRoutineMinutes({ exercises: [entry(4, 75), entry(4, 75), entry(4, 75)] }), 25);
+  // Nunca menos de 5 ni más de 600, que es lo que acepta la validación de rutinas.
+  assert.equal(estimateRoutineMinutes({ exercises: [] }), 5);
+  assert.equal(estimateRoutineMinutes({ exercises: [entry(30, 3600)] }), 600);
+  // Un campo a medio escribir en el editor (vacío o fuera de rango) no rompe la cuenta: ese ejercicio no suma.
+  const half = [entry(Number.NaN, 60), entry(3, 60), { ...entry(3, 60), sets: null as unknown as number }];
+  assert.equal(estimateRoutineMinutes({ exercises: half }), estimateRoutineMinutes({ exercises: [entry(3, 60)] }));
+});
+
+test('las plantillas guardan la misma duración que se muestra', () => {
+  for (const routine of seedRoutines) assert.equal(routine.duration, estimateRoutineMinutes(routine), routine.id);
 });
 
 test('los nombres salen en el orden de la lista y se leen de corrido', () => {

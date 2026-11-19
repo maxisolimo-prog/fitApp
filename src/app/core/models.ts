@@ -35,7 +35,7 @@ export interface Routine {
   name: string;
   description: string;
   category: RoutineCategory;
-  /** Estimated session length in minutes. */
+  /** Minutos estimados, guardados al editar. Las pantallas muestran `estimateRoutineMinutes`, que se calcula con las series y los descansos. */
   duration: number;
   level: FitnessLevel;
   exercises: RoutineExercise[];

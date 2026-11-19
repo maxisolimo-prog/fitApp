@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, Output, computed, inject, signal, type 
 import { FormsModule } from '@angular/forms';
 import type { Exercise, FitnessLevel, Routine, RoutineCategory, RoutineExercise } from '../core/models';
 import { WorkoutStore } from '../core/workout-store';
+import { estimateRoutineMinutes } from '../core/workout-utils';
 import { ExerciseThumbComponent } from './exercise-thumb.component';
 
 /** Same bound as validateRoutine in workout-utils: generous, not a product limit. */
@@ -32,11 +33,6 @@ const MAX_EXERCISES = 50;
             <small id="name-error" class="field-error">@if ((nameInput.touched || attempted) && !name.trim()) { Escribí un nombre para encontrarla después. }</small>
           </label>
           <label class="field">
-            <span>Duración estimada (min)</span>
-            <input type="number" name="duration" [(ngModel)]="duration" #durationInput="ngModel" required min="1" max="600" step="1" inputmode="numeric"
-              [attr.aria-invalid]="(durationInput.touched || attempted) && !integerInRange(duration, 1, 600)">
-          </label>
-          <label class="field">
             <span>Enfoque</span>
             <select name="category" [(ngModel)]="category">@for (option of categories; track option) { <option [ngValue]="option">{{ option }}</option> }</select>
           </label>
@@ -51,8 +47,8 @@ const MAX_EXERCISES = 50;
         </div>
 
         <div class="exercise-heading">
-          <div><h3>Ejercicios</h3><p>Cargas en kg; 0 para peso corporal.</p></div>
-          <span class="exercise-count">{{ entries.length }} {{ entries.length === 1 ? 'ejercicio' : 'ejercicios' }}</span>
+          <div><h3>Ejercicios</h3><p>Cargas en kg; 0 para peso corporal. La duración se estima con tus series y descansos.</p></div>
+          <span class="exercise-count">{{ entries.length }} {{ entries.length === 1 ? 'ejercicio' : 'ejercicios' }}@if (entries.length) { <span> · ≈ {{ estimate }} min</span> }</span>
         </div>
 
         <ol class="exercise-list">
@@ -159,7 +155,7 @@ const MAX_EXERCISES = 50;
     .intro,.exercise-heading p{color:var(--ink-2);font-size:13px;line-height:1.6;margin:0}
     button,input,select,textarea{font:inherit}button{cursor:pointer;transition:background .16s,color .16s,border-color .16s}button:disabled{cursor:not-allowed;opacity:.45}
     .text-button{background:none;border:0;padding:8px 0;color:var(--ink);font-size:13px;white-space:nowrap;text-decoration:underline;text-underline-offset:4px;min-height:44px}
-    .details-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:16px 20px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:22px 0}
+    .details-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px 20px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:22px 0}
     .name-field,.description-field{grid-column:span 2}.field{display:flex;flex-direction:column;gap:6px;min-width:0}
     .field>span{font-size:12px;font-weight:600;line-height:1.4}.optional{font-weight:400;color:var(--ink-2)}
     input,select,textarea{width:100%;min-width:0;border:1px solid var(--line-strong);background:var(--surface);border-radius:var(--radius-field);color:var(--ink);outline:none;padding:10px 12px;font-size:15px;line-height:1.4;min-height:44px}
@@ -221,7 +217,6 @@ export class RoutineEditorComponent implements OnChanges {
   readonly levels: FitnessLevel[] = ['Principiante', 'Intermedio', 'Avanzado'];
   name = '';
   description = '';
-  duration = 30;
   category: RoutineCategory = 'Fuerza';
   level: FitnessLevel = 'Principiante';
   entries: RoutineExercise[] = [];
@@ -243,7 +238,6 @@ export class RoutineEditorComponent implements OnChanges {
   ngOnChanges(): void {
     this.name = this.routine ? this.routine.name + (this.routine.custom ? '' : ' · Mi versión') : '';
     this.description = this.routine?.description ?? '';
-    this.duration = this.routine?.duration ?? 30;
     this.category = this.routine?.category ?? 'Fuerza';
     this.level = this.routine?.level ?? this.store.profile().level;
     this.entries = this.routine?.exercises.map((entry) => ({ ...entry })) ?? [];
@@ -255,13 +249,18 @@ export class RoutineEditorComponent implements OnChanges {
     return !this.routine ? 'Creá tu rutina' : this.routine.custom ? 'Editar rutina' : 'Personalizar rutina';
   }
 
+  /** Minutos estimados con lo cargado hasta ahora; es lo que se guarda como duración. */
+  get estimate(): number {
+    return estimateRoutineMinutes({ exercises: this.entries });
+  }
+
   get canAdd(): boolean {
     return this.entries.length < MAX_EXERCISES && this.store.exercises().some((exercise) => !this.isUsed(exercise.id));
   }
 
   get valid(): boolean {
     return this.name.trim().length > 0 && this.name.trim().length <= 80 && this.description.length <= 300
-      && this.integerInRange(this.duration, 1, 600) && this.categories.includes(this.category)
+      && this.categories.includes(this.category)
       && this.levels.includes(this.level) && this.entries.length >= 1 && this.entries.length <= MAX_EXERCISES
       && this.entries.every((entry) => this.validEntry(entry))
       && new Set(this.entries.map((entry) => entry.exerciseId)).size === this.entries.length;
@@ -335,7 +334,7 @@ export class RoutineEditorComponent implements OnChanges {
     }
     const routine: Routine = {
       id: this.routine?.custom ? this.routine.id : `custom-${crypto.randomUUID()}`,
-      name: this.name.trim(), description: this.description.trim(), duration: this.duration,
+      name: this.name.trim(), description: this.description.trim(), duration: this.estimate,
       category: this.category, level: this.level, custom: true,
       exercises: this.entries.map((entry) => ({ ...entry })),
     };

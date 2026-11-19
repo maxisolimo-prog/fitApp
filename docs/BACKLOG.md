@@ -130,8 +130,8 @@ encima de la sesión. Hoy la ficha solo se abre desde la Biblioteca, y para ir h
 | # | Qué | Esfuerzo | Esquema | Depende de |
 | --- | --- | --- | --- | --- |
 | B-06 | Sustituir un ejercicio durante la sesión | Medio | No | B-04 ayuda, no traba |
-| B-07 | Duración estimada calculada y "Empezar" fijo en la previa | Bajo | No | — |
-| B-08 | Avance de la sesión en curso en Inicio | Bajo | No | — |
+| B-07 | Duración estimada calculada y "Empezar" fijo en la previa | Bajo | No | Hecho el 19 de noviembre de 2026 |
+| B-08 | Avance de la sesión en curso en Inicio | Bajo | No | Hecho el 19 de noviembre de 2026 |
 | B-09 | Aclarar si la carga es total o por mancuerna | Bajo | No | Decisión 4 |
 | B-10 | Guardar la hora de cada serie | Medio | **Sí (v4)** | — |
 | B-11 | Comentario por serie | Bajo | **Sí (v4)** | Va en la misma migración que B-10 |
@@ -145,9 +145,13 @@ encima de la sesión. Hoy la ficha solo se abre desde la Biblioteca, y para ir h
   ejercicio, pero es lógica del store: pasa por `store-guardian`.
 - **B-07. Duración estimada.** Hoy la duración es un número fijo cargado en la rutina. Calcularla a partir de series
   y descansos, y mostrarla con "≈". El tiempo de trabajo por serie es una suposición: va como constante con nombre,
-  no escondida.
+  no escondida. **Hecho:** `estimateRoutineMinutes` suma, por serie, 45 s de trabajo más su descanso y, por
+  ejercicio, 60 s de armado (`WORK_SECONDS_PER_SET` y `SETUP_SECONDS_PER_EXERCISE` en `workout-utils.ts`), y
+  redondea a 5 minutos. Son suposiciones sin medir: conviene ajustarlas con sesiones reales. El editor ya no pide la
+  duración a mano: la muestra calculada y guarda ese valor. Las plantillas pasaron de 45, 40, 35 y 25 minutos a 35,
+  35, 25 y 20. En el celular, la previa de la rutina tiene una barra fija con la duración y "Empezar".
 - **B-08. Avance.** La tarjeta de la sesión en curso muestra "5 de 16 series" con un anillo, como el 37 % de la
-  competencia. Los datos ya existen.
+  competencia. Los datos ya existen. **Hecho:** el anillo es decorativo; el texto de al lado dice lo mismo.
 - **B-09. Carga.** Texto al lado del campo Kg y en la ficha: "por mancuerna", "barra incluida", según el equipo. Solo
   cambia etiquetas: no reinterpreta lo ya registrado.
 - **B-10. Hora de cada serie.** Campo opcional en la serie. Permite mostrar el descanso real y la hora en el

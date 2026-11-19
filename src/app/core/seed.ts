@@ -363,7 +363,7 @@ export const seedRoutines: Routine[] = [
     name: 'Tren superior',
     description: 'Pecho, espalda y hombros. Una base simple para construir fuerza en el gimnasio.',
     category: 'Fuerza',
-    duration: 45,
+    duration: 35,
     level: 'Intermedio',
     exercises: [
       { exerciseId: 'bench-press', sets: 3, reps: 10, weight: 0, restSeconds: 90 },
@@ -378,7 +378,7 @@ export const seedRoutines: Routine[] = [
     name: 'Piernas y glúteos',
     description: 'Trabajá el tren inferior con movimientos controlados y descansos entre series.',
     category: 'Fuerza',
-    duration: 40,
+    duration: 35,
     level: 'Intermedio',
     exercises: [
       { exerciseId: 'goblet-squat', sets: 3, reps: 10, weight: 0, restSeconds: 90 },
@@ -393,7 +393,7 @@ export const seedRoutines: Routine[] = [
     name: 'Cuerpo completo inicial',
     description: 'Una rutina de cuerpo completo para empezar y familiarizarte con los movimientos.',
     category: 'Fuerza',
-    duration: 35,
+    duration: 25,
     level: 'Principiante',
     exercises: [
       { exerciseId: 'goblet-squat', sets: 2, reps: 10, weight: 0, restSeconds: 90 },
@@ -408,7 +408,7 @@ export const seedRoutines: Routine[] = [
     name: 'En casa, a tu ritmo',
     description: 'Sin máquinas ni pesas. Movimientos básicos para entrenar donde estés.',
     category: 'Resistencia',
-    duration: 25,
+    duration: 20,
     level: 'Principiante',
     exercises: [
       { exerciseId: 'reverse-lunge', sets: 2, reps: 8, weight: 0, restSeconds: 60 },

@@ -5,7 +5,7 @@ import { IconComponent } from './icon.component';
 import { WorkoutStore } from './core/workout-store';
 import { SyncService, type SyncStatus } from './core/sync.service';
 import { SwUpdate } from '@angular/service-worker';
-import { lastSetsFor, localDate, parseLocalDate, personalRecords, plannedRoutineId, suggestProgression, suggestWeeklyPlan, weekDates, workoutSummaryText, workoutVolume, workoutDurationMinutes, type ProgressionSuggestion } from './core/workout-utils';
+import { estimateRoutineMinutes, lastSetsFor, localDate, parseLocalDate, personalRecords, plannedRoutineId, suggestProgression, suggestWeeklyPlan, weekDates, workoutSummaryText, workoutVolume, workoutDurationMinutes, type ProgressionSuggestion } from './core/workout-utils';
 import { Routine, Profile, Workout, Exercise, WorkoutSet } from './core/models';
 import { RoutineEditorComponent } from './features/routine-editor.component';
 import { ExerciseDetailComponent } from './features/exercise-detail.component';
@@ -75,6 +75,8 @@ export class AppComponent implements OnDestroy {
     return label.charAt(0).toUpperCase() + label.slice(1);
   });
   readonly completedSets = computed(() => this.store.activeWorkout()?.sets.filter(s=>s.completed).length ?? 0);
+  /** Avance de la sesión en curso, de 0 a 100. */
+  readonly sessionPercent = computed(() => { const total = this.store.activeWorkout()?.sets.length ?? 0; return total ? Math.round(this.completedSets() / total * 100) : 0; });
   readonly elapsed = computed(() => { const w=this.store.activeWorkout(); return w ? Math.max(0,Math.floor((this.now()-Date.parse(w.startedAt))/1000)) : 0; });
   readonly workoutGroups = computed(() => {
     const w=this.store.activeWorkout(); if (!w) return [];
@@ -191,6 +193,9 @@ export class AppComponent implements OnDestroy {
   applySuggestion(exerciseId:string,s:ProgressionSuggestion){const ok=s.kind==='mas-reps'?this.store.applyReps(exerciseId,s.value):this.store.applyLoad(exerciseId,s.value);this.notify(ok?(s.kind==='mas-reps'?`Listo: ${s.value} repeticiones en las series que faltan.`:`Listo: ${this.fmt(s.value)} kg en las series que faltan.`):(this.store.actionError()??'No se pudo aplicar.'));}
 
   fmt(value:number){return this.numberFormat.format(value);}
+  /** Minutos estimados de una rutina (se muestran con "≈"). */
+  estimate(r:Routine){return estimateRoutineMinutes(r);}
+  setCount(r:Routine){return r.exercises.reduce((total,entry)=>total+entry.sets,0);}
   openRoutine(r:Routine){this.navigate('routines');this.selectedRoutine.set(r);}
   planRoutine(r:Routine){this.openSchedule();this.calendarRoutine=r.id;}
   cancelConfirmation(){if(this.confirmation()==='import')this.pendingImport='';this.confirmation.set(null);}

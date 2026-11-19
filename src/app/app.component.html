@@ -67,7 +67,14 @@
 
           @if (store.activeWorkout(); as active) {
             <article class="resume-card">
-              <div>
+              <div class="session-ring" aria-hidden="true">
+                <svg viewBox="0 0 44 44" focusable="false">
+                  <circle class="session-ring-track" cx="22" cy="22" r="18"/>
+                  @if (sessionPercent() > 0) { <circle class="session-ring-value" cx="22" cy="22" r="18" pathLength="100" [attr.stroke-dasharray]="sessionPercent() + ' 100'"/> }
+                </svg>
+                <span class="tabular">{{ sessionPercent() }}<small>%</small></span>
+              </div>
+              <div class="resume-text">
                 <p class="eyebrow">Sesión en curso</p>
                 <h2>{{ active.routineName }}</h2>
                 <p class="tabular">{{ completedSets() }} de {{ active.sets.length }} series · {{ clock(elapsed()) }}</p>
@@ -84,7 +91,7 @@
                 <h2>{{ routine.name }}</h2>
                 <p>{{ routine.description }}</p>
                 <ul class="meta-list">
-                  <li><app-icon name="clock" />{{ routine.duration }} min</li>
+                  <li><app-icon name="clock" /><span><span aria-hidden="true">≈ </span><span class="sr-only">Unos </span>{{ estimate(routine) }} min</span></li>
                   <li><app-icon name="dumbbell" />{{ routine.exercises.length }} ejercicios</li>
                   <li><app-icon name="target" />{{ routine.level }}</li>
                 </ul>
@@ -165,19 +172,19 @@
         @if (selectedRoutine(); as routine) {
           <section class="page" aria-labelledby="routine-title">
             <button type="button" class="back" (click)="selectedRoutine.set(null)"><app-icon name="left" />Mis rutinas</button>
-            <article class="routine-detail">
+            <article class="routine-detail" [class.has-start-bar]="!store.activeWorkout()">
               <img class="routine-cover" [src]="imageFor(routine.id)" alt="" width="640" height="440">
               <div class="routine-info">
                 <p class="eyebrow">{{ routine.custom ? 'Mi creación' : 'Plantilla inicial' }} · {{ routine.category }}</p>
                 <h1 id="routine-title">{{ routine.name }}</h1>
                 @if (routine.description) { <p class="lead">{{ routine.description }}</p> }
                 <ul class="meta-list meta-dark">
-                  <li><app-icon name="clock" />{{ routine.duration }} min</li>
+                  <li><app-icon name="clock" /><span><span aria-hidden="true">≈ </span><span class="sr-only">Unos </span>{{ estimate(routine) }} min</span></li>
                   <li><app-icon name="dumbbell" />{{ routine.exercises.length }} ejercicios</li>
                   <li><app-icon name="target" />{{ routine.level }}</li>
                 </ul>
                 <div class="actions">
-                  <button type="button" class="btn btn-primary" (click)="start(routine)"><app-icon name="play" />Empezar</button>
+                  <button type="button" class="btn btn-primary detail-start" (click)="start(routine)"><app-icon name="play" />{{ store.activeWorkout() ? 'Ir a la sesión' : 'Empezar' }}</button>
                   <button type="button" class="btn btn-secondary" (click)="planRoutine(routine)"><app-icon name="calendar" />Agendar</button>
                   <button type="button" class="btn btn-secondary" (click)="editRoutine(routine)"><app-icon name="edit" />{{ routine.custom ? 'Editar' : 'Personalizar' }}</button>
                 </div>
@@ -198,6 +205,13 @@
             <div class="danger-zone">
               <button type="button" class="btn btn-danger-ghost" (click)="confirmation.set('delete')"><app-icon name="trash" />Eliminar rutina</button>
             </div>
+            @if (!store.activeWorkout()) {
+              <!-- Celular: "Empezar" siempre a mano mientras se recorre la lista. -->
+              <div class="start-bar">
+                <p><strong class="tabular"><span aria-hidden="true">≈ </span><span class="sr-only">Unos </span>{{ estimate(routine) }} min</strong><span class="tabular">{{ setCount(routine) }} series · {{ routine.exercises.length }} ejercicios</span></p>
+                <button type="button" class="btn btn-primary" (click)="start(routine)"><app-icon name="play" />Empezar</button>
+              </div>
+            }
           </section>
         } @else {
           <section class="page" aria-labelledby="routines-title">
@@ -221,7 +235,7 @@
                   <span class="routine-card-body">
                     <span class="tag">{{ routine.custom ? 'Mi creación' : routine.level }}</span>
                     <strong>{{ routine.name }}</strong>
-                    <small>{{ routine.duration }} min · {{ routine.exercises.length }} ejercicios · {{ routine.category }}</small>
+                    <small>≈ {{ estimate(routine) }} min · {{ routine.exercises.length }} ejercicios · {{ routine.category }}</small>
                   </span>
                 </button>
               } @empty {
@@ -447,7 +461,7 @@
               <p class="eyebrow">{{ dateLabel(selectedDate(), { weekday: 'long', day: 'numeric', month: 'long' }) }}</p>
               @if (plannedRoutine(selectedDate()); as routine) {
                 <h2>{{ routine.name }}</h2>
-                <p class="muted small">{{ scheduled(selectedDate()) ? 'Planificado solo para este día.' : 'Según tu semana tipo.' }} {{ routine.duration }} min · {{ routine.exercises.length }} ejercicios</p>
+                <p class="muted small">{{ scheduled(selectedDate()) ? 'Planificado solo para este día.' : 'Según tu semana tipo.' }} ≈ {{ estimate(routine) }} min · {{ routine.exercises.length }} ejercicios</p>
               } @else {
                 <h2>Descanso</h2>
                 <p class="muted small">{{ scheduled(selectedDate()) ? 'Marcaste este día como descanso.' : 'No hay nada planificado.' }}</p>
