@@ -131,8 +131,8 @@ encima de la sesión. Hoy la ficha solo se abre desde la Biblioteca, y para ir h
   vuelve al nombre del ejercicio.
 - **Hecho.** El nombre del ejercicio (y su miniatura) abre la ficha en una hoja encima de la sesión, que sigue
   montada debajo. La hoja muestra el descanso que está corriendo. Mientras está abierta, lo de atrás queda inactivo
-  para el teclado y los lectores de pantalla. **Falta:** el botón Atrás del teléfono no cierra la hoja, sale de la
-  sesión (que no se pierde); le pasa lo mismo al selector de ejercicios del editor.
+  para el teclado y los lectores de pantalla. El botón Atrás del teléfono cierra la hoja y deja al alumno en la
+  sesión. **Falta:** el selector de ejercicios del editor de rutinas todavía no hace lo mismo con Atrás.
 
 ## Bloque 2: la sesión en el gimnasio
 
@@ -175,9 +175,9 @@ encima de la sesión. Hoy la ficha solo se abre desde la Biblioteca, y para ir h
   la serie anterior; es el descanso más lo que llevó hacer la serie, no el descanso solo. Un entrenamiento
   anterior a la versión 4 no muestra la columna.
 - **B-11. Comentario por serie.** Texto corto opcional ("me costó la última", "molestia en el hombro"). **Hecho:**
-  hasta 200 caracteres. En la sesión, el renglón para comentar aparece debajo de la última serie completada y de
-  las que ya tienen comentario; para comentar una serie más vieja que no tiene, hoy no hay camino. Se ve en el
-  detalle del entrenamiento y en el historial de la ficha del ejercicio.
+  hasta 200 caracteres. En la sesión, debajo de la tabla de cada ejercicio hay un botón para comentar la última
+  serie completada que todavía no tiene comentario; el comentario queda debajo de su serie y se edita tocándolo.
+  Se ve en el detalle del entrenamiento y en el historial de la ficha del ejercicio.
 - **B-10 y B-11, esquema.** `FitAppState` versión 4, migración `005_set_time_note.sql`. Los datos de versiones
   anteriores cargan igual: los campos nuevos simplemente no están. Hay que reiniciar la API para que acepte la
   versión 4. Una app instalada que todavía no se actualizó no puede leer una cuenta que ya tiene datos de la 4, y

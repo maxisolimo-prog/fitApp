@@ -63,8 +63,10 @@ Sale del análisis de Fitness Online (`docs/COMPETENCIA.md`). Detalle de cada í
 - **Duración estimada** calculada con series y descansos, y "Empezar" siempre a mano en el celular (B-07).
 - **Avance de la sesión** en Inicio (B-08).
 - **Hora y comentario por serie** (B-10, B-11): FitAppState v4, migración 005.
-- Dos revisiones adversariales del dominio (`store-guardian`). La primera encontró que cambiar la duración de las
-  plantillas hacía aparecer un conflicto falso al ingresar a una cuenta desde un dispositivo vacío; corregido.
+- Dos revisiones adversariales del dominio (`store-guardian`) y una de interfaz (`ui-reviewer`). La primera
+  encontró que cambiar la duración de las plantillas hacía aparecer un conflicto falso al ingresar a una cuenta
+  desde un dispositivo vacío; la segunda, que una app sin actualizar podía pisar datos de la versión nueva; la de
+  interfaz, que la app podía quedar bloqueada si la sesión desaparecía con una hoja abierta. Corregido.
 - **Sin validar:** la clasificación de músculos, los movimientos equivalentes y los tiempos de la duración estimada
   son generales y no los revisó un profesional. Nada de esto se probó todavía en un gimnasio ni en un teléfono real.
 

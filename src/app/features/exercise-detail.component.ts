@@ -30,7 +30,7 @@ interface ExerciseSession {
           </button>
         }
         <div class="heading-copy">
-          <span class="eyebrow">BIBLIOTECA DE EJERCICIOS</span>
+          <span class="eyebrow">{{ embedded() ? 'FICHA DEL EJERCICIO' : 'BIBLIOTECA DE EJERCICIOS' }}</span>
           <h2 [id]="prefix() + '-title'">{{ exercise().name }}</h2>
           <p>{{ exercise().muscle }} <span aria-hidden="true">·</span> {{ exercise().equipment }}</p>
         </div>

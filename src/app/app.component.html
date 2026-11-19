@@ -1,4 +1,4 @@
-<a class="skip-link" href="#contenido">Saltar al contenido</a>
+<a class="skip-link" href="#contenido" [attr.inert]="sheetOpen() ? '' : null" (click)="skipToContent($event)">Saltar al contenido</a>
 
 <div class="shell" [attr.inert]="sheetOpen() ? '' : null">
   <!-- Escritorio: barra lateral -->
@@ -235,7 +235,7 @@
                   <span class="routine-card-body">
                     <span class="tag">{{ routine.custom ? 'Mi creación' : routine.level }}</span>
                     <strong>{{ routine.name }}</strong>
-                    <small>≈ {{ estimate(routine) }} min · {{ routine.exercises.length }} ejercicios · {{ routine.category }}</small>
+                    <small><span aria-hidden="true">≈ </span><span class="sr-only">Unos </span>{{ estimate(routine) }} min · {{ routine.exercises.length }} ejercicios · {{ routine.category }}</small>
                   </span>
                 </button>
               } @empty {
@@ -259,6 +259,14 @@
       @case ('workout') {
         @if (store.activeWorkout(); as active) {
           <section class="page workout" aria-labelledby="workout-title">
+            <p id="open-detail-hint" hidden>Abre la ficha del ejercicio.</p>
+            <!-- Campo del comentario de una serie: se usa debajo de la serie (al editar) y debajo de la tabla (al agregar). -->
+            <ng-template #noteField let-row>
+              <input #noteInput type="text" class="note-input" [id]="'set-note-' + row.index" maxlength="200" autocomplete="off" enterkeyhint="done"
+                [value]="row.set.note ?? ''" placeholder="Por ejemplo, me costó la última"
+                [attr.aria-label]="'Comentario de la serie ' + row.set.setNumber + ' de ' + row.set.exerciseName"
+                (blur)="commitNote(row.index, noteInput.value, false)" (keydown.enter)="commitNote(row.index, noteInput.value, true)" (keydown.escape)="cancelNote(row.index)">
+            </ng-template>
             <header class="workout-head">
               <div>
                 <p class="eyebrow">Sesión en curso</p>
@@ -284,11 +292,11 @@
             }
 
             @for (group of workoutGroups(); track group.id) {
-              <article class="exercise-block" [attr.aria-labelledby]="'block-' + group.id">
+              <article class="exercise-block" [attr.aria-label]="group.exercise.name">
                 <header>
                   <app-exercise-thumb [exercise]="group.exercise" (click)="openSessionExercise(group.exercise, nameButton)" />
                   <div class="block-title">
-                    <h2 [id]="'block-' + group.id"><button #nameButton type="button" class="block-name" aria-haspopup="dialog" (click)="openSessionExercise(group.exercise, nameButton)">{{ group.exercise.name }}<span class="sr-only">, ver la ficha</span><app-icon name="info" /></button></h2>
+                    <h2 [id]="'block-' + group.id"><button #nameButton type="button" class="block-name" aria-haspopup="dialog" aria-describedby="open-detail-hint" (click)="openSessionExercise(group.exercise, nameButton)">{{ group.exercise.name }}<app-icon name="info" /></button></h2>
                     <p>{{ group.exercise.muscle }} · {{ group.exercise.equipment }}</p>
                   </div>
                   @if (hasPending(group.sets)) {
@@ -326,18 +334,15 @@
                           </button>
                         </td>
                       </tr>
-                      @if (showsNote(row)) {
+                      @if (row.set.note) {
                         <tr class="note-row">
                           <td colspan="5">
                             @if (noteEditing() === row.index) {
-                              <input #noteInput type="text" class="note-input" [id]="'set-note-' + row.index" maxlength="200" autocomplete="off" enterkeyhint="done"
-                                [value]="row.set.note ?? ''" placeholder="Por ejemplo, me costó la última"
-                                [attr.aria-label]="'Comentario de la serie ' + row.set.setNumber + ' de ' + group.exercise.name"
-                                (blur)="commitNote(row.index, noteInput.value, false)" (keydown.enter)="commitNote(row.index, noteInput.value, true)" (keydown.escape)="cancelNote(row.index)">
+                              <ng-container [ngTemplateOutlet]="noteField" [ngTemplateOutletContext]="{ $implicit: row }" />
                             } @else {
-                              <button type="button" class="note-button" [class.note-add]="!row.set.note" [attr.data-note-button]="row.index" (click)="editNote(row.index)"
-                                [attr.aria-label]="row.set.note ? 'Editar el comentario de la serie ' + row.set.setNumber + ' de ' + group.exercise.name + ': ' + row.set.note : 'Agregar un comentario a la serie ' + row.set.setNumber + ' de ' + group.exercise.name">
-                                <app-icon [name]="row.set.note ? 'edit' : 'plus'" /><span>{{ row.set.note || 'Comentario' }}</span>
+                              <button type="button" class="note-button" [attr.data-note-button]="row.index" (click)="editNote(row.index)"
+                                [attr.aria-label]="'Editar el comentario de la serie ' + row.set.setNumber + ' de ' + group.exercise.name + ': ' + row.set.note">
+                                <app-icon name="edit" /><span>{{ row.set.note }}</span>
                               </button>
                             }
                           </td>
@@ -346,6 +351,19 @@
                     }
                   </tbody>
                 </table>
+                @if (group.comment; as target) {
+                  <!-- Fuera de la tabla: completar una serie no mueve las filas que se están tocando. -->
+                  <div class="note-add-row">
+                    @if (noteEditing() === target.index) {
+                      <ng-container [ngTemplateOutlet]="noteField" [ngTemplateOutletContext]="{ $implicit: target }" />
+                    } @else {
+                      <button type="button" class="note-button note-add" [attr.data-note-button]="target.index" (click)="editNote(target.index)"
+                        [attr.aria-label]="'Agregar un comentario a la serie ' + target.set.setNumber + ' de ' + group.exercise.name">
+                        <app-icon name="plus" /><span>Comentar la serie {{ target.set.setNumber }}</span>
+                      </button>
+                    }
+                  </div>
+                }
                 <div class="set-controls">
                   <button type="button" class="btn btn-small btn-outline-light" (click)="addSet(group.id)"><app-icon name="plus" />Agregar serie</button>
                   @if (group.sets.length > 1) { <button type="button" class="link link-light" (click)="removeLastSet(group.sets)">Quitar la última</button> }
@@ -482,7 +500,7 @@
               <p class="eyebrow">{{ dateLabel(selectedDate(), { weekday: 'long', day: 'numeric', month: 'long' }) }}</p>
               @if (plannedRoutine(selectedDate()); as routine) {
                 <h2>{{ routine.name }}</h2>
-                <p class="muted small">{{ scheduled(selectedDate()) ? 'Planificado solo para este día.' : 'Según tu semana tipo.' }} ≈ {{ estimate(routine) }} min · {{ routine.exercises.length }} ejercicios</p>
+                <p class="muted small">{{ scheduled(selectedDate()) ? 'Planificado solo para este día.' : 'Según tu semana tipo.' }} <span aria-hidden="true">≈ </span><span class="sr-only">Unos </span>{{ estimate(routine) }} min · {{ routine.exercises.length }} ejercicios</p>
               } @else {
                 <h2>Descanso</h2>
                 <p class="muted small">{{ scheduled(selectedDate()) ? 'Marcaste este día como descanso.' : 'No hay nada planificado.' }}</p>
@@ -565,7 +583,7 @@
                         <td class="tabular set-time">
                           @if (set.completedAt) {
                             {{ timeLabel(set.completedAt) }}
-                            @if (historyPauses()[i]; as pause) { <small><span class="sr-only">, </span>+{{ clock(pause) }}<span class="sr-only"> desde la serie anterior</span></small> }
+                            @if (historyPauses()[i]; as pause) { <small><span class="sr-only">, </span>{{ pauseLabel(pause) }}<span class="sr-only"> desde la serie anterior</span></small> }
                           } @else { <span aria-hidden="true">—</span><span class="sr-only">sin hora</span> }
                         </td>
                       }
@@ -575,7 +593,7 @@
                 </tbody>
               </table>
             </div>
-            @if (historyHasTimes()) { <p class="muted small note">Debajo de cada hora va el tiempo que pasó desde la serie anterior: el descanso más lo que llevó hacer la serie.</p> }
+            @if (historyHasTimes()) { <p class="muted small note">Debajo de cada hora, cuánto pasó desde la serie anterior: el descanso más lo que llevó hacer la serie.</p> }
           </section>
         } @else {
           <section class="page" aria-labelledby="progress-title">
@@ -877,14 +895,15 @@
       <h2 id="swap-title">Cambiar {{ substituting()?.name }}</h2>
       <p id="swap-desc">Cambian solo las series que te faltan de esta sesión. Las que ya hiciste y tu rutina quedan igual.</p>
     </header>
+    <div role="radiogroup" aria-labelledby="swap-title" (keydown)="swapKey($event)">
     @for (section of sections; track section.title) {
       <section [attr.aria-label]="section.title + ': ' + section.detail">
         <h3 class="swap-section">{{ section.title }} <span>· {{ section.detail }}</span></h3>
-        <ul class="swap-list">
+        <ul class="swap-list" role="presentation">
           @for (row of section.rows; track row.exercise.id) {
-            <li>
-              <button type="button" class="swap-item" [class.is-picked]="substituteChoice() === row.exercise.id" [disabled]="row.used"
-                [attr.aria-pressed]="substituteChoice() === row.exercise.id" (click)="substituteChoice.set(row.exercise.id)">
+            <li role="presentation">
+              <button type="button" role="radio" class="swap-item" [class.is-picked]="substituteChoice() === row.exercise.id" [disabled]="row.used"
+                [attr.aria-checked]="substituteChoice() === row.exercise.id" (click)="substituteChoice.set(row.exercise.id)">
                 <app-exercise-thumb [exercise]="row.exercise" />
                 <span class="swap-text">
                   <strong>{{ row.exercise.name }}</strong>
@@ -900,6 +919,7 @@
     } @empty {
       <p class="swap-empty">No hay otro ejercicio parecido en la biblioteca.</p>
     }
+    </div>
     <div class="swap-foot">
       <button type="button" class="btn btn-outline-light" (click)="closeSheet()">Cancelar</button>
       <button type="button" class="btn btn-primary" [disabled]="!substituteChoice()" (click)="confirmSubstitute()">{{ substituteChoice() ? 'Cambiar ejercicio' : 'Elegí un ejercicio' }}</button>

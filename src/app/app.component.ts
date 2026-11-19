@@ -42,15 +42,9 @@ export class AppComponent implements OnDestroy {
   /** Ficha de un ejercicio abierta encima de la sesión. La sesión sigue montada debajo: no se pierde nada de lo cargado. */
   readonly sessionExercise = signal<Exercise|null>(null);
   /** Hay una hoja abierta: lo de atrás queda inactivo para el teclado y los lectores de pantalla. */
-  readonly sheetOpen = computed(() => !!this.sessionExercise() || !!this.substituting());
+  readonly sheetOpen = computed(() => !!this.sessionExercise() || !!this.substituteOptions());
   /** Serie de la sesión cuyo comentario se está escribiendo (su posición en la sesión). */
   readonly noteEditing = signal<number|null>(null);
-  /** La última serie que se completó, por hora: ahí se ofrece agregar un comentario. -1 si no hay ninguna con hora. */
-  readonly lastCompletedIndex = computed(() => {
-    let best = -1, time = '';
-    (this.store.activeWorkout()?.sets ?? []).forEach((set, index) => { if (set.completed && set.completedAt && set.completedAt >= time) { best = index; time = set.completedAt; } });
-    return best;
-  });
   /** Entrenamiento abierto en el historial: segundos desde la serie anterior, y si alguna serie tiene hora. */
   readonly historyPauses = computed(() => { const workout = this.selectedHistory(); return workout ? setPauses(workout) : []; });
   readonly historyHasTimes = computed(() => this.selectedHistory()?.sets.some(set => !!set.completedAt) ?? false);
@@ -117,7 +111,13 @@ export class AppComponent implements OnDestroy {
   readonly elapsed = computed(() => { const w=this.store.activeWorkout(); return w ? Math.max(0,Math.floor((this.now()-Date.parse(w.startedAt))/1000)) : 0; });
   readonly workoutGroups = computed(() => {
     const w=this.store.activeWorkout(); if (!w) return [];
-    return [...new Set(w.sets.map(s=>s.exerciseId))].map(id=>({id,exercise:this.exercise(id),sets:w.sets.map((set,index)=>({set,index})).filter(s=>s.set.exerciseId===id)}));
+    return [...new Set(w.sets.map(s=>s.exerciseId))].map(id=>{
+      const sets=w.sets.map((set,index)=>({set,index})).filter(s=>s.set.exerciseId===id);
+      // Dónde se ofrece comentar: la última serie completada del ejercicio que todavía no tiene comentario.
+      const comment=sets.filter(row=>row.set.completed&&row.set.completedAt&&!row.set.note)
+        .reduce<{set:WorkoutSet;index:number}|null>((last,row)=>!last||row.set.completedAt!>=last.set.completedAt!?row:last,null);
+      return {id,exercise:this.exercise(id),sets,comment};
+    });
   });
   search=''; muscle='Todos'; routineFilter='Todas';
   calendarDate=this.today; calendarRoutine='full-body'; calendarForm=false;
@@ -153,7 +153,23 @@ export class AppComponent implements OnDestroy {
     offline:'Sin conexión: se envía al volver', error:'No se pudo sincronizar', conflict:'Elegí qué datos conservar',
   };
 
+  /** La hoja abierta ocupa una entrada del historial del navegador: el botón Atrás del teléfono la cierra en lugar de salir de la sesión. */
+  private sheetInHistory = false;
+  /** Vueltas atrás que pidió la app misma al cerrar una hoja: no son del alumno. */
+  private ownBacks = 0;
+  private pushSheetHistory(){if(this.sheetInHistory)return;try{history.pushState({fitappSheet:true},'');this.sheetInHistory=true;}catch{}}
+  private popSheetHistory(){if(!this.sheetInHistory)return;this.sheetInHistory=false;this.ownBacks++;try{history.back();}catch{this.ownBacks--;}}
+  @HostListener('window:popstate') historyBack(){
+    if(this.ownBacks>0){this.ownBacks--;return;}
+    if(this.sheetInHistory){this.sheetInHistory=false;this.closeSheet();}
+  }
+  /** "Saltar al contenido" mueve el foco sin tocar la dirección: cambiar el hash se tomaría como ir a Inicio. */
+  skipToContent(event:Event){event.preventDefault();document.getElementById('contenido')?.focus();}
+
   constructor(){
+    // Las hojas y el comentario a medio escribir son de la sesión: si la sesión desaparece (otra pestaña la terminó,
+    // llegó otra copia de la cuenta), se cierran solos y lo de atrás vuelve a responder.
+    effect(() => { if (!this.store.activeWorkout()) { this.popSheetHistory(); this.dropSheets(); this.noteEditing.set(null); } });
     // Zoneless: move focus into an open dialog once it renders, and restore it afterwards.
     effect(() => {
       if (this.confirmation() || this.sync.conflict()) { this.lastFocus ??= document.activeElement as HTMLElement|null; setTimeout(() => (document.querySelector('.dialog button') as HTMLElement|null)?.focus()); }
@@ -192,13 +208,11 @@ export class AppComponent implements OnDestroy {
     if(this.swUpdate.isEnabled) void this.swUpdate.checkForUpdate().catch(()=>false);
   }
 
-  openSessionExercise(exercise:Exercise, trigger:HTMLElement){this.sheetTrigger=trigger;this.sessionExercise.set(exercise);this.focusSheet();}
+  openSessionExercise(exercise:Exercise, trigger:HTMLElement){this.sheetTrigger=trigger;this.sessionExercise.set(exercise);this.pushSheetHistory();this.focusSheet();}
   /** Cierra la hoja abierta y devuelve el foco a quien la abrió. */
-  closeSheet(){if(!this.sheetOpen())return;this.dropSheets();const trigger=this.sheetTrigger;this.sheetTrigger=null;setTimeout(()=>{if(trigger?.isConnected)trigger.focus();});}
+  closeSheet(){if(!this.sheetOpen())return;this.popSheetHistory();this.dropSheets();const trigger=this.sheetTrigger;this.sheetTrigger=null;setTimeout(()=>{if(trigger?.isConnected)trigger.focus();});}
   private dropSheets(){this.sessionExercise.set(null);this.substituting.set(null);this.substituteChoice.set(null);}
   hasPending(rows:{set:WorkoutSet}[]){return rows.some(row=>!row.set.completed);}
-  /** El renglón del comentario aparece si la serie ya tiene uno, si se está escribiendo o si es la última completada. */
-  showsNote(row:{set:WorkoutSet;index:number}){return !!row.set.note||this.noteEditing()===row.index||row.index===this.lastCompletedIndex();}
   editNote(index:number){this.noteKey=this.setKey(index);this.noteEditing.set(index);setTimeout(()=>document.getElementById('set-note-'+index)?.focus());}
   /** Qué serie es la que ocupa una posición: si la sesión cambia mientras se escribe, el comentario no va a otra serie. */
   private noteKey='';
@@ -213,8 +227,26 @@ export class AppComponent implements OnDestroy {
   }
   cancelNote(index:number){if(this.noteEditing()!==index)return;this.noteEditing.set(null);this.focusNoteButton(index);}
   private focusNoteButton(index:number){setTimeout(()=>(document.querySelector('[data-note-button="'+index+'"]') as HTMLElement|null)?.focus());}
+  /** "+45 s", "+2 min 10 s", "+1 h 5 min": a propósito distinto de una hora del día, para que no se confundan. */
+  pauseLabel(seconds:number){
+    if(seconds<60)return `+${seconds} s`;
+    const minutes=Math.floor(seconds/60), rest=seconds%60;
+    if(minutes>=60){const left=minutes%60;return `+${Math.floor(minutes/60)} h${left?` ${left} min`:''}`;}
+    return `+${minutes} min${rest?` ${rest} s`:''}`;
+  }
   timeLabel(iso:string){return new Intl.DateTimeFormat('es-AR',{hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(iso));}
-  openSubstitute(exercise:Exercise, trigger:HTMLElement){this.sheetTrigger=trigger;this.substituteChoice.set(null);this.substituting.set(exercise);this.focusSheet();}
+  openSubstitute(exercise:Exercise, trigger:HTMLElement){this.sheetTrigger=trigger;this.substituteChoice.set(null);this.substituting.set(exercise);this.pushSheetHistory();this.focusSheet();}
+  /** Flechas sobre las opciones de reemplazo: pasan a la siguiente o a la anterior y la eligen, como en cualquier grupo de opciones. */
+  swapKey(event:KeyboardEvent){
+    const step=event.key==='ArrowDown'||event.key==='ArrowRight'?1:event.key==='ArrowUp'||event.key==='ArrowLeft'?-1:0;
+    if(!step)return;
+    const options=Array.from(document.querySelectorAll<HTMLButtonElement>('.swap-item:not(:disabled)'));
+    const current=options.indexOf(document.activeElement as HTMLButtonElement);
+    if(current<0)return;
+    event.preventDefault();
+    const next=options[(current+step+options.length)%options.length];
+    next.focus();next.click();
+  }
   confirmSubstitute(){
     const from=this.substituting(), toId=this.substituteChoice(), workout=this.store.activeWorkout();
     if(!from||!toId||!workout)return;
@@ -222,7 +254,7 @@ export class AppComponent implements OnDestroy {
     const swaps=recordSwap(this.sessionSwaps(),workout.id,from.id,toId);
     this.sessionSwaps.set(swaps);
     try{localStorage.setItem('fitapp-session-swaps',JSON.stringify(swaps));}catch{}
-    this.dropSheets();this.sheetTrigger=null;
+    this.popSheetHistory();this.dropSheets();this.sheetTrigger=null;
     this.notify(`Listo: ${this.exercise(toId).name} en las series que te faltan. Tu rutina no cambia.`);
     // El botón que abrió la hoja puede haber desaparecido con el ejercicio: el foco va al nombre del reemplazo.
     setTimeout(()=>(document.getElementById('block-'+toId)?.querySelector('button') as HTMLElement|null)?.focus());

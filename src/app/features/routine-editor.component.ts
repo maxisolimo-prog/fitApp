@@ -48,7 +48,7 @@ const MAX_EXERCISES = 50;
 
         <div class="exercise-heading">
           <div><h3>Ejercicios</h3><p>Cargas en kg; 0 para peso corporal. La duración se estima con tus series y descansos.</p></div>
-          <span class="exercise-count">{{ entries.length }} {{ entries.length === 1 ? 'ejercicio' : 'ejercicios' }}@if (entries.length) { <span> · ≈ {{ estimate }} min</span> }</span>
+          <span class="exercise-count">{{ entries.length }} {{ entries.length === 1 ? 'ejercicio' : 'ejercicios' }}@if (entries.length) { <span> · <span aria-hidden="true">≈ </span><span class="sr-only">unos </span>{{ estimate }} min</span> }</span>
         </div>
 
         <ol class="exercise-list">
