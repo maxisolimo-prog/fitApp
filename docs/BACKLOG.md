@@ -89,6 +89,11 @@ competencia sin usar sus recursos.
 - **Orden:** primero una sola imagen de prueba (press de banca) para que el usuario apruebe el estilo. Después el
   resto, de a una. Una posición por ejercicio para empezar; la segunda posición solo si la figura se mantiene
   igual de una imagen a otra.
+- **Animadas (pedido del 19 de noviembre de 2026):** el usuario quiere que el ejercicio se mueva. GPT no genera
+  GIF: el prompt de [PROMPT-IMAGENES.md](PROMPT-IMAGENES.md) pide las dos posiciones en una sola imagen apaisada,
+  para que la figura salga igual en las dos, y después se corta para armar una animación de dos cuadros. Trae un
+  bloque listo por cada uno de los 43 ejercicios. Cambia el formato de "Estilo a pedir": apaisada y con fondo
+  transparente, en lugar de cuadrada sobre bosque. Sin probar todavía.
 - **Riesgos:** una imagen generada puede mostrar mal la técnica o resaltar el músculo equivocado, y el estilo
   puede variar entre ejercicios. Cada imagen se revisa contra su ejercicio antes de entrar (regla de
   `docs/DESIGN.md`) y queda pendiente la revisión de un profesional. La que no pasa se vuelve a generar, o ese
