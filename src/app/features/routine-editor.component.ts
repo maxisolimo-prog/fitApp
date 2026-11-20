@@ -34,11 +34,10 @@ const MAX_EXERCISES = 50;
       <form #routineForm="ngForm" (ngSubmit)="save()" novalidate>
         @if (builderOpen()) {
           <div class="builder" role="group" aria-labelledby="builder-title">
-            <h3 id="builder-title" tabindex="-1">Empezá con una propuesta</h3>
-            <p class="builder-intro">Decinos qué querés trabajar y cuánto tiempo tenés. Te proponemos ejercicios del catálogo con sus series y descansos, y después cambiás lo que quieras.</p>
+            <h3 id="builder-title" tabindex="-1">Te armamos una propuesta</h3>
             <fieldset class="choice">
               <legend>¿Qué querés trabajar?</legend>
-              <div class="choice-options">
+              <div class="choice-options targets">
                 @for (option of targets; track option) {
                   <label class="choice-chip">
                     <input type="radio" name="builderTarget" [value]="option" [checked]="builderTarget() === option" (change)="builderTarget.set(option)" (keydown.enter)="builderEnter($event)">
@@ -49,7 +48,7 @@ const MAX_EXERCISES = 50;
             </fieldset>
             <fieldset class="choice">
               <legend>¿Cuánto tiempo tenés?</legend>
-              <div class="choice-options">
+              <div class="choice-options minutes">
                 @for (option of minuteOptions; track option) {
                   <label class="choice-chip">
                     <input type="radio" name="builderMinutes" [value]="option" [checked]="builderMinutes() === option" (change)="builderMinutes.set(option)" (keydown.enter)="builderEnter($event)">
@@ -72,22 +71,20 @@ const MAX_EXERCISES = 50;
                 El catálogo no tiene ejercicios de {{ targetLabels[builderTarget()].toLowerCase() }} para hacer en {{ placeLabels[place()].toLowerCase() }}. Probá con otra zona o con otro lugar.
               }
             </p>
-            <p class="builder-basis">Las series, las repeticiones y los descansos salen del objetivo y el nivel de tu perfil. Las cargas las ponés vos al entrenar.</p>
             <div class="builder-actions">
               <button type="button" class="primary-button" (click)="applyProposal()" [disabled]="!proposal().exercises.length">{{ entries.length ? 'Reemplazar por esta propuesta' : 'Armar propuesta' }}</button>
               @if (entries.length) { <button type="button" class="secondary-button" (click)="closeBuilder()">Cancelar</button> }
             </div>
+            <p class="builder-basis">Son ejercicios del catálogo. Las series, las repeticiones y los descansos salen del objetivo y el nivel de tu perfil; las cargas las ponés vos al entrenar. Después cambiás lo que quieras.</p>
           </div>
         }
 
         @if (entries.length || !builderOpen()) {
           <div class="exercise-heading">
-            <div>
-              <h3 id="exercises-title" tabindex="-1">Ejercicios</h3>
-              <p>{{ showWeights() ? 'Kg de arranque; 0 para peso corporal.' : 'La carga la ponés al entrenar y queda guardada para la próxima.' }} La duración se estima con tus series y descansos.</p>
-            </div>
+            <h3 id="exercises-title" tabindex="-1">Ejercicios</h3>
             <span class="exercise-count">{{ entries.length }} {{ entries.length === 1 ? 'ejercicio' : 'ejercicios' }}@if (entries.length) { <span> · <span aria-hidden="true">≈ </span><span class="sr-only">unos </span>{{ estimate }} min</span> }</span>
           </div>
+          <p class="exercise-help">{{ showWeights() ? 'Kg de arranque; 0 para peso corporal.' : 'La carga la ponés al entrenar y queda guardada para la próxima.' }} La duración se estima con tus series y descansos.</p>
           @if (proposalNote()) {
             <div class="proposal-note">
               <p role="status"><strong>Es una propuesta.</strong> Cambiá, sacá o agregá lo que quieras antes de guardar.</p>
@@ -96,7 +93,7 @@ const MAX_EXERCISES = 50;
           }
           @if ((!routine && !builderOpen()) || (entries.length && !showWeights())) {
             <div class="list-tools">
-              @if (!routine && !builderOpen()) { <button type="button" id="builder-open" class="text-button" (click)="openBuilder()">{{ entries.length ? 'Armar otra propuesta' : 'Pedir una propuesta' }}</button> }
+              @if (!routine && !builderOpen()) { <button type="button" id="builder-open" class="text-button" (click)="openBuilder()">{{ entries.length ? 'Armar otra propuesta' : 'Armar una propuesta' }}</button> }
               @if (entries.length && !showWeights()) { <button type="button" class="text-button" (click)="revealWeights()">Cargar kilos de arranque</button> }
             </div>
           }
@@ -266,24 +263,23 @@ const MAX_EXERCISES = 50;
     .editor-header{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-bottom:26px}
     .eyebrow{font-size:10px;letter-spacing:.14em;font-weight:700;color:var(--ink-2);margin:0 0 10px}
     h2{font-family:var(--font-display);font-size:30px;letter-spacing:var(--display-tracking,-1px);line-height:1.2;font-weight:var(--display-weight,700);text-transform:var(--display-transform,none);margin:0 0 10px}h3{font-size:19px;letter-spacing:-.4px;margin:0}
-    .intro,.exercise-heading p{color:var(--ink-2);font-size:13px;line-height:1.6;margin:0}
+    .intro,.exercise-help{color:var(--ink-2);font-size:13px;line-height:1.6;margin:0}.exercise-help{max-width:68ch;margin-bottom:14px}
     button,input,select,textarea{font:inherit}button{cursor:pointer;transition:background .16s,color .16s,border-color .16s}button:disabled{cursor:not-allowed;opacity:.45}
     .text-button{background:none;border:0;padding:8px 0;color:var(--ink);font-size:13px;white-space:nowrap;text-decoration:underline;text-underline-offset:4px;min-height:44px}
     .builder{margin:0 0 26px;padding:18px 16px 16px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);min-width:0}
     .builder h3:focus,.exercise-heading h3:focus{outline:none}
-    .builder-intro{margin:6px 0 0;max-width:62ch;font-size:13px;line-height:1.6;color:var(--ink-2)}
-    .choice{margin:18px 0 0;padding:0;border:0;min-width:0}.choice legend{padding:0;margin-bottom:8px;font-size:13px;font-weight:600;line-height:1.4}
+    .choice{margin:16px 0 0;padding:0;border:0;min-width:0}.choice legend{padding:0;margin-bottom:8px;font-size:13px;font-weight:600;line-height:1.4}
     .choice-options{display:flex;flex-wrap:wrap;gap:8px}
-    .choice-chip{position:relative;display:inline-flex}
+    .choice-chip{position:relative;display:flex}
     .choice-chip input{position:absolute;inset:0;width:100%;height:100%;min-height:0;margin:0;padding:0;border:0;opacity:0;cursor:pointer}
-    .choice-chip span{display:inline-flex;align-items:center;min-height:44px;padding:8px 16px;border-radius:999px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);font-size:14px;font-weight:500;line-height:1.3;transition:background .16s,color .16s,border-color .16s}
+    .choice-chip span{display:flex;align-items:center;justify-content:center;width:100%;min-height:44px;padding:8px 16px;border-radius:999px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);font-size:14px;font-weight:500;line-height:1.3;text-align:center;transition:background .16s,color .16s,border-color .16s}
     .choice-chip:hover span{border-color:var(--ink)}
     .choice-chip input:checked+span{background:var(--dark);border-color:var(--dark);color:var(--on-dark);font-weight:600}
     .choice-chip input:focus-visible+span{outline:2px solid var(--ink);outline-offset:3px}
-    .builder-place{margin-top:18px;max-width:280px}
-    .builder-result{margin:18px 0 0;font-size:14px;line-height:1.5;color:var(--ink)}.builder-result strong{font-variant-numeric:tabular-nums}
-    .builder-basis{margin:4px 0 0;max-width:62ch;font-size:12px;line-height:1.6;color:var(--ink-2)}
-    .builder-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+    .builder-place{margin-top:16px;max-width:280px}
+    .builder-result{margin:16px 0 0;font-size:14px;line-height:1.5;color:var(--ink)}.builder-result strong{font-variant-numeric:tabular-nums}
+    .builder-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+    .builder-basis{margin:12px 0 0;max-width:68ch;font-size:12px;line-height:1.6;color:var(--ink-2)}
     .proposal-note{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px 16px;margin:0 0 12px;padding:6px 14px;border-radius:12px;background:var(--bg-tint);color:var(--ink);font-size:13px;line-height:1.5}
     .proposal-note p{margin:6px 0}
     .list-tools{display:flex;flex-wrap:wrap;gap:0 22px;margin:-8px 0 8px}
@@ -298,7 +294,7 @@ const MAX_EXERCISES = 50;
     input,select,textarea{width:100%;min-width:0;border:1px solid var(--line-strong);background:var(--surface);border-radius:var(--radius-field);color:var(--ink);outline:none;padding:10px 12px;font-size:15px;line-height:1.4;min-height:44px}
     textarea{resize:vertical;min-height:64px}input:focus,select:focus,textarea:focus{border-color:var(--ink);box-shadow:0 0 0 3px color-mix(in srgb, var(--strong) 18%, transparent)}
     [aria-invalid=true]{border-color:var(--danger)}.field-error{color:var(--danger);font-size:11px;line-height:1.4}.field-error:empty{display:none}
-    .exercise-heading{display:flex;justify-content:space-between;align-items:center;gap:20px;margin:0 0 14px}.exercise-heading p{margin-top:4px}
+    .exercise-heading{display:flex;justify-content:space-between;align-items:baseline;gap:20px;margin:0 0 4px}
     .exercise-count{font-size:13px;color:var(--ink-2);font-variant-numeric:tabular-nums;white-space:nowrap}
     .exercise-list{list-style:none;margin:0;padding:0;display:grid;gap:10px}
     .exercise-row fieldset{margin:0;padding:14px 16px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);min-width:0}
@@ -343,7 +339,10 @@ const MAX_EXERCISES = 50;
     @media(min-width:760px){.picker{left:50%;right:auto;top:50%;bottom:auto;transform:translate(-50%,-50%);width:min(560px,92vw);max-height:80vh;border-radius:20px}}
     @media(max-width:680px){.editor-header{flex-direction:column;gap:8px;margin-bottom:20px}h2{font-size:26px}.details-grid{grid-template-columns:1fr 1fr;gap:14px}.name-field,.description-field{grid-column:1/-1}
       .exercise-row fieldset{padding:12px}.exercise-numbers{gap:8px}.exercise-numbers .field>span{font-size:11px}.tool-button{width:36px;height:36px}
-      .builder{padding:16px 14px 14px;margin-bottom:22px}.builder-actions button{flex:1}.builder-place{max-width:none}
+      .builder{padding:16px 14px 14px;margin-bottom:22px}.builder-actions button{flex:1}
+      .choice-options.targets{display:grid;grid-template-columns:1fr 1fr}.choice-options.minutes{display:grid;grid-template-columns:repeat(4,1fr)}
+      .choice-chip span{padding:6px 10px}
+      .builder-place{flex-direction:row;align-items:center;justify-content:space-between;gap:12px;max-width:none}.builder-place select{width:auto;flex:0 1 190px}
       .editor-footer{flex-direction:column;align-items:stretch;gap:16px}.editor-footer p{max-width:none}.footer-actions{width:100%}.footer-actions button{flex:1}}
     .dialog h2{font-family:var(--font-body);font-size:19px;font-weight:650;letter-spacing:-.02em;text-transform:none;margin:0 0 8px}
     @media(prefers-reduced-motion:reduce){button{transition:none}}
@@ -522,7 +521,7 @@ export class RoutineEditorComponent implements OnChanges, OnInit, OnDestroy {
   get intro(): string {
     return this.routine
       ? 'Elegí los ejercicios que quieras y ajustá series, repeticiones y descanso.'
-      : 'Empezá con una propuesta o elegí vos los ejercicios. Después ajustás series, repeticiones y descanso.';
+      : 'Te armamos una propuesta o elegís vos los ejercicios. Después cambiás lo que quieras.';
   }
 
   /** Músculos que trabaja lo que hay en la lista. Se recalcula solo cuando cambian los ejercicios. */
