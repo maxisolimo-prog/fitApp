@@ -29,6 +29,13 @@ export const ROUTINE_TARGETS: readonly RoutineTarget[] = Object.keys(ROUTINE_TAR
 /** Los tiempos que se ofrecen. La propuesta acepta cualquier cantidad de minutos. */
 export const PROPOSAL_MINUTES: readonly number[] = [20, 30, 45, 60];
 
+export const TRAINING_FOCUS_LABELS: Readonly<Record<TrainingFocus, string>> = {
+  fuerza: 'Ganar fuerza',
+  musculo: 'Ganar músculo',
+  grasa: 'Bajar grasa',
+  salud: 'Salud y bienestar',
+};
+
 export const TRAINING_PLACE_LABELS: Readonly<Record<TrainingPlace, string>> = {
   gimnasio: 'Gimnasio',
   'casa-pesas': 'Casa con pesas',

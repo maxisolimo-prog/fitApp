@@ -5,7 +5,7 @@ import { BackClose, type BackLayer } from '../back-close';
 import { loadHint } from '../load-hint';
 import { muscleSentence } from '../core/muscles';
 import {
-  PROPOSAL_MINUTES, ROUTINE_TARGETS, ROUTINE_TARGET_LABELS, TRAINING_PLACE_LABELS,
+  PROPOSAL_MINUTES, ROUTINE_TARGETS, ROUTINE_TARGET_LABELS, TRAINING_FOCUS_LABELS, TRAINING_PLACE_LABELS,
   availableAt, buildRoutineProposal, defaultPrescription, routineMuscles, type RoutineTarget,
 } from '../core/routine-builder';
 import { WorkoutStore } from '../core/workout-store';
@@ -24,14 +24,15 @@ const MAX_EXERCISES = 50;
     <section class="routine-editor" aria-labelledby="routine-editor-title">
       <header class="editor-header">
         <div>
-          <p class="eyebrow">TU ENTRENAMIENTO, A TU MEDIDA</p>
+          <p class="eyebrow">{{ eyebrow }}</p>
           <h2 id="routine-editor-title">{{ title }}</h2>
           <p class="intro">{{ intro }}</p>
         </div>
         <button class="text-button" type="button" (click)="requestLeave()">Volver a mis rutinas</button>
       </header>
 
-      <form #routineForm="ngForm" (ngSubmit)="save()" novalidate>
+      <form #routineForm="ngForm" (ngSubmit)="save()" (keydown.enter)="formEnter($event)" novalidate>
+        <p class="sr-only" role="status" aria-atomic="true">{{ announcement() }}</p>
         @if (builderOpen()) {
           <div class="builder" role="group" aria-labelledby="builder-title">
             <h3 id="builder-title" tabindex="-1">Te armamos una propuesta</h3>
@@ -57,25 +58,32 @@ const MAX_EXERCISES = 50;
                 }
               </div>
             </fieldset>
-            <label class="field builder-place">
-              <span>¿Dónde entrenás?</span>
-              <select name="builderPlace" (change)="setPlace($any($event.target).value)" (keydown.enter)="builderEnter($event)">
-                @for (option of placeOptions; track option) { <option [value]="option" [selected]="place() === option">{{ placeLabels[option] }}</option> }
-              </select>
-            </label>
-            <p class="builder-result" role="status">
+            <div class="builder-fields">
+              <label class="field">
+                <span>¿Dónde entrenás?</span>
+                <select name="builderPlace" (change)="setPlace($any($event.target).value)">
+                  @for (option of placeOptions; track option) { <option [value]="option" [selected]="place() === option">{{ placeLabels[option] }}</option> }
+                </select>
+              </label>
+              <label class="field">
+                <span>Tu nivel</span>
+                <select name="builderLevel" [(ngModel)]="level">@for (option of levels; track option) { <option [ngValue]="option">{{ option }}</option> }</select>
+              </label>
+            </div>
+            <p class="builder-result" role="status" aria-atomic="true">
               @if (proposal().exercises.length) {
                 <strong>{{ proposal().exercises.length }} {{ proposal().exercises.length === 1 ? 'ejercicio' : 'ejercicios' }}, <span aria-hidden="true">≈ </span><span class="sr-only">unos </span>{{ proposal().minutes }} min.</strong>
-                @if (proposalShort()) { <span> Con ese equipo, el catálogo no da para más tiempo en esta zona.</span> }
+                @if (proposalShort()) { <span> No llega a {{ builderMinutes() }} min: el catálogo no tiene más ejercicios de esta zona{{ place() === 'gimnasio' ? '' : ' para ' + placeLabels[place()].toLowerCase() }}.</span> }
+                <span> Series y descansos para {{ focusLabel }}.</span>
               } @else {
                 El catálogo no tiene ejercicios de {{ targetLabels[builderTarget()].toLowerCase() }} para hacer en {{ placeLabels[place()].toLowerCase() }}. Probá con otra zona o con otro lugar.
               }
             </p>
             <div class="builder-actions">
-              <button type="button" class="primary-button" (click)="applyProposal()" [disabled]="!proposal().exercises.length">{{ entries.length ? 'Reemplazar por esta propuesta' : 'Armar propuesta' }}</button>
-              @if (entries.length) { <button type="button" class="secondary-button" (click)="closeBuilder()">Cancelar</button> }
+              <button type="button" class="primary-button" (click)="applyProposal()" [disabled]="!proposal().exercises.length">{{ entries.length ? 'Reemplazar la lista' : 'Armar propuesta' }}</button>
+              @if (entries.length) { <button type="button" class="secondary-button" (click)="closeBuilder()">No reemplazar</button> }
             </div>
-            <p class="builder-basis">Son ejercicios del catálogo. Las series, las repeticiones y los descansos salen del objetivo y el nivel de tu perfil; las cargas las ponés vos al entrenar. Después cambiás lo que quieras.</p>
+            <p class="builder-basis">Son ejercicios del catálogo, con valores generales de partida. El objetivo sale de tu perfil y se cambia en Perfil y datos. Las cargas las ponés vos al entrenar.</p>
           </div>
         }
 
@@ -87,26 +95,26 @@ const MAX_EXERCISES = 50;
           <p class="exercise-help">{{ showWeights() ? 'Kg de arranque; 0 para peso corporal.' : 'La carga la ponés al entrenar y queda guardada para la próxima.' }} La duración se estima con tus series y descansos.</p>
           @if (proposalNote()) {
             <div class="proposal-note">
-              <p role="status"><strong>Es una propuesta.</strong> Cambiá, sacá o agregá lo que quieras antes de guardar.</p>
-              @if (undoEntries) { <button type="button" class="text-button" (click)="undoProposal()">Deshacer</button> }
+              <p><strong>Es una propuesta general</strong> con ejercicios del catálogo. Cambiá, sacá o agregá lo que quieras antes de guardar.</p>
+              @if (undoEntries) { <button type="button" class="text-button" (click)="undoProposal()">Volver a la lista anterior</button> }
             </div>
           }
           @if ((!routine && !builderOpen()) || (entries.length && !showWeights())) {
             <div class="list-tools">
-              @if (!routine && !builderOpen()) { <button type="button" id="builder-open" class="text-button" (click)="openBuilder()">{{ entries.length ? 'Armar otra propuesta' : 'Armar una propuesta' }}</button> }
+              @if (!routine && !builderOpen()) { <button type="button" id="builder-open" class="text-button" (click)="openBuilder()">{{ builderLink }}</button> }
               @if (entries.length && !showWeights()) { <button type="button" class="text-button" (click)="revealWeights()">Cargar kilos de arranque</button> }
             </div>
           }
         }
 
-        <ol class="exercise-list">
+        <ol class="exercise-list" (input)="listEdited()">
           @for (entry of entries; track $index; let i = $index; let first = $first; let last = $last) {
             <li class="exercise-row">
               <fieldset>
                 <legend class="sr-only">{{ exerciseName(entry.exerciseId) }}</legend>
                 <div class="exercise-top">
                   <span class="row-number" aria-hidden="true">{{ i + 1 }}</span>
-                  <div class="exercise-title"><strong>{{ exerciseName(entry.exerciseId) }}</strong><small>{{ exerciseMeta(entry.exerciseId) }}</small></div>
+                  <div class="exercise-title"><strong><span class="title-number" aria-hidden="true">{{ i + 1 }}. </span>{{ exerciseName(entry.exerciseId) }}</strong><small>{{ exerciseMeta(entry.exerciseId) }}</small></div>
                   <div class="row-tools">
                     <button type="button" class="tool-button" (click)="move(i, -1)" [disabled]="first" [attr.aria-label]="'Subir ' + exerciseName(entry.exerciseId)" title="Subir">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>
@@ -144,7 +152,7 @@ const MAX_EXERCISES = 50;
         @if (entries.length) {
           <div class="muscles">
             <p><strong>Qué trabaja:</strong> {{ muscleSummary.primaryText }}.@if (muscleSummary.secondaryText) { <span> También ayudan: {{ muscleSummary.secondaryText }}.</span> }</p>
-            <button type="button" class="text-button" [attr.aria-expanded]="mapOpen()" aria-controls="routine-muscle-map" (click)="mapOpen.set(!mapOpen())">{{ mapOpen() ? 'Ocultar el cuerpo' : 'Verlo en el cuerpo' }}</button>
+            <button type="button" class="text-button" [attr.aria-expanded]="mapOpen()" aria-controls="routine-muscle-map" (click)="mapOpen.set(!mapOpen())">{{ mapOpen() ? 'Ocultar el mapa' : 'Ver en el mapa' }}</button>
             <div id="routine-muscle-map">
               @if (mapOpen()) {
                 <div class="muscle-panel">
@@ -156,7 +164,7 @@ const MAX_EXERCISES = 50;
           </div>
         }
 
-        @if (entries.length || routine) {
+        @if (showDetails) {
           <div class="details">
             <h3>Datos de la rutina</h3>
             <div class="details-grid">
@@ -173,7 +181,8 @@ const MAX_EXERCISES = 50;
               </label>
               <label class="field">
                 <span>Nivel</span>
-                <select name="level" [(ngModel)]="level">@for (option of levels; track option) { <option [ngValue]="option">{{ option }}</option> }</select>
+                <select name="level" [(ngModel)]="level" [attr.aria-describedby]="levelChanged ? 'level-hint' : null">@for (option of levels; track option) { <option [ngValue]="option">{{ option }}</option> }</select>
+                @if (levelChanged) { <small id="level-hint" class="field-hint">Las series de la lista no cambian solas. Para ajustarlas a este nivel, armá otra propuesta.</small> }
               </label>
               <label class="field description-field">
                 <span>Descripción <span class="optional">(opcional)</span></span>
@@ -188,7 +197,7 @@ const MAX_EXERCISES = 50;
           <p>{{ routine && !routine.custom ? 'Se guardará como una nueva rutina. La plantilla original se conserva.' : 'Podés volver a editar tu rutina cuando quieras.' }}</p>
           <div class="footer-actions">
             <button type="button" class="secondary-button" (click)="requestLeave()">Cancelar</button>
-            <button type="submit" class="primary-button" [disabled]="!valid">Guardar rutina</button>
+            @if (entries.length || routine) { <button type="submit" class="primary-button">Guardar rutina</button> }
           </div>
         </footer>
       </form>
@@ -228,7 +237,7 @@ const MAX_EXERCISES = 50;
         @if (place() !== 'gimnasio') {
           <label class="picker-place">
             <input type="checkbox" [checked]="pickerPlaceOnly()" (change)="pickerPlaceOnly.set($any($event.target).checked)">
-            <span>Solo lo que puedo hacer en {{ placeLabels[place()].toLowerCase() }}</span>
+            <span>{{ placeFilterLabel }}</span>
           </label>
         }
         <ul class="picker-list">
@@ -244,7 +253,7 @@ const MAX_EXERCISES = 50;
               </button>
             </li>
           } @empty {
-            <li class="picker-empty">No encontramos ejercicios con esa búsqueda.@if (place() !== 'gimnasio' && pickerPlaceOnly()) { <span> Destildá el filtro de equipo para ver todo el catálogo.</span> }</li>
+            <li class="picker-empty">No encontramos ejercicios con esos filtros.@if (place() !== 'gimnasio' && pickerPlaceOnly()) { <span> Destildá «{{ placeFilterLabel }}» para ver todo el catálogo.</span> }</li>
           }
         </ul>
         <footer class="picker-footer">
@@ -262,13 +271,13 @@ const MAX_EXERCISES = 50;
     .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
     .editor-header{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-bottom:26px}
     .eyebrow{font-size:10px;letter-spacing:.14em;font-weight:700;color:var(--ink-2);margin:0 0 10px}
-    h2{font-family:var(--font-display);font-size:30px;letter-spacing:var(--display-tracking,-1px);line-height:1.2;font-weight:var(--display-weight,700);text-transform:var(--display-transform,none);margin:0 0 10px}h3{font-size:19px;letter-spacing:-.4px;margin:0}
+    h2{font-family:var(--font-display);font-size:30px;letter-spacing:var(--display-tracking,-1px);line-height:1.2;font-weight:var(--display-weight,700);text-transform:var(--display-transform,none);margin:0 0 10px}h3{font-size:19px;font-weight:600;letter-spacing:-.4px;margin:0}
     .intro,.exercise-help{color:var(--ink-2);font-size:13px;line-height:1.6;margin:0}.exercise-help{max-width:68ch;margin-bottom:14px}
     button,input,select,textarea{font:inherit}button{cursor:pointer;transition:background .16s,color .16s,border-color .16s}button:disabled{cursor:not-allowed;opacity:.45}
     .text-button{background:none;border:0;padding:8px 0;color:var(--ink);font-size:13px;white-space:nowrap;text-decoration:underline;text-underline-offset:4px;min-height:44px}
     .builder{margin:0 0 26px;padding:18px 16px 16px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);min-width:0}
     .builder h3:focus,.exercise-heading h3:focus{outline:none}
-    .choice{margin:16px 0 0;padding:0;border:0;min-width:0}.choice legend{padding:0;margin-bottom:8px;font-size:13px;font-weight:600;line-height:1.4}
+    .choice{margin:14px 0 0;padding:0;border:0;min-width:0}.choice legend{padding:0;margin-bottom:6px;font-size:13px;font-weight:600;line-height:1.4}
     .choice-options{display:flex;flex-wrap:wrap;gap:8px}
     .choice-chip{position:relative;display:flex}
     .choice-chip input{position:absolute;inset:0;width:100%;height:100%;min-height:0;margin:0;padding:0;border:0;opacity:0;cursor:pointer}
@@ -276,11 +285,14 @@ const MAX_EXERCISES = 50;
     .choice-chip:hover span{border-color:var(--ink)}
     .choice-chip input:checked+span{background:var(--dark);border-color:var(--dark);color:var(--on-dark);font-weight:600}
     .choice-chip input:focus-visible+span{outline:2px solid var(--ink);outline-offset:3px}
-    .builder-place{margin-top:16px;max-width:280px}
-    .builder-result{margin:16px 0 0;font-size:14px;line-height:1.5;color:var(--ink)}.builder-result strong{font-variant-numeric:tabular-nums}
-    .builder-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+    @media(forced-colors:active){.choice-chip input:checked+span::before{content:"✓";margin-right:6px}}
+    .builder-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;max-width:420px}.builder-fields .field>span{font-size:13px}
+    .builder-result{margin:12px 0 0;font-size:14px;line-height:1.5;color:var(--ink)}.builder-result strong{font-variant-numeric:tabular-nums}
+    .field-hint{font-size:11px;line-height:1.4;color:var(--ink-2)}
+    .title-number{display:none}
+    .builder-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
     .builder-basis{margin:12px 0 0;max-width:68ch;font-size:12px;line-height:1.6;color:var(--ink-2)}
-    .proposal-note{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px 16px;margin:0 0 12px;padding:6px 14px;border-radius:12px;background:var(--bg-tint);color:var(--ink);font-size:13px;line-height:1.5}
+    .proposal-note{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px 16px;margin:0 0 12px;padding:6px 14px;border-radius:var(--radius);background:var(--bg-tint);color:var(--ink);font-size:13px;line-height:1.5}
     .proposal-note p{margin:6px 0}
     .list-tools{display:flex;flex-wrap:wrap;gap:0 22px;margin:-8px 0 8px}
     .or-manual{margin:0 0 -2px;font-size:13px;line-height:1.5;color:var(--ink-2)}
@@ -304,7 +316,7 @@ const MAX_EXERCISES = 50;
     .row-tools{display:flex;gap:2px;flex-shrink:0}
     .tool-button{display:grid;place-items:center;width:40px;height:40px;border:0;border-radius:10px;background:transparent;color:var(--ink-2)}
     .tool-button:hover:not(:disabled){background:var(--bg);color:var(--ink)}.tool-button.remove:hover{background:var(--danger-bg);color:var(--danger)}.tool-button svg{width:20px;height:20px}
-    .exercise-numbers{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}.exercise-numbers.with-weights{grid-template-columns:repeat(4,1fr)}
+    .exercise-numbers{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}.exercise-numbers.with-weights{grid-template-columns:repeat(4,1fr)}.exercise-numbers .field{justify-content:flex-end}
     .exercise-numbers input{background:var(--bg);font-variant-numeric:tabular-nums;text-align:center}
     .row-error{color:var(--danger);font-size:12px;margin:10px 0 0;line-height:1.5}
     .add-button{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:1.5px dashed var(--strong);border-radius:12px;background:transparent;color:var(--ink);min-height:52px;margin-top:12px;font-size:15px;font-weight:600}
@@ -338,11 +350,12 @@ const MAX_EXERCISES = 50;
     .picker-footer{display:grid;grid-template-columns:auto 1fr;gap:10px;padding-top:6px}
     @media(min-width:760px){.picker{left:50%;right:auto;top:50%;bottom:auto;transform:translate(-50%,-50%);width:min(560px,92vw);max-height:80vh;border-radius:20px}}
     @media(max-width:680px){.editor-header{flex-direction:column;gap:8px;margin-bottom:20px}h2{font-size:26px}.details-grid{grid-template-columns:1fr 1fr;gap:14px}.name-field,.description-field{grid-column:1/-1}
-      .exercise-row fieldset{padding:12px}.exercise-numbers{gap:8px}.exercise-numbers .field>span{font-size:11px}.tool-button{width:36px;height:36px}
+      .exercise-row fieldset{padding:12px}.exercise-numbers{gap:8px}.exercise-numbers .field>span{font-size:11px}
       .builder{padding:16px 14px 14px;margin-bottom:22px}.builder-actions button{flex:1}
       .choice-options.targets{display:grid;grid-template-columns:1fr 1fr}.choice-options.minutes{display:grid;grid-template-columns:repeat(4,1fr)}
       .choice-chip span{padding:6px 10px}
-      .builder-place{flex-direction:row;align-items:center;justify-content:space-between;gap:12px;max-width:none}.builder-place select{width:auto;flex:0 1 190px}
+      .builder-fields{max-width:none}
+      .row-number{display:none}.title-number{display:inline}.row-tools{gap:0}.tool-button{width:44px;height:44px}.tool-button.remove{margin-left:6px}
       .editor-footer{flex-direction:column;align-items:stretch;gap:16px}.editor-footer p{max-width:none}.footer-actions{width:100%}.footer-actions button{flex:1}}
     .dialog h2{font-family:var(--font-body);font-size:19px;font-weight:650;letter-spacing:-.02em;text-transform:none;margin:0 0 8px}
     @media(prefers-reduced-motion:reduce){button{transition:none}}
@@ -397,6 +410,14 @@ export class RoutineEditorComponent implements OnChanges, OnInit, OnDestroy {
   readonly proposalNote = signal(false);
   /** La lista que había antes de reemplazarla por una propuesta, para poder deshacer. */
   undoEntries: RoutineExercise[] | null = null;
+  /** Lo demás que cambia una propuesta, para que volver atrás devuelva la pantalla entera a como estaba. */
+  private undoRest: { name: string; suggestedName: string; note: boolean; level: FitnessLevel | null } | null = null;
+  /** Ya se aplicó alguna propuesta en esta rutina. */
+  private proposalUsed = false;
+  /** Nivel con el que se armó la propuesta a la vista: si después cambia, las series ya no le corresponden. */
+  private proposalLevel: FitnessLevel | null = null;
+  /** Lo último que pasó, para quien usa lector de pantalla. La región que lo lee está siempre en la página. */
+  readonly announcement = signal('');
   /** El nombre que puso la última propuesta: si la persona no lo cambió, la siguiente lo puede pisar. */
   private suggestedName = '';
   /** Los kilos de arranque no se piden salvo que la rutina ya los tenga o la persona los quiera cargar. */
@@ -443,6 +464,10 @@ export class RoutineEditorComponent implements OnChanges, OnInit, OnDestroy {
     this.builderOpen.set(!this.routine);
     this.proposalNote.set(false);
     this.undoEntries = null;
+    this.undoRest = null;
+    this.proposalUsed = false;
+    this.proposalLevel = null;
+    this.announcement.set('');
     this.suggestedName = '';
     this.showWeights.set(this.entries.some((entry) => entry.weight > 0));
     this.mapOpen.set(false);
@@ -543,10 +568,51 @@ export class RoutineEditorComponent implements OnChanges, OnInit, OnDestroy {
     if (this.placeOptions.includes(value as TrainingPlace)) this.place.set(value as TrainingPlace);
   }
 
-  /** Enter en una opción de la propuesta la arma, en lugar de enviar el formulario entero. */
+  /** Enter en una opción arma la primera propuesta. Con una lista ya armada no hace nada: reemplazarla pide el botón. */
   builderEnter(event: Event): void {
     event.preventDefault();
-    this.applyProposal();
+    if (!this.entries.length) this.applyProposal();
+  }
+
+  /**
+   * Enter dentro de un campo no guarda la rutina: con el nombre ya puesto por la propuesta, apretarlo al corregir
+   * una serie la guardaba sin revisar. Guardar es siempre el botón.
+   */
+  formEnter(event: Event): void {
+    if (event.target instanceof HTMLInputElement) event.preventDefault();
+  }
+
+  /** Al tocar un número de la lista ya no se ofrece volver a la anterior: se perdería lo que se acaba de cambiar. */
+  listEdited(): void {
+    this.undoEntries = null;
+  }
+
+  get eyebrow(): string {
+    return !this.routine ? 'RUTINA NUEVA' : this.routine.custom ? 'MI CREACIÓN' : 'PLANTILLA INICIAL';
+  }
+
+  /** El objetivo del perfil, para leer de corrido: "ganar fuerza". */
+  get focusLabel(): string {
+    return TRAINING_FOCUS_LABELS[this.store.profile().focus].toLocaleLowerCase('es');
+  }
+
+  get builderLink(): string {
+    if (!this.entries.length) return 'Armar una propuesta';
+    return this.proposalUsed ? 'Armar otra propuesta' : 'Reemplazar por una propuesta';
+  }
+
+  /** Los datos se piden cuando hay algo que nombrar, y no se esconden si la persona ya escribió alguno. */
+  get showDetails(): boolean {
+    return this.entries.length > 0 || !!this.routine || this.name.trim().length > 0 || this.description.trim().length > 0;
+  }
+
+  /** El nivel cambió después de armar la propuesta que está a la vista. */
+  get levelChanged(): boolean {
+    return this.proposalNote() && this.proposalLevel !== null && this.proposalLevel !== this.level;
+  }
+
+  get placeFilterLabel(): string {
+    return this.place() === 'casa-pesas' ? 'Solo con mancuernas o peso corporal' : 'Solo con peso corporal';
   }
 
   openBuilder(): void {
@@ -564,18 +630,30 @@ export class RoutineEditorComponent implements OnChanges, OnInit, OnDestroy {
     const proposal = this.proposal();
     if (!proposal.exercises.length) return;
     this.undoEntries = this.entries.length ? this.entries.map((entry) => ({ ...entry })) : null;
+    this.undoRest = this.undoEntries ? { name: this.name, suggestedName: this.suggestedName, note: this.proposalNote(), level: this.proposalLevel } : null;
     this.entries = proposal.exercises.map((entry) => ({ ...entry }));
     if (!this.name.trim() || this.name === this.suggestedName) this.name = this.suggestedName = proposal.name;
     this.builderOpen.set(false);
     this.proposalNote.set(true);
+    this.proposalUsed = true;
+    this.proposalLevel = this.level;
+    const count = proposal.exercises.length;
+    this.announcement.set(`Listo: ${count} ${count === 1 ? 'ejercicio propuesto' : 'ejercicios propuestos'}, unos ${proposal.minutes} minutos. Revisalos antes de guardar.`);
     setTimeout(() => document.getElementById('exercises-title')?.focus());
   }
 
+  /** Vuelve a la lista que había antes del reemplazo, con su nombre y su aviso: la pantalla queda como estaba. */
   undoProposal(): void {
     if (!this.undoEntries) return;
     this.entries = this.undoEntries;
-    this.undoEntries = null;
-    this.proposalNote.set(false);
+    if (this.undoRest) {
+      this.name = this.undoRest.name;
+      this.suggestedName = this.undoRest.suggestedName;
+      this.proposalNote.set(this.undoRest.note);
+      this.proposalLevel = this.undoRest.level;
+    }
+    this.undoEntries = this.undoRest = null;
+    this.announcement.set('Volvió la lista anterior.');
     setTimeout(() => document.getElementById('exercises-title')?.focus());
   }
 
@@ -680,9 +758,17 @@ export class RoutineEditorComponent implements OnChanges, OnInit, OnDestroy {
   }
 
   removeExercise(index: number): void {
+    const name = this.exerciseName(this.entries[index]?.exerciseId ?? '');
     this.entries = this.entries.filter((_, position) => position !== index);
     this.undoEntries = null;
     if (!this.entries.length) this.proposalNote.set(false);
+    this.announcement.set(`Quitaste ${name}.`);
+    // El botón que se tocó ya no existe: el foco sigue en la fila que ocupó su lugar, o en el título si no queda ninguna.
+    setTimeout(() => {
+      const rows = document.querySelectorAll('app-routine-editor .exercise-row');
+      const next = rows[Math.min(index, rows.length - 1)]?.querySelector<HTMLElement>('.tool-button.remove');
+      (next ?? document.getElementById('exercises-title'))?.focus();
+    });
   }
 
   save(): void {
@@ -690,6 +776,8 @@ export class RoutineEditorComponent implements OnChanges, OnInit, OnDestroy {
     this.saveError = '';
     if (!this.valid) {
       this.saveError = 'Completá el nombre y agregá al menos un ejercicio con valores válidos.';
+      // El botón ya no se deshabilita: en su lugar, lleva a lo primero que falta.
+      setTimeout(() => document.querySelector<HTMLElement>('app-routine-editor [aria-invalid="true"]')?.focus());
       return;
     }
     const routine: Routine = {
