@@ -1,11 +1,17 @@
 import { Component, EventEmitter, Input, Output, computed, inject, signal, type OnChanges, type OnDestroy, type OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import type { Exercise, FitnessLevel, Routine, RoutineCategory, RoutineExercise } from '../core/models';
+import type { Exercise, FitnessLevel, MuscleId, Routine, RoutineCategory, RoutineExercise, TrainingPlace } from '../core/models';
 import { BackClose, type BackLayer } from '../back-close';
 import { loadHint } from '../load-hint';
+import { muscleSentence } from '../core/muscles';
+import {
+  PROPOSAL_MINUTES, ROUTINE_TARGETS, ROUTINE_TARGET_LABELS, TRAINING_PLACE_LABELS,
+  availableAt, buildRoutineProposal, defaultPrescription, routineMuscles, type RoutineTarget,
+} from '../core/routine-builder';
 import { WorkoutStore } from '../core/workout-store';
 import { estimateRoutineMinutes } from '../core/workout-utils';
 import { ExerciseThumbComponent } from './exercise-thumb.component';
+import { MuscleMapComponent } from './muscle-map.component';
 
 /** Same bound as validateRoutine in workout-utils: generous, not a product limit. */
 const MAX_EXERCISES = 50;
@@ -13,45 +19,88 @@ const MAX_EXERCISES = 50;
 @Component({
   selector: 'app-routine-editor',
   standalone: true,
-  imports: [FormsModule, ExerciseThumbComponent],
+  imports: [FormsModule, ExerciseThumbComponent, MuscleMapComponent],
   template: `
     <section class="routine-editor" aria-labelledby="routine-editor-title">
       <header class="editor-header">
         <div>
           <p class="eyebrow">TU ENTRENAMIENTO, A TU MEDIDA</p>
           <h2 id="routine-editor-title">{{ title }}</h2>
-          <p class="intro">Elegí los ejercicios que quieras y ajustá series, repeticiones y descanso.</p>
+          <p class="intro">{{ intro }}</p>
         </div>
         <button class="text-button" type="button" (click)="requestLeave()">Volver a mis rutinas</button>
       </header>
 
       <form #routineForm="ngForm" (ngSubmit)="save()" novalidate>
-        <div class="details-grid">
-          <label class="field name-field">
-            <span>Nombre de la rutina <span aria-hidden="true">*</span></span>
-            <input name="routineName" [(ngModel)]="name" #nameInput="ngModel" required maxlength="80"
-              placeholder="Por ejemplo, mi día de fuerza" autocomplete="off"
-              [attr.aria-invalid]="(nameInput.touched || attempted) && !name.trim()" aria-describedby="name-error">
-            <small id="name-error" class="field-error">@if ((nameInput.touched || attempted) && !name.trim()) { Escribí un nombre para encontrarla después. }</small>
-          </label>
-          <label class="field">
-            <span>Enfoque</span>
-            <select name="category" [(ngModel)]="category">@for (option of categories; track option) { <option [ngValue]="option">{{ option }}</option> }</select>
-          </label>
-          <label class="field">
-            <span>Nivel</span>
-            <select name="level" [(ngModel)]="level">@for (option of levels; track option) { <option [ngValue]="option">{{ option }}</option> }</select>
-          </label>
-          <label class="field description-field">
-            <span>Descripción <span class="optional">(opcional)</span></span>
-            <textarea name="description" [(ngModel)]="description" maxlength="300" rows="2" placeholder="Qué querés trabajar en esta sesión"></textarea>
-          </label>
-        </div>
+        @if (builderOpen()) {
+          <div class="builder" role="group" aria-labelledby="builder-title">
+            <h3 id="builder-title" tabindex="-1">Empezá con una propuesta</h3>
+            <p class="builder-intro">Decinos qué querés trabajar y cuánto tiempo tenés. Te proponemos ejercicios del catálogo con sus series y descansos, y después cambiás lo que quieras.</p>
+            <fieldset class="choice">
+              <legend>¿Qué querés trabajar?</legend>
+              <div class="choice-options">
+                @for (option of targets; track option) {
+                  <label class="choice-chip">
+                    <input type="radio" name="builderTarget" [value]="option" [checked]="builderTarget() === option" (change)="builderTarget.set(option)" (keydown.enter)="builderEnter($event)">
+                    <span>{{ targetLabels[option] }}</span>
+                  </label>
+                }
+              </div>
+            </fieldset>
+            <fieldset class="choice">
+              <legend>¿Cuánto tiempo tenés?</legend>
+              <div class="choice-options">
+                @for (option of minuteOptions; track option) {
+                  <label class="choice-chip">
+                    <input type="radio" name="builderMinutes" [value]="option" [checked]="builderMinutes() === option" (change)="builderMinutes.set(option)" (keydown.enter)="builderEnter($event)">
+                    <span>{{ option }} min</span>
+                  </label>
+                }
+              </div>
+            </fieldset>
+            <label class="field builder-place">
+              <span>¿Dónde entrenás?</span>
+              <select name="builderPlace" (change)="setPlace($any($event.target).value)" (keydown.enter)="builderEnter($event)">
+                @for (option of placeOptions; track option) { <option [value]="option" [selected]="place() === option">{{ placeLabels[option] }}</option> }
+              </select>
+            </label>
+            <p class="builder-result" role="status">
+              @if (proposal().exercises.length) {
+                <strong>{{ proposal().exercises.length }} {{ proposal().exercises.length === 1 ? 'ejercicio' : 'ejercicios' }}, <span aria-hidden="true">≈ </span><span class="sr-only">unos </span>{{ proposal().minutes }} min.</strong>
+                @if (proposalShort()) { <span> Con ese equipo, el catálogo no da para más tiempo en esta zona.</span> }
+              } @else {
+                El catálogo no tiene ejercicios de {{ targetLabels[builderTarget()].toLowerCase() }} para hacer en {{ placeLabels[place()].toLowerCase() }}. Probá con otra zona o con otro lugar.
+              }
+            </p>
+            <p class="builder-basis">Las series, las repeticiones y los descansos salen del objetivo y el nivel de tu perfil. Las cargas las ponés vos al entrenar.</p>
+            <div class="builder-actions">
+              <button type="button" class="primary-button" (click)="applyProposal()" [disabled]="!proposal().exercises.length">{{ entries.length ? 'Reemplazar por esta propuesta' : 'Armar propuesta' }}</button>
+              @if (entries.length) { <button type="button" class="secondary-button" (click)="closeBuilder()">Cancelar</button> }
+            </div>
+          </div>
+        }
 
-        <div class="exercise-heading">
-          <div><h3>Ejercicios</h3><p>Cargas en kg; 0 para peso corporal. La duración se estima con tus series y descansos.</p></div>
-          <span class="exercise-count">{{ entries.length }} {{ entries.length === 1 ? 'ejercicio' : 'ejercicios' }}@if (entries.length) { <span> · <span aria-hidden="true">≈ </span><span class="sr-only">unos </span>{{ estimate }} min</span> }</span>
-        </div>
+        @if (entries.length || !builderOpen()) {
+          <div class="exercise-heading">
+            <div>
+              <h3 id="exercises-title" tabindex="-1">Ejercicios</h3>
+              <p>{{ showWeights() ? 'Kg de arranque; 0 para peso corporal.' : 'La carga la ponés al entrenar y queda guardada para la próxima.' }} La duración se estima con tus series y descansos.</p>
+            </div>
+            <span class="exercise-count">{{ entries.length }} {{ entries.length === 1 ? 'ejercicio' : 'ejercicios' }}@if (entries.length) { <span> · <span aria-hidden="true">≈ </span><span class="sr-only">unos </span>{{ estimate }} min</span> }</span>
+          </div>
+          @if (proposalNote()) {
+            <div class="proposal-note">
+              <p role="status"><strong>Es una propuesta.</strong> Cambiá, sacá o agregá lo que quieras antes de guardar.</p>
+              @if (undoEntries) { <button type="button" class="text-button" (click)="undoProposal()">Deshacer</button> }
+            </div>
+          }
+          @if ((!routine && !builderOpen()) || (entries.length && !showWeights())) {
+            <div class="list-tools">
+              @if (!routine && !builderOpen()) { <button type="button" id="builder-open" class="text-button" (click)="openBuilder()">{{ entries.length ? 'Armar otra propuesta' : 'Pedir una propuesta' }}</button> }
+              @if (entries.length && !showWeights()) { <button type="button" class="text-button" (click)="revealWeights()">Cargar kilos de arranque</button> }
+            </div>
+          }
+        }
 
         <ol class="exercise-list">
           @for (entry of entries; track $index; let i = $index; let first = $first; let last = $last) {
@@ -73,10 +122,12 @@ const MAX_EXERCISES = 50;
                     </button>
                   </div>
                 </div>
-                <div class="exercise-numbers">
+                <div class="exercise-numbers" [class.with-weights]="showWeights()">
                   <label class="field"><span>Series</span><input type="number" [name]="'sets-' + i" [(ngModel)]="entry.sets" min="1" max="30" step="1" required inputmode="numeric" [attr.aria-invalid]="attempted && !integerInRange(entry.sets, 1, 30)"></label>
                   <label class="field"><span>Reps</span><input type="number" [name]="'reps-' + i" [(ngModel)]="entry.reps" min="1" max="999" step="1" required inputmode="numeric" [attr.aria-invalid]="attempted && !integerInRange(entry.reps, 1, 999)"></label>
-                  <label class="field"><span>Kg</span><input type="number" [name]="'weight-' + i" [(ngModel)]="entry.weight" min="0" max="2000" step="0.5" required inputmode="decimal" [attr.aria-invalid]="attempted && !numberInRange(entry.weight, 0, 2000)"></label>
+                  @if (showWeights()) {
+                    <label class="field"><span>Kg</span><input class="weight-input" type="number" [name]="'weight-' + i" [(ngModel)]="entry.weight" min="0" max="2000" step="0.5" required inputmode="decimal" [attr.aria-invalid]="attempted && !numberInRange(entry.weight, 0, 2000)"></label>
+                  }
                   <label class="field"><span>Descanso (s)</span><input type="number" [name]="'rest-' + i" [(ngModel)]="entry.restSeconds" min="0" max="3600" step="5" required inputmode="numeric" [attr.aria-invalid]="attempted && !integerInRange(entry.restSeconds, 0, 3600)"></label>
                 </div>
                 @if (attempted && !validEntry(entry)) {
@@ -87,10 +138,53 @@ const MAX_EXERCISES = 50;
           }
         </ol>
 
-        @if (!entries.length) { <p class="empty-exercises">Todavía no elegiste ejercicios. Agregá los que vas a hacer.</p> }
+        @if (!entries.length && !builderOpen()) { <p class="empty-exercises">Todavía no elegiste ejercicios. Agregá los que vas a hacer.</p> }
+        @if (!entries.length && builderOpen()) { <p class="or-manual">¿Ya sabés qué querés hacer?</p> }
         <button type="button" class="add-button" (click)="openPicker()" [disabled]="!canAdd">
-          <span aria-hidden="true">＋</span> Agregar ejercicios
+          <span aria-hidden="true">＋</span> {{ !entries.length && builderOpen() ? 'Elegir yo los ejercicios' : 'Agregar ejercicios' }}
         </button>
+
+        @if (entries.length) {
+          <div class="muscles">
+            <p><strong>Qué trabaja:</strong> {{ muscleSummary.primaryText }}.@if (muscleSummary.secondaryText) { <span> También ayudan: {{ muscleSummary.secondaryText }}.</span> }</p>
+            <button type="button" class="text-button" [attr.aria-expanded]="mapOpen()" aria-controls="routine-muscle-map" (click)="mapOpen.set(!mapOpen())">{{ mapOpen() ? 'Ocultar el cuerpo' : 'Verlo en el cuerpo' }}</button>
+            <div id="routine-muscle-map">
+              @if (mapOpen()) {
+                <div class="muscle-panel">
+                  <app-muscle-map [primary]="muscleSummary.primary" [secondary]="muscleSummary.secondary" />
+                  <p class="legend">Relleno: músculos principales. Contorno: los que ayudan. Es una guía general, no una medición.</p>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        @if (entries.length || routine) {
+          <div class="details">
+            <h3>Datos de la rutina</h3>
+            <div class="details-grid">
+              <label class="field name-field">
+                <span>Nombre de la rutina <span aria-hidden="true">*</span></span>
+                <input name="routineName" [(ngModel)]="name" #nameInput="ngModel" required maxlength="80"
+                  placeholder="Por ejemplo, mi día de fuerza" autocomplete="off"
+                  [attr.aria-invalid]="(nameInput.touched || attempted) && !name.trim()" aria-describedby="name-error">
+                <small id="name-error" class="field-error">@if ((nameInput.touched || attempted) && !name.trim()) { Escribí un nombre para encontrarla después. }</small>
+              </label>
+              <label class="field">
+                <span>Enfoque</span>
+                <select name="category" [(ngModel)]="category">@for (option of categories; track option) { <option [ngValue]="option">{{ option }}</option> }</select>
+              </label>
+              <label class="field">
+                <span>Nivel</span>
+                <select name="level" [(ngModel)]="level">@for (option of levels; track option) { <option [ngValue]="option">{{ option }}</option> }</select>
+              </label>
+              <label class="field description-field">
+                <span>Descripción <span class="optional">(opcional)</span></span>
+                <textarea name="description" [(ngModel)]="description" maxlength="300" rows="2" placeholder="Qué querés trabajar en esta sesión"></textarea>
+              </label>
+            </div>
+          </div>
+        }
 
         @if (saveError) { <p class="save-error" role="alert">{{ saveError }}</p> }
         <footer class="editor-footer">
@@ -134,6 +228,12 @@ const MAX_EXERCISES = 50;
             <button type="button" class="chip" [class.is-active]="pickerMuscle() === option" [attr.aria-pressed]="pickerMuscle() === option" (click)="pickerMuscle.set(option)">{{ option }}</button>
           }
         </div>
+        @if (place() !== 'gimnasio') {
+          <label class="picker-place">
+            <input type="checkbox" [checked]="pickerPlaceOnly()" (change)="pickerPlaceOnly.set($any($event.target).checked)">
+            <span>Solo lo que puedo hacer en {{ placeLabels[place()].toLowerCase() }}</span>
+          </label>
+        }
         <ul class="picker-list">
           @for (exercise of pickerExercises(); track exercise.id) {
             <li>
@@ -147,7 +247,7 @@ const MAX_EXERCISES = 50;
               </button>
             </li>
           } @empty {
-            <li class="picker-empty">No encontramos ejercicios con esa búsqueda.</li>
+            <li class="picker-empty">No encontramos ejercicios con esa búsqueda.@if (place() !== 'gimnasio' && pickerPlaceOnly()) { <span> Destildá el filtro de equipo para ver todo el catálogo.</span> }</li>
           }
         </ul>
         <footer class="picker-footer">
@@ -169,13 +269,36 @@ const MAX_EXERCISES = 50;
     .intro,.exercise-heading p{color:var(--ink-2);font-size:13px;line-height:1.6;margin:0}
     button,input,select,textarea{font:inherit}button{cursor:pointer;transition:background .16s,color .16s,border-color .16s}button:disabled{cursor:not-allowed;opacity:.45}
     .text-button{background:none;border:0;padding:8px 0;color:var(--ink);font-size:13px;white-space:nowrap;text-decoration:underline;text-underline-offset:4px;min-height:44px}
-    .details-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px 20px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:22px 0}
+    .builder{margin:0 0 26px;padding:18px 16px 16px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);min-width:0}
+    .builder h3:focus,.exercise-heading h3:focus{outline:none}
+    .builder-intro{margin:6px 0 0;max-width:62ch;font-size:13px;line-height:1.6;color:var(--ink-2)}
+    .choice{margin:18px 0 0;padding:0;border:0;min-width:0}.choice legend{padding:0;margin-bottom:8px;font-size:13px;font-weight:600;line-height:1.4}
+    .choice-options{display:flex;flex-wrap:wrap;gap:8px}
+    .choice-chip{position:relative;display:inline-flex}
+    .choice-chip input{position:absolute;inset:0;width:100%;height:100%;min-height:0;margin:0;padding:0;border:0;opacity:0;cursor:pointer}
+    .choice-chip span{display:inline-flex;align-items:center;min-height:44px;padding:8px 16px;border-radius:999px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);font-size:14px;font-weight:500;line-height:1.3;transition:background .16s,color .16s,border-color .16s}
+    .choice-chip:hover span{border-color:var(--ink)}
+    .choice-chip input:checked+span{background:var(--dark);border-color:var(--dark);color:var(--on-dark);font-weight:600}
+    .choice-chip input:focus-visible+span{outline:2px solid var(--ink);outline-offset:3px}
+    .builder-place{margin-top:18px;max-width:280px}
+    .builder-result{margin:18px 0 0;font-size:14px;line-height:1.5;color:var(--ink)}.builder-result strong{font-variant-numeric:tabular-nums}
+    .builder-basis{margin:4px 0 0;max-width:62ch;font-size:12px;line-height:1.6;color:var(--ink-2)}
+    .builder-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+    .proposal-note{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px 16px;margin:0 0 12px;padding:6px 14px;border-radius:12px;background:var(--bg-tint);color:var(--ink);font-size:13px;line-height:1.5}
+    .proposal-note p{margin:6px 0}
+    .list-tools{display:flex;flex-wrap:wrap;gap:0 22px;margin:-8px 0 8px}
+    .or-manual{margin:0 0 -2px;font-size:13px;line-height:1.5;color:var(--ink-2)}
+    .muscles{margin-top:18px;font-size:13px;line-height:1.6;color:var(--ink-2)}.muscles p{margin:0}.muscles strong{color:var(--ink)}
+    .muscle-panel{margin-top:6px;padding:16px 12px 14px;border-radius:var(--radius);background:var(--dark);color:var(--on-dark)}
+    .muscle-panel .legend{margin:8px auto 0;max-width:44ch;font-size:12px;line-height:1.5;text-align:center;color:var(--muted-on-dark)}
+    .details{border-top:1px solid var(--line);margin-top:24px;padding-top:22px}
+    .details-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px 20px;margin-top:14px}
     .name-field,.description-field{grid-column:span 2}.field{display:flex;flex-direction:column;gap:6px;min-width:0}
     .field>span{font-size:12px;font-weight:600;line-height:1.4}.optional{font-weight:400;color:var(--ink-2)}
     input,select,textarea{width:100%;min-width:0;border:1px solid var(--line-strong);background:var(--surface);border-radius:var(--radius-field);color:var(--ink);outline:none;padding:10px 12px;font-size:15px;line-height:1.4;min-height:44px}
     textarea{resize:vertical;min-height:64px}input:focus,select:focus,textarea:focus{border-color:var(--ink);box-shadow:0 0 0 3px color-mix(in srgb, var(--strong) 18%, transparent)}
     [aria-invalid=true]{border-color:var(--danger)}.field-error{color:var(--danger);font-size:11px;line-height:1.4}.field-error:empty{display:none}
-    .exercise-heading{display:flex;justify-content:space-between;align-items:center;gap:20px;margin:24px 0 14px}.exercise-heading p{margin-top:4px}
+    .exercise-heading{display:flex;justify-content:space-between;align-items:center;gap:20px;margin:0 0 14px}.exercise-heading p{margin-top:4px}
     .exercise-count{font-size:13px;color:var(--ink-2);font-variant-numeric:tabular-nums;white-space:nowrap}
     .exercise-list{list-style:none;margin:0;padding:0;display:grid;gap:10px}
     .exercise-row fieldset{margin:0;padding:14px 16px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);min-width:0}
@@ -185,7 +308,7 @@ const MAX_EXERCISES = 50;
     .row-tools{display:flex;gap:2px;flex-shrink:0}
     .tool-button{display:grid;place-items:center;width:40px;height:40px;border:0;border-radius:10px;background:transparent;color:var(--ink-2)}
     .tool-button:hover:not(:disabled){background:var(--bg);color:var(--ink)}.tool-button.remove:hover{background:var(--danger-bg);color:var(--danger)}.tool-button svg{width:20px;height:20px}
-    .exercise-numbers{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
+    .exercise-numbers{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}.exercise-numbers.with-weights{grid-template-columns:repeat(4,1fr)}
     .exercise-numbers input{background:var(--bg);font-variant-numeric:tabular-nums;text-align:center}
     .row-error{color:var(--danger);font-size:12px;margin:10px 0 0;line-height:1.5}
     .add-button{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:1.5px dashed var(--strong);border-radius:12px;background:transparent;color:var(--ink);min-height:52px;margin-top:12px;font-size:15px;font-weight:600}
@@ -206,6 +329,8 @@ const MAX_EXERCISES = 50;
     .picker-chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}.picker-chips::-webkit-scrollbar{display:none}
     .chip{flex-shrink:0;min-height:38px;padding:6px 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:13px;font-weight:500}
     .chip.is-active{background:var(--dark);border-color:var(--dark);color:var(--on-dark)}
+    .picker-place{display:flex;align-items:center;gap:10px;min-height:44px;font-size:13px;line-height:1.4;color:var(--ink);cursor:pointer}
+    .picker-place input{flex-shrink:0;width:20px;height:20px;min-height:0;margin:0;padding:0;accent-color:var(--strong);cursor:pointer}
     .picker-list{list-style:none;margin:0;padding:0;overflow-y:auto;display:flex;flex-direction:column;gap:6px;flex:1;min-height:120px}
     .picker-item{display:flex;align-items:center;gap:12px;width:100%;min-height:60px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);text-align:left}
     .picker-item:hover:not(:disabled){border-color:var(--ink)}.picker-item.is-picked{border-color:var(--strong);background:var(--bg-tint)}
@@ -218,6 +343,7 @@ const MAX_EXERCISES = 50;
     @media(min-width:760px){.picker{left:50%;right:auto;top:50%;bottom:auto;transform:translate(-50%,-50%);width:min(560px,92vw);max-height:80vh;border-radius:20px}}
     @media(max-width:680px){.editor-header{flex-direction:column;gap:8px;margin-bottom:20px}h2{font-size:26px}.details-grid{grid-template-columns:1fr 1fr;gap:14px}.name-field,.description-field{grid-column:1/-1}
       .exercise-row fieldset{padding:12px}.exercise-numbers{gap:8px}.exercise-numbers .field>span{font-size:11px}.tool-button{width:36px;height:36px}
+      .builder{padding:16px 14px 14px;margin-bottom:22px}.builder-actions button{flex:1}.builder-place{max-width:none}
       .editor-footer{flex-direction:column;align-items:stretch;gap:16px}.editor-footer p{max-width:none}.footer-actions{width:100%}.footer-actions button{flex:1}}
     .dialog h2{font-family:var(--font-body);font-size:19px;font-weight:650;letter-spacing:-.02em;text-transform:none;margin:0 0 8px}
     @media(prefers-reduced-motion:reduce){button{transition:none}}
@@ -243,38 +369,89 @@ export class RoutineEditorComponent implements OnChanges, OnInit, OnDestroy {
   name = '';
   description = '';
   category: RoutineCategory = 'Fuerza';
-  level: FitnessLevel = 'Principiante';
+  /** El nivel vive en un signal porque la propuesta se calcula con él; el formulario lo usa como una propiedad más. */
+  private readonly levelValue = signal<FitnessLevel>('Principiante');
+  get level(): FitnessLevel { return this.levelValue(); }
+  set level(value: FitnessLevel) { this.levelValue.set(value); }
   entries: RoutineExercise[] = [];
   attempted = false;
   saveError = '';
 
+  /** La propuesta ("Armámela") solo se ofrece al crear una rutina; al editar una existente no aparece. */
+  readonly targets = ROUTINE_TARGETS;
+  readonly targetLabels = ROUTINE_TARGET_LABELS;
+  readonly minuteOptions = PROPOSAL_MINUTES;
+  readonly placeLabels = TRAINING_PLACE_LABELS;
+  readonly placeOptions = Object.keys(TRAINING_PLACE_LABELS) as TrainingPlace[];
+  readonly builderOpen = signal(false);
+  readonly builderTarget = signal<RoutineTarget>('cuerpo-completo');
+  readonly builderMinutes = signal(45);
+  /** Dónde entrena: arranca con el del perfil y vale solo para esta rutina (la propuesta y el filtro del selector). */
+  readonly place = signal<TrainingPlace>('gimnasio');
+  readonly proposal = computed(() => buildRoutineProposal({
+    target: this.builderTarget(), minutes: this.builderMinutes(), place: this.place(),
+    level: this.levelValue(), focus: this.store.profile().focus,
+  }, this.store.exercises()));
+  /** Lo propuesto queda bastante por debajo del tiempo pedido: el catálogo no tiene más para esa zona y ese lugar. */
+  readonly proposalShort = computed(() => this.proposal().minutes <= this.builderMinutes() - 10);
+  /** Los ejercicios a la vista vienen de una propuesta todavía sin guardar. */
+  readonly proposalNote = signal(false);
+  /** La lista que había antes de reemplazarla por una propuesta, para poder deshacer. */
+  undoEntries: RoutineExercise[] | null = null;
+  /** El nombre que puso la última propuesta: si la persona no lo cambió, la siguiente lo puede pisar. */
+  private suggestedName = '';
+  /** Los kilos de arranque no se piden salvo que la rutina ya los tenga o la persona los quiera cargar. */
+  readonly showWeights = signal(false);
+  readonly mapOpen = signal(false);
+  private summaryKey: string | null = null;
+  private summary: { primary: MuscleId[]; secondary: MuscleId[]; primaryText: string; secondaryText: string } = { primary: [], secondary: [], primaryText: '', secondaryText: '' };
+  private ready = false;
+
   readonly pickerOpen = signal(false);
   readonly pickerSearch = signal('');
   readonly pickerMuscle = signal('Todos');
+  /** En casa, el selector arranca mostrando solo lo que se puede hacer con ese equipo. */
+  readonly pickerPlaceOnly = signal(true);
   readonly picked = signal<Set<string>>(new Set());
   readonly muscles = computed(() => ['Todos', ...new Set(this.store.exercises().map((exercise) => exercise.muscle))]);
   readonly pickerExercises = computed(() => {
     const query = this.pickerSearch().trim().toLocaleLowerCase('es');
     const muscle = this.pickerMuscle();
+    const place = this.pickerPlaceOnly() ? this.place() : 'gimnasio';
     return this.store.exercises().filter((exercise) => (muscle === 'Todos' || exercise.muscle === muscle)
+      && availableAt(place, exercise)
       && `${exercise.name} ${exercise.muscle} ${exercise.equipment}`.toLocaleLowerCase('es').includes(query));
   });
 
   ngOnChanges(): void {
+    this.reset();
+  }
+
+  ngOnInit(): void {
+    if (!this.ready) this.reset();
+    this.watchBack();
+  }
+
+  /** Deja el formulario como corresponde a la rutina recibida (o vacío, con la propuesta a la vista, si es nueva). */
+  private reset(): void {
+    const profile = this.store.profile();
     this.name = this.routine ? this.routine.name + (this.routine.custom ? '' : ' · Mi versión') : '';
     this.description = this.routine?.description ?? '';
     this.category = this.routine?.category ?? 'Fuerza';
-    this.level = this.routine?.level ?? this.store.profile().level;
+    this.level = this.routine?.level ?? profile.level;
     this.entries = this.routine?.exercises.map((entry) => ({ ...entry })) ?? [];
+    this.place.set(profile.place);
+    this.builderOpen.set(!this.routine);
+    this.proposalNote.set(false);
+    this.undoEntries = null;
+    this.suggestedName = '';
+    this.showWeights.set(this.entries.some((entry) => entry.weight > 0));
+    this.mapOpen.set(false);
     this.attempted = false;
     this.saveError = '';
     this.initial = this.formState();
     this.leaveAsk.set(false);
-  }
-
-  ngOnInit(): void {
-    this.initial = this.formState();
-    this.watchBack();
+    this.ready = true;
   }
 
   ngOnDestroy(): void {
@@ -342,6 +519,72 @@ export class RoutineEditorComponent implements OnChanges, OnInit, OnDestroy {
     return !this.routine ? 'Creá tu rutina' : this.routine.custom ? 'Editar rutina' : 'Personalizar rutina';
   }
 
+  get intro(): string {
+    return this.routine
+      ? 'Elegí los ejercicios que quieras y ajustá series, repeticiones y descanso.'
+      : 'Empezá con una propuesta o elegí vos los ejercicios. Después ajustás series, repeticiones y descanso.';
+  }
+
+  /** Músculos que trabaja lo que hay en la lista. Se recalcula solo cuando cambian los ejercicios. */
+  get muscleSummary(): { primary: MuscleId[]; secondary: MuscleId[]; primaryText: string; secondaryText: string } {
+    const key = this.entries.map((entry) => entry.exerciseId).join('|');
+    if (key !== this.summaryKey) {
+      const muscles = routineMuscles(this.entries, this.store.exercises());
+      this.summaryKey = key;
+      this.summary = {
+        ...muscles,
+        primaryText: muscleSentence(muscles.primary).toLocaleLowerCase('es'),
+        secondaryText: muscleSentence(muscles.secondary).toLocaleLowerCase('es'),
+      };
+    }
+    return this.summary;
+  }
+
+  setPlace(value: string): void {
+    if (this.placeOptions.includes(value as TrainingPlace)) this.place.set(value as TrainingPlace);
+  }
+
+  /** Enter en una opción de la propuesta la arma, en lugar de enviar el formulario entero. */
+  builderEnter(event: Event): void {
+    event.preventDefault();
+    this.applyProposal();
+  }
+
+  openBuilder(): void {
+    this.builderOpen.set(true);
+    setTimeout(() => document.getElementById('builder-title')?.focus());
+  }
+
+  closeBuilder(): void {
+    this.builderOpen.set(false);
+    setTimeout(() => document.getElementById('builder-open')?.focus());
+  }
+
+  /** Pone en la lista lo propuesto. Si había ejercicios, los guarda para poder deshacer. */
+  applyProposal(): void {
+    const proposal = this.proposal();
+    if (!proposal.exercises.length) return;
+    this.undoEntries = this.entries.length ? this.entries.map((entry) => ({ ...entry })) : null;
+    this.entries = proposal.exercises.map((entry) => ({ ...entry }));
+    if (!this.name.trim() || this.name === this.suggestedName) this.name = this.suggestedName = proposal.name;
+    this.builderOpen.set(false);
+    this.proposalNote.set(true);
+    setTimeout(() => document.getElementById('exercises-title')?.focus());
+  }
+
+  undoProposal(): void {
+    if (!this.undoEntries) return;
+    this.entries = this.undoEntries;
+    this.undoEntries = null;
+    this.proposalNote.set(false);
+    setTimeout(() => document.getElementById('exercises-title')?.focus());
+  }
+
+  revealWeights(): void {
+    this.showWeights.set(true);
+    setTimeout(() => document.querySelector<HTMLElement>('app-routine-editor .weight-input')?.focus());
+  }
+
   /** Minutos estimados con lo cargado hasta ahora; es lo que se guarda como duración. */
   get estimate(): number {
     return estimateRoutineMinutes({ exercises: this.entries });
@@ -365,7 +608,7 @@ export class RoutineEditorComponent implements OnChanges, OnInit, OnDestroy {
   exerciseMeta(id: string): string {
     const exercise = this.exerciseById(id);
     if (!exercise) return '';
-    const hint = loadHint(exercise.equipment);
+    const hint = this.showWeights() ? loadHint(exercise.equipment) : '';
     return `${exercise.muscle} · ${exercise.equipment}${hint ? ` · kg ${hint}` : ''}`;
   }
 
@@ -414,11 +657,15 @@ export class RoutineEditorComponent implements OnChanges, OnInit, OnDestroy {
     this.picked.set(next);
   }
 
-  /** Adds the picked exercises in catalog order with sensible defaults the user then adjusts. */
+  /** Adds the picked exercises in catalog order, with the starting values for the profile's goal and this routine's level. */
   confirmPick(): void {
-    const ids = this.store.exercises().map((exercise) => exercise.id).filter((id) => this.picked().has(id) && !this.isUsed(id));
+    const added = this.store.exercises().filter((exercise) => this.picked().has(exercise.id) && !this.isUsed(exercise.id));
+    const focus = this.store.profile().focus;
     const firstNew = this.entries.length;
-    this.entries = [...this.entries, ...ids.map((exerciseId) => ({ exerciseId, sets: 3, reps: 10, weight: 0, restSeconds: 60 }))];
+    this.entries = [...this.entries, ...added.map((exercise) => ({ exerciseId: exercise.id, ...defaultPrescription(exercise, focus, this.level), weight: 0 }))];
+    // Eligió a mano: la propuesta deja de ocupar lugar, y ya no se puede deshacer hacia una lista anterior.
+    this.builderOpen.set(false);
+    this.undoEntries = null;
     this.closePicker(false);
     // El foco va a lo que sigue: las series del primer ejercicio agregado (el botón de agregar puede quedar deshabilitado).
     setTimeout(() => document.querySelectorAll('app-routine-editor .exercise-row')[firstNew]?.querySelector<HTMLElement>('.exercise-numbers input')?.focus(), 50);
@@ -430,10 +677,13 @@ export class RoutineEditorComponent implements OnChanges, OnInit, OnDestroy {
     const next = [...this.entries];
     [next[index], next[target]] = [next[target], next[index]];
     this.entries = next;
+    this.undoEntries = null;
   }
 
   removeExercise(index: number): void {
     this.entries = this.entries.filter((_, position) => position !== index);
+    this.undoEntries = null;
+    if (!this.entries.length) this.proposalNote.set(false);
   }
 
   save(): void {
