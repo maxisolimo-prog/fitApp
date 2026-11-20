@@ -72,6 +72,19 @@ Sale del análisis de Fitness Online (`docs/COMPETENCIA.md`). Detalle de cada í
 - **Sin validar:** la clasificación de músculos, los movimientos equivalentes y los tiempos de la duración estimada
   son generales y no los revisó un profesional. Nada de esto se probó todavía en un gimnasio ni en un teléfono real.
 
+## Sexta entrega (20 de noviembre de 2026): armar la rutina
+
+Pedido del usuario sobre la pantalla "Creá tu rutina". Detalle en el bloque 4 de [BACKLOG.md](BACKLOG.md).
+
+- **La app propone una rutina** (B-22): la persona dice qué quiere trabajar, cuánto tiempo tiene y dónde entrena, y
+  recibe ejercicios del catálogo con sus series y descansos. Son reglas, no IA; la propuesta entra al editor como
+  borrador y la persona confirma.
+- **Editor** (B-23 a B-25): ejercicios primero y datos al final; valores iniciales según el objetivo del perfil y
+  el nivel; kilos de arranque opcionales; qué músculos trabaja la rutina; selector filtrado por el equipo del lugar.
+- **Sin validar:** qué ejercicio se propone para cada movimiento y las series, repeticiones y descansos de partida
+  son generales. Están en `docs/REVISION-PROFESIONAL.md`, sin revisar por un profesional.
+- **Queda abierto:** el coach con IA (B-26). Falta decidir proveedor, si exige cuenta y tope de gasto.
+
 ## Estado frente a la hipótesis de producto
 
 Hipótesis: registro simple + planificación personalizada + IA conversacional, para hispanohablantes.
@@ -83,8 +96,8 @@ Hipótesis: registro simple + planificación personalizada + IA conversacional, 
 | Biblioteca con videos | MVP | Parcial: 43 ejercicios con texto y mapa muscular propio (principales y secundarios), sin imágenes del movimiento. Plan: imágenes creadas con GPT; animaciones compradas solo si hace falta (ver "Próximos incrementos") |
 | Registro de series, pesos y repeticiones | MVP | Hecho |
 | Estadísticas y evolución | MVP | Hecho |
-| Adaptación automática de rutinas | 2ª fase | Primera parte hecha: semana tipo sugerida según el perfil y progresión de cargas por reglas (subir, mantener o +1 repetición), siempre con confirmación del usuario |
-| Entrenador IA conversacional | 2ª fase | Pendiente: requiere proveedor, presupuesto y límites |
+| Adaptación automática de rutinas | 2ª fase | Primera parte hecha: semana tipo sugerida según el perfil, progresión de cargas por reglas (subir, mantener o +1 repetición) y rutina propuesta por reglas al crear una (B-22), siempre con confirmación del usuario |
+| Entrenador IA conversacional | 2ª fase | Pendiente: requiere proveedor, presupuesto y límites. Primer uso definido: pedir la rutina con palabras propias (B-26) |
 | Relojes y apps de salud | 2ª fase | Pendiente: requiere app nativa (p. ej. Capacitor) |
 | Panel para entrenadores y gimnasios | Expansión | Pendiente: validar con profes |
 
@@ -168,4 +181,4 @@ Los tres primeros salen del análisis de Fitness Online del 17 de noviembre de 2
 Más adelante, sin fecha: ejercicios por tiempo, favoritos, mapa muscular de la semana y programa en secuencia
 (B-13 a B-16).
 
-El MVP no envía mensajes, no contrata servicios y no procesa pagos. Tampoco inventa recomendaciones personalizadas a partir del perfil.
+El MVP no envía mensajes, no contrata servicios y no procesa pagos. Tampoco inventa recomendaciones personalizadas a partir del perfil: la semana sugerida, la rutina propuesta y la progresión salen de reglas generales, se presentan como propuestas y la persona las confirma.

@@ -45,6 +45,7 @@ ya está en el entorno. Procesos largos con afinidad `0xF` y prioridad `BelowNor
 | `src/app/core/seed.ts` | 43 ejercicios (con músculos principales y secundarios) y 4 plantillas. Cargas en 0: nunca inventar pesos ni historial. |
 | `src/app/core/muscles.ts` | Lista cerrada de 16 músculos (los que el mapa puede dibujar), nombres y textos. |
 | `src/app/core/workout-utils.ts` | Funciones puras: fechas locales, volumen, validación estricta, serialización. |
+| `src/app/core/routine-builder.ts` | Rutina propuesta por reglas al crear una ("Armámela"), valores iniciales de series y descansos, y músculos que trabaja una rutina. Sin IA. Cambiar una regla exige actualizar `docs/REVISION-PROFESIONAL.md`. |
 | `src/app/core/workout-store.ts` | Store con signals; toda mutación valida, persiste y deja `actionError`/`storageError`. |
 | `src/app/app.component.{ts,html}` | Shell, navegación por hash (`#home`, `#routines`, …) y vistas del alumno. |
 | `src/app/features/` | `routine-editor` (claro), `exercise-detail` (oscuro, pestañas accesibles), `muscle-map` (mapa muscular; sus trazos están en `muscle-map.data.ts`, generado y con licencia MIT: no editar a mano) y `exercise-thumb` (miniatura de las listas: el único lugar que decide qué imagen lleva un ejercicio). |

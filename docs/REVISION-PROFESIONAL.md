@@ -850,6 +850,88 @@ martes, jueves y viernes; 5 días, de lunes a viernes.
 - [ ] Está bien así
 - [ ] Hay que corregir: ____________________________________________
 
+### La rutina que la app propone
+
+Al crear una rutina, el alumno puede pedir una propuesta. Contesta **qué quiere trabajar**, **cuánto tiempo tiene**
+(20, 30, 45 o 60 minutos) y **dónde entrena**. La app elige ejercicios de los 43 y les pone series, repeticiones y
+descanso según el objetivo y el nivel que el alumno cargó en su perfil. No hay inteligencia artificial: son las
+reglas de abajo. Las cargas quedan en cero y el alumno puede cambiar todo antes de guardar.
+
+**Qué movimientos entran, y en qué orden.** La app recorre la fila de izquierda a derecha y toma un ejercicio de
+cada movimiento mientras entre en el tiempo. Nunca propone más de 8 ejercicios.
+
+| Zona | Movimientos, en orden | Cierre |
+| --- | --- | --- |
+| Cuerpo completo | Sentadilla, press de pecho, remo, bisagra de cadera, press de hombros, jalón, zancada, puente o empuje de cadera, curl de bíceps, extensión de tríceps | Estabilidad del tronco |
+| Tren superior | Press de pecho, remo, press de hombros, jalón, curl de bíceps, extensión de tríceps, elevaciones laterales, hombro posterior, aperturas | No tiene |
+| Piernas y glúteos | Sentadilla, bisagra de cadera, zancada, puente o empuje de cadera, flexión de rodilla, extensión de rodilla, abducción de cadera, gemelos | Estabilidad del tronco |
+| Pecho, hombros y tríceps | Press de pecho, press de hombros, aperturas, elevaciones laterales, extensión de tríceps | No tiene |
+| Espalda y bíceps | Jalón, remo, hombro posterior, curl de bíceps | No tiene |
+| Abdominales y zona media | Estabilidad del tronco, abdominales | No tiene |
+
+El cierre se agrega solo si el alumno tiene 30 minutos o más. Si la zona tiene pocos movimientos y sobra tiempo,
+suma un segundo ejercicio de cada uno. Si llegó a 8 ejercicios y todavía sobra tiempo, suma una serie a los primeros.
+
+- [ ] Las zonas y el orden están bien
+- [ ] Hay que corregir: ____________________________________________
+
+**Qué ejercicio propone de cada movimiento.** El primero de la lista que se pueda hacer en el lugar elegido.
+
+| Movimiento | Si recién empieza | Con experiencia (intermedio o avanzado) |
+| --- | --- | --- |
+| Press de pecho | Press inclinado con mancuernas, press en máquina, flexiones, press de banca | Press de banca, press inclinado con mancuernas, press en máquina, flexiones |
+| Remos | Remo en polea, remo con mancuerna, remo con barra | Remo con barra, remo en polea, remo con mancuerna |
+| Jalones y dominadas | Jalón al pecho, dominadas asistidas, dominadas | Igual |
+| Press de hombros | Press de hombros con mancuernas, press militar con barra | Press militar con barra, press de hombros con mancuernas |
+| Curl de bíceps | Curl con mancuernas, curl martillo, curl con barra | Curl con barra, curl con mancuernas, curl martillo |
+| Extensiones de tríceps | Extensión en polea, extensión sobre la cabeza, fondos en banco | Igual |
+| Sentadillas y prensa | Sentadilla goblet, prensa, sentadilla con barra | Sentadilla con barra, prensa, sentadilla goblet |
+| Zancadas | Zancada hacia atrás, sentadilla búlgara | Sentadilla búlgara, zancada hacia atrás |
+| Bisagra de cadera | Peso muerto rumano, hiperextensiones, peso muerto con barra | Igual |
+| Puentes y empuje de cadera | Puente de glúteos, patada en polea, hip thrust | Hip thrust, puente de glúteos, patada en polea |
+| Hombro posterior | Face pull, vuelos posteriores | Igual |
+| Aperturas de pecho | Cruce de poleas, aperturas con mancuernas | Igual |
+| Abdominales | Crunch, elevación de piernas | Igual |
+| Estabilidad del tronco | Bird dog, dead bug, Pallof press | Dead bug, Pallof press, bird dog |
+
+A propósito, el peso muerto con barra y las dominadas no quedan primeros ni siquiera con experiencia: nos pareció
+que una propuesta automática no puede dar por sabida esa técnica.
+
+- [ ] El orden de preferencia está bien
+- [ ] Hay que corregir: ____________________________________________
+
+**Dónde entrena.** En el gimnasio, cualquier ejercicio. En casa con pesas, los de mancuernas y los de peso
+corporal. En casa sin equipo, solo los de peso corporal. Las dominadas no se proponen en casa porque piden una
+barra fija. La app no sabe si un ejercicio con mancuernas además pide un banco (press inclinado, aperturas): en
+casa con pesas los propone igual.
+
+- [ ] Está bien así
+- [ ] Hay que corregir: ____________________________________________
+
+**Series, repeticiones y descanso.** Son también los valores con los que entra un ejercicio cuando el alumno lo
+agrega a mano. "Multiarticular" es press, remo, jalón, sentadilla, zancada, bisagra y empuje de cadera; "accesorio",
+el resto, salvo la zona media.
+
+| Objetivo del perfil | Multiarticular | Accesorio |
+| --- | --- | --- |
+| Ganar fuerza | 6 repeticiones, 120 s de descanso | 10 repeticiones, 75 s |
+| Ganar músculo | 10 repeticiones, 90 s | 12 repeticiones, 60 s |
+| Bajar grasa | 12 repeticiones, 60 s | 15 repeticiones, 45 s |
+| Salud y bienestar | 10 repeticiones, 75 s | 12 repeticiones, 60 s |
+
+| Nivel | Series en multiarticulares | Series en accesorios y zona media |
+| --- | --- | --- |
+| Principiante | 2 | 2 |
+| Intermedio | 3 | 2 |
+| Avanzado | 4 | 3 |
+
+Zona media, con cualquier objetivo: estabilidad del tronco, 8 repeticiones; abdominales, 12; 45 s de descanso.
+Quien recién empieza nunca baja de 8 repeticiones, aunque su objetivo sea ganar fuerza.
+
+- [ ] Los valores son razonables como punto de partida
+- [ ] Hay que corregir: ____________________________________________
+
 ---
 
-Armado el 19 de noviembre de 2026 con los datos que la app muestra ese día.
+Armado el 19 de noviembre de 2026 con los datos que la app muestra ese día. "La rutina que la app propone" se
+agregó el 20 de noviembre de 2026.

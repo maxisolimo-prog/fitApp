@@ -91,6 +91,9 @@ La marca Fitness Group usa además Anton (títulos, un solo peso, en mayúsculas
 - Una acción que se puede deshacer no depende solo de un aviso que se va: el aviso ofrece "Deshacer" y además queda una salida a la vista ("Volver a…") mientras siga valiendo. El aviso no se va mientras el puntero o el foco estén sobre él.
 - El botón Atrás del teléfono cierra lo que esté abierto encima de la pantalla (hoja, selector) antes de salir de ella, y nunca descarta sin preguntar algo que el alumno estaba armando.
 - Los nombres de clase propios no pueden coincidir con una utilidad de Tailwind (`outline`, `ring`): Tailwind genera su regla y la aplica encima.
+- Lo que la app arma por el alumno (una rutina propuesta) se presenta como propuesta: dice de dónde sale, entra como borrador que se puede cambiar entero y nunca se guarda sin que el alumno lo confirme. Antes de armarla muestra qué va a dar ("7 ejercicios, ≈ 45 min"); si el catálogo no alcanza para lo pedido, lo dice en lugar de rellenar.
+- En un formulario largo, primero va lo que el alumno vino a hacer (los ejercicios) y después los datos que lo acompañan (nombre, nivel). Lo que casi nadie necesita al crear (los kilos de arranque) no ocupa lugar hasta que se pide.
+- Una elección entre pocas opciones a la vista (zona, tiempo) usa botones de opción con forma de pastilla, de 44 px de alto como mínimo; la elegida se distingue por el relleno, no solo por el tono.
 
 ## Demostraciones de ejercicios
 

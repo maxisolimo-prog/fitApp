@@ -9,7 +9,8 @@ migración con test de ida y vuelta y una migración SQL nueva en `api/migration
 (`seed.ts`) no se guarda en el estado del alumno: cambiarlo no toca el esquema.
 
 Varios ítems dicen "falta la revisión de un profesional". Todo lo que hay que revisar (músculos, indicaciones,
-reemplazos, tiempos de la duración, sugerencia de progresión, rutinas iniciales y semana sugerida) está reunido en
+reemplazos, tiempos de la duración, sugerencia de progresión, rutinas iniciales, semana sugerida y la rutina que la
+app propone) está reunido en
 [REVISION-PROFESIONAL.md](REVISION-PROFESIONAL.md), escrito para pasárselo a un profe o a un kinesiólogo. Sale del
 catálogo: si el catálogo cambia, hay que volver a armarlo.
 
@@ -30,6 +31,9 @@ Las toma el usuario. Hasta entonces, los ítems que dependen de ellas no arranca
 5. **Imágenes de ejercicios con tres marcas: resuelta el 19 de noviembre de 2026.** Un solo juego en grises, sin
    color en los músculos y con fondo transparente, que sirve para las tres marcas. El color de cada marca lo pone
    el mapa muscular de B-02. B-03 ya no espera una decisión: solo el cupo de GPT.
+6. **Coach con IA para armar la rutina.** Falta decidir el proveedor (Gemini Flash-Lite es la primera prueba
+   propuesta), si exige cuenta y el tope de gasto mensual. Además, para un gimnasio el coach compite con el profe que
+   asigna rutinas: tendría que ser una función por marca. Traba a B-26.
 
 ## Bloque 1: que el ejercicio se vea
 
@@ -218,6 +222,50 @@ encima de la sesión. Hoy la ficha solo se abre desde la Biblioteca, y para ir h
   semana tipo: definir cómo conviven antes de construir. Sin candados.
 - **B-17.** Reemplaza las imágenes de B-03 sin tocar las pantallas, si B-03 deja la imagen detrás de un solo
   componente. Incluye validar con un profesional que cada animación corresponde a su ejercicio.
+
+## Bloque 4: armar la rutina
+
+Pedido del usuario del 20 de noviembre de 2026, a partir de la pantalla "Creá tu rutina": arrancaba con un
+formulario vacío, pedía el nombre antes que los ejercicios y suponía que la persona ya sabía qué elegir.
+
+De dónde sale: Hevy y Strong ofrecen el mismo editor en blanco (título y "agregar ejercicio"). Fitbod no tiene
+editor al empezar: pregunta objetivo, nivel, equipo y duración, y genera la sesión; es su parte paga. Las apps de
+chat con IA arman el plan conversando, pero de ellas solo hay fichas de tienda, sin pruebas independientes. FitApp
+toma lo del medio: una propuesta que entra al editor como borrador y que la persona confirma.
+Fuentes: [rutinas en Hevy](https://help.hevyapp.com/hc/en-us/articles/34953606698903-Build-a-Workout-Program-Create-Organize-Routines),
+[cómo arma Fitbod el entrenamiento](https://help.fitbod.me/hc/en-us/articles/360004429814-How-Fitbod-Creates-Your-Workout).
+
+| # | Qué | Esfuerzo | Esquema | Estado |
+| --- | --- | --- | --- | --- |
+| B-22 | Propuesta de rutina por reglas ("Armámela") | Medio | No | Hecho el 20 de noviembre de 2026; falta la revisión de un profesional |
+| B-23 | Editor: ejercicios primero, valores iniciales según objetivo y nivel, kilos de arranque opcionales | Bajo | No | Hecho el 20 de noviembre de 2026 |
+| B-24 | Qué trabaja la rutina: resumen y mapa muscular en el editor | Bajo | No | Hecho el 20 de noviembre de 2026 |
+| B-25 | Selector de ejercicios filtrado por el equipo del lugar | Bajo | No | Hecho el 20 de noviembre de 2026 |
+| B-26 | Coach con IA: pedir la rutina con palabras propias | Alto | No (endpoint nuevo en la API) | Decisión 6 |
+| B-27 | Cambiar un ejercicio por otro del mismo movimiento desde el editor | Bajo | No | — |
+
+- **B-22, hecho.** Al crear una rutina, la persona elige qué quiere trabajar (seis zonas), cuánto tiempo tiene y
+  dónde entrena, y la app propone ejercicios del catálogo con sus series y descansos. Sin IA: reglas en
+  `src/app/core/routine-builder.ts`, la misma respuesta da siempre la misma propuesta. Nunca supera el tiempo pedido
+  ni los 8 ejercicios, solo propone lo que se puede hacer con el equipo del lugar y deja las cargas en 0. Si el
+  catálogo no alcanza (espalda en casa sin equipo), lo dice en lugar de inventar. La propuesta entra al editor como
+  borrador: se puede cambiar todo, pedir otra y deshacer. Las reglas están en REVISION-PROFESIONAL.md.
+- **B-23, hecho.** Los ejercicios van arriba; nombre, enfoque, nivel y descripción, al final, cuando ya hay algo
+  que nombrar. Un ejercicio agregado a mano ya no entra siempre con 3 × 10 y 60 s: toma los valores del objetivo
+  del perfil y del nivel de la rutina. Los kilos no se piden al crear (la sesión los recuerda desde la primera
+  vez); se cargan con "Cargar kilos de arranque", y una rutina que ya los tiene los muestra.
+- **B-24, hecho.** Debajo de la lista, qué músculos trabaja la rutina en texto y, a pedido, sobre el cuerpo. Sin
+  porcentajes.
+- **B-25, hecho.** En casa, el selector arranca mostrando solo lo que se puede hacer con ese equipo; se destilda
+  para ver todo el catálogo. El lugar sale del perfil y se puede cambiar para esa rutina sin tocar el perfil.
+- **B-26.** Un cuadro de texto ("tengo 40 minutos, quiero piernas y me molesta el hombro") que devuelve una rutina
+  del mismo catálogo al mismo editor. Aporta lo que las reglas no pueden: molestias, restricciones y pedidos con
+  palabras propias. Condiciones: la clave vive en `api/`, nunca en el navegador; la respuesta trae solo
+  identificadores del catálogo y pasa por `validateRoutine`; el proveedor queda detrás de un solo endpoint; sin
+  conexión se ofrece B-22. Costo estimado, sin medir: entre USD 0,003 y 0,01 por rutina.
+- **B-27.** La sesión ya lo hace (B-06). En el editor hoy hay que quitar el ejercicio y agregar otro.
+- **Pendiente menor.** Los nombres de los lugares ("Casa con pesas") están escritos dos veces: en
+  `routine-builder.ts` y en `app.component.ts`. Unificarlos.
 
 ## Marcas: un solo código, tres versiones
 
