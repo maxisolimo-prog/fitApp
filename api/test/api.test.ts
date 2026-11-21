@@ -7,6 +7,8 @@ import { createApp } from '../src/app.ts';
 import { dbConfig } from '../src/config.ts';
 import { createPool } from '../src/db.ts';
 import { migrate } from '../src/migrate.ts';
+import {loadCoachUsage,reserveCoachUsage} from '../src/coach-usage.ts';
+import type {CoachUsage} from '../../src/app/core/coach-usage.ts';
 import { buildWorkout, completeWorkout, createInitialState } from '../../src/app/core/workout-utils.ts';
 
 let pool: Pool;
@@ -128,13 +130,41 @@ test('coach exige cuenta, respeta marca, valida respuestas y conserva el límite
   const payload={prompt:'Quiero entrenar las piernas',level:'Principiante',place:'gimnasio',minutes:30,brand:'fitapp'};
   const call=(data:unknown,cookie=client.cookie)=>fetch(origin+'/api/coach/routine',{method:'POST',headers:{'Content-Type':'application/json',Cookie:cookie},body:JSON.stringify(data)});
   try{
+    assert.equal((await fetch(origin+'/api/coach/usage?brand=fitapp')).status,401);
+    const quota=await fetch(origin+'/api/coach/usage?brand=fitapp',{headers:{Cookie:client.cookie}}).then(r=>r.json()) as {enabled:boolean;usage:CoachUsage};
+    assert.equal(quota.enabled,true);assert.equal(quota.usage.daily.remaining,10);assert.equal(quota.usage.monthly.remaining,2);
     assert.equal((await call(payload,'')).status,401);
     assert.equal((await call({...payload,brand:'qivox'})).status,503);
     assert.equal((await call({...payload,prompt:'Me molesta la rodilla'})).status,422);
     assert.equal((await call({...payload,minutes:0})).status,400);assert.equal(providerCalls,0);
     assert.equal((await call(payload)).status,200);assert.equal((await call(payload)).status,502);
     assert.equal((await call(payload)).status,429);assert.equal(providerCalls,2);
+    const after=await fetch(origin+'/api/coach/usage?brand=fitapp',{headers:{Cookie:client.cookie}}).then(r=>r.json()) as {usage:CoachUsage};
+    assert.equal(after.usage.daily.remaining,8);assert.equal(after.usage.monthly.remaining,0);
   }finally{await new Promise(resolve=>aiServer.close(resolve));}
+});
+
+test('las reservas diarias son atómicas, persisten entre conexiones y se borran con la cuenta',async()=>{
+  const client=new Client(),address=email();await client.call('POST','/api/auth/register',{email:address,password:'una-clave-larga'});
+  const [rows]=await pool.query('SELECT id FROM users WHERE email=?',[address]);const userId=Number((rows as {id:number}[])[0].id);
+  const day=new Date('2099-12-20T12:00:00.000Z');
+  const results=await Promise.all(Array.from({length:20},()=>reserveCoachUsage(pool,userId,100,day)));
+  assert.equal(results.filter(r=>r==='ok').length,10);assert.equal(results.filter(r=>r==='daily').length,10);
+  const otherConnection=createPool(dbConfig(true));
+  try{const usage=await loadCoachUsage(otherConnection,userId,100,day);assert.equal(usage.daily.remaining,0);assert.equal(usage.monthly.remaining,90);}finally{await otherConnection.end();}
+  assert.equal(await reserveCoachUsage(pool,userId,100,new Date('2099-12-21T12:00:00Z')),'ok');
+  assert.equal((await loadCoachUsage(pool,userId,100,new Date('2100-01-01T12:00:00Z'))).monthly.remaining,100);
+  assert.equal((await client.call('DELETE','/api/account',{password:'una-clave-larga'})).status,204);
+  const [count]=await pool.query('SELECT COUNT(*) AS total FROM ai_daily_usage WHERE user_id=?',[userId]);assert.equal(Number((count as {total:number}[])[0].total),0);
+});
+
+test('el cupo global no se excede con solicitudes concurrentes y no consume días cuando está agotado',async()=>{
+  const client=new Client(),address=email();await client.call('POST','/api/auth/register',{email:address,password:'una-clave-larga'});
+  const [rows]=await pool.query('SELECT id FROM users WHERE email=?',[address]);const userId=Number((rows as {id:number}[])[0].id);
+  const day=new Date('2099-11-20T12:00:00.000Z');
+  const results=await Promise.all(Array.from({length:15},()=>reserveCoachUsage(pool,userId,5,day)));
+  assert.equal(results.filter(r=>r==='ok').length,5);assert.equal(results.filter(r=>r==='monthly').length,10);
+  const usage=await loadCoachUsage(pool,userId,5,day);assert.equal(usage.monthly.remaining,0);assert.equal(usage.daily.remaining,5);
 });
 
 

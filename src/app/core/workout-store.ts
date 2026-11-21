@@ -1,6 +1,6 @@
 import { computed, Injectable, signal } from '@angular/core';
 import type { Profile, Routine, ScheduledWorkout, WeeklyPlan, WeightRecord, Workout, WorkoutSet, TrainingProgram } from './models';
-import { advanceProgram, validateProgram } from './training-program';
+import { advanceProgram, canPreserveProgramProgress, validateProgram } from './training-program';
 import { seedExercises } from './seed';
 import {
   buildWorkout, cleanSetNote, completeWorkout, createInitialState, deserializeState, FitAppState, isNewerVersion,
@@ -218,10 +218,19 @@ export class WorkoutStore {
     return true;
   }
 
-  saveProgram(name: string, routineIds: string[]): boolean {
+  saveProgram(name: string, routineIds: string[], options: { baseline?: TrainingProgram | null; restart?: boolean } = {}): boolean {
     if (this.frozen) return this.fail(NEWER_VERSION);
     if (this.activeWorkout()?.programStep) return this.fail('Terminá o descartá la sesión del programa antes de cambiarlo.');
-    const p = validateProgram({id:this.id('program'),name,routineIds,position:0,paused:false},this.routines());
+    const current = this.program();
+    if ('baseline' in options && JSON.stringify(current) !== JSON.stringify(options.baseline)) {
+      return this.fail('El programa cambió mientras lo editabas. Cargá la versión actual antes de guardar.');
+    }
+    if (current && !options.restart && !canPreserveProgramProgress(current, routineIds)) {
+      return this.fail('Cambiaste sesiones ya completadas. Confirmá reiniciar para guardar este orden.');
+    }
+    const preserve = current && !options.restart;
+    const p = validateProgram({id:preserve ? current.id : this.id('program'),name,routineIds,
+      position:preserve ? current.position : 0,paused:preserve ? current.paused : false},this.routines());
     if (!p) return this.fail('Dale un nombre y elegí de 1 a 100 sesiones válidas.');
     this.program.set(p); this.persist(); return true;
   }

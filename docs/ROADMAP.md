@@ -83,7 +83,16 @@ Pedido del usuario sobre la pantalla "Creá tu rutina". Detalle en el bloque 4 d
   el nivel; kilos de arranque opcionales; qué músculos trabaja la rutina; selector filtrado por el equipo del lugar.
 - **Sin validar:** qué ejercicio se propone para cada movimiento y las series, repeticiones y descansos de partida
   son generales. Están en `docs/REVISION-PROFESIONAL.md`, sin revisar por un profesional.
-- **Queda abierto:** el coach con IA (B-26). Falta decidir proveedor, si exige cuenta y tope de gasto.
+- **Actualizado:** Gemini está integrado con cuenta y cupos; ver COACH-IA.md.
+
+## Estado actual, 21 de noviembre de 2026
+
+- 48 ejercicios con demostración original local; 47 GIF descargables.
+- Sesión por repeticiones/tiempo, favoritos, reemplazos y mapa semanal.
+- Vista enfocada y programas con edición conservando avance y vista previa.
+- Gemini con cuenta, clave privada y cupos persistentes.
+- Verificación automática y revisión de experiencia en [PLAN-2026-11-21.md](PLAN-2026-11-21.md).
+- Graphik, dominios/hosting y revisión profesional siguen pendientes. La historia previa se conserva como referencia temporal.
 
 ## Estado frente a la hipótesis de producto
 
@@ -93,11 +102,11 @@ Hipótesis: registro simple + planificación personalizada + IA conversacional, 
 | --- | --- | --- |
 | Perfil, objetivos y nivel | MVP | Hecho: objetivo principal, días por semana, lugar (gimnasio / casa con pesas / sin equipo) y nivel |
 | Rutinas y calendario semanal | MVP | Hecho |
-| Biblioteca con videos | MVP | Parcial: 43 ejercicios con texto y mapa muscular propio (principales y secundarios), sin imágenes del movimiento. Plan: imágenes creadas con GPT; animaciones compradas solo si hace falta (ver "Próximos incrementos") |
+| Biblioteca con videos | MVP | Hecho: 48 ejercicios con demostración, texto, posters y mapa muscular; revisión profesional pendiente |
 | Registro de series, pesos y repeticiones | MVP | Hecho |
 | Estadísticas y evolución | MVP | Hecho |
 | Adaptación automática de rutinas | 2ª fase | Primera parte hecha: semana tipo sugerida según el perfil, progresión de cargas por reglas (subir, mantener o +1 repetición) y rutina propuesta por reglas al crear una (B-22), siempre con confirmación del usuario |
-| Entrenador IA conversacional | 2ª fase | Pendiente: requiere proveedor, presupuesto y límites. Primer uso definido: pedir la rutina con palabras propias (B-26) |
+| Entrenador IA conversacional | 2ª fase | Primer uso hecho: propuesta con Gemini, cuenta y cupos persistentes. Conversación adaptativa posterior pendiente |
 | Relojes y apps de salud | 2ª fase | Pendiente: requiere app nativa (p. ej. Capacitor) |
 | Panel para entrenadores y gimnasios | Expansión | Pendiente: validar con profes |
 
@@ -178,7 +187,6 @@ Los tres primeros salen del análisis de Fitness Online del 17 de noviembre de 2
 7. Módulo para gimnasios y profes (ver "Segmento: personas y gimnasios"): validar primero, después multi-organización, vinculación, panel del profe y marca. Nunca mediante un selector de roles sin autorización. Ahí entran los mensajes entre profe y socio y el programa asignado en secuencia.
 8. Suscripciones y pagos solamente tras validar producto y precio. IA y ajustes automáticos después de definir límites y supervisión.
 
-Más adelante, sin fecha: ejercicios por tiempo, favoritos, mapa muscular de la semana y programa en secuencia
-(B-13 a B-16).
+B-13 a B-16 están implementados: tiempo, favoritos, mapa semanal y programa en secuencia.
 
 El MVP no envía mensajes, no contrata servicios y no procesa pagos. Tampoco inventa recomendaciones personalizadas a partir del perfil: la semana sugerida, la rutina propuesta y la progresión salen de reglas generales, se presentan como propuestas y la persona las confirma.

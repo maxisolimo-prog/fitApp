@@ -228,7 +228,7 @@
               </div>
               <button type="button" class="btn btn-primary" (click)="editRoutine(null)"><app-icon name="plus" />Crear rutina</button>
             </header>
-            <app-training-program (started)="navigate('workout')" />
+            <app-training-program (started)="navigate('workout')" (exerciseRequested)="openExerciseSheet($event.exercise,'program',$event.trigger)" />
             <div class="chips" role="group" aria-label="Filtrar rutinas">
               @for (filter of routineFilters; track filter) {
                 <button type="button" class="chip" [class.is-active]="routineFilter === filter" [attr.aria-pressed]="routineFilter === filter" (click)="routineFilter = filter">{{ filter }}</button>
@@ -236,7 +236,7 @@
             </div>
             <div class="routine-grid">
               @for (routine of filteredRoutines; track routine.id) {
-                <button type="button" class="routine-card" (click)="selectedRoutine.set(routine)">
+                <button type="button" class="routine-card" (click)="openRoutine(routine)">
                   <img [src]="imageFor(routine.id)" alt="" width="640" height="440" loading="lazy">
                   <span class="routine-card-body">
                     <span class="tag">{{ routine.custom ? 'Mi creación' : routine.level }}</span>
@@ -258,7 +258,7 @@
 
       @case ('editor') {
         <section class="page">
-          <app-routine-editor [routine]="editingRoutine" (saved)="routineSaved()" (cancelled)="navigate('routines')" />
+          <app-routine-editor [routine]="editingRoutine" (saved)="routineSaved()" (cancelled)="navigate('routines')" (accountRequested)="navigate('profile')" />
         </section>
       }
 
@@ -913,7 +913,7 @@
   <div class="sheet-overlay" (click)="closeSheet()" aria-hidden="true"></div>
   <div class="sheet" role="dialog" aria-modal="true" [attr.aria-label]="'Ficha de ' + sheet.exercise.name">
     <div class="sheet-bar">
-      <button type="button" class="btn btn-small btn-outline-light" data-sheet-focus (click)="closeSheet()"><app-icon name="left" />{{ sheet.source === 'routine' ? 'Volver a la rutina' : 'Volver a la sesión' }}</button>
+      <button type="button" class="btn btn-small btn-outline-light" data-sheet-focus (click)="closeSheet()"><app-icon name="left" />{{ sheet.source === 'program' ? 'Volver al programa' : sheet.source === 'routine' ? 'Volver a la rutina' : 'Volver a la sesión' }}</button>
       @if (sheet.source === 'session' && restSeconds() > 0) {
         <p class="sheet-rest" role="timer" aria-label="Descanso"><app-icon name="clock" /><span class="tabular">{{ clock(restSeconds()) }}</span></p>
       }

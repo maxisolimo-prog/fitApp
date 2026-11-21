@@ -127,7 +127,7 @@ Los ejercicios por tiempo usan segundos internamente y muestran minutos/segundos
 
 La sesión permite alternar entre lista y un ejercicio a la vez. El modo enfocado muestra posición, selector directo, anterior/siguiente, series, repeticiones o tiempo, descanso y demostración. Usa las mismas series y acciones que la lista; alternar no guarda otra copia ni descarta datos. La preferencia de vista se conserva localmente. La navegación es manual para no cambiar de ejercicio al marcar una serie.
 
-En Mis rutinas se puede crear una secuencia de 1 a 100 sesiones, repetir rutinas, ordenar, pausar y retomar. Solo avanza una sesión iniciada desde el programa y guardada con al menos una serie completada. Descartar o hacer una rutina libre no avanza. Editar reinicia el recorrido y lo advierte antes de guardar. Calendario y semana tipo conservan sus prioridades y sus descansos. Estado v7, compatible con v1–v6; tabla SQL 008.
+En Mis rutinas se puede crear una secuencia de 1 a 100 sesiones, repetir rutinas, ordenar, pausar y retomar. Solo avanza una sesión iniciada desde el programa y guardada con al menos una serie completada. Descartar o hacer una rutina libre no avanza. Editar conserva avance y pausa cuando no cambia el tramo completado. Modificar ese tramo requiere reinicio explícito. La navegación protege el borrador y detecta cambios en otro dispositivo. Calendario y semana tipo conservan sus prioridades y sus descansos. Estado v7, compatible con v1–v6; tabla SQL 008.
 
 El editor ofrece la propuesta con IA dentro de un detalle opcional. Presenta una vista previa y requiere aplicarla al borrador; no guarda una rutina automáticamente. El servidor puede desactivarla por configuración y marca. Gemini está conectado en FitApp con cuenta y cupo mensual; ver [COACH-IA.md](COACH-IA.md).
 
@@ -136,3 +136,10 @@ El editor ofrece la propuesta con IA dentro de un detalle opcional. Presenta una
 La estrella es un botón independiente de 44 × 44 px, con nombre accesible y `aria-pressed`; marcarla no abre la ficha ni elige el ejercicio. Aparece en Biblioteca, ficha y selector. Los filtros muestran el número de favoritos y explican cómo empezar cuando la lista está vacía.
 
 En el editor, «Cambiar ejercicio» abre un selector de alternativas del mismo movimiento. La flecha indica que elegir una aplica el cambio directamente al borrador. Se conservan series, repeticiones o tiempo y descanso, pero la carga empieza en cero. «Volver a…» queda visible en la fila mientras pueda restaurarse sin pisar ediciones nuevas. El selector cierra con Cancelar, Escape o Atrás y devuelve el foco a su origen; la rutina se guarda solo al confirmarla.
+
+
+### Revisión de experiencia del 21 de noviembre de 2026
+
+La próxima sesión muestra tiempo, nivel y cantidad de ejercicios. La lista usa posters estáticos y abre la demostración sin salir del programa; al cerrar vuelve el foco al ejercicio. Las animaciones se reservan para la ficha.
+
+El coach comprueba cuenta y disponibilidad antes de mostrar el pedido. Distingue cupo diario de la cuenta y mensual compartido de la aplicación; muestra la renovación cuando se agotan y permite actualizar el saldo. Una respuesta, error o cierre de sesión no reemplaza el borrador: el alumno decide cuándo aplicar la propuesta.

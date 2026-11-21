@@ -7,7 +7,8 @@ import {
 } from './auth.ts';
 import { config } from './config.ts';
 import { loadState, saveState } from './state-repo.ts';
-import { coachConfig, coachEnabled, generateCoachRoutine, hasClinicalRequest, parseCoachRequest, reserveCoachRequest, type CoachConfig } from './ai-coach.ts';
+import { coachConfig, coachEnabled, generateCoachRoutine, hasClinicalRequest, parseCoachRequest, type CoachConfig } from './ai-coach.ts';
+import { loadCoachUsage, reserveCoachUsage } from './coach-usage.ts';
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -63,20 +64,29 @@ export function createApp(pool: Pool, options: AppOptions = {}) {
   // A real session pushes at most every 1.5 s of inactivity; this only stops loops.
   const stateLimit = rateLimit(120 * scale, 10 * 60_000, byUser);
   const accountLimit = rateLimit(5 * scale, 15 * 60_000, byUser);
-  const coachLimit = rateLimit(10 * scale, 24 * 60 * 60_000, byUser);
+  const coachLimit = rateLimit(20 * scale, 60 * 60_000, byUser);
   const ai = options.coach ?? coachConfig();
 
   app.get('/api/coach/status', (req,res) => {
     res.json({enabled:coachEnabled(ai,String(req.query['brand']??'')),requiresAccount:true});
   });
+  app.get('/api/coach/usage',auth,handle(async(req,res)=>{
+    const brand=String(req.query['brand']??'');
+    if(!coachEnabled(ai,brand)){res.json({enabled:false});return;}
+    res.json({enabled:true,usage:await loadCoachUsage(pool,req.userId!,ai.monthlyLimit)});
+  }));
   app.post('/api/coach/routine', auth, coachLimit, handle(async (req,res) => {
     const input=parseCoachRequest(req.body);
     if(!input){res.status(400).json({error:'Contanos qué querés entrenar y elegí un tiempo de 20 a 90 minutos.'});return;}
     if(!coachEnabled(ai,input.brand)){res.status(503).json({error:'La propuesta con IA todavía no está disponible. Podés usar la propuesta guiada.'});return;}
     if(hasClinicalRequest(input.prompt)){res.status(422).json({error:'Las molestias o lesiones necesitan una evaluación profesional. Esta función arma propuestas generales.'});return;}
-    if(!await reserveCoachRequest(pool,ai.monthlyLimit)){res.status(429).json({error:'Se alcanzó el límite de propuestas con IA. Podés seguir con la propuesta guiada.'});return;}
-    try{res.json({routine:await generateCoachRoutine(input,ai,options.coachFetch)});}
-    catch{res.status(502).json({error:'No pudimos obtener una propuesta válida. Tu borrador sigue intacto; podés usar la propuesta guiada.'});}
+    const reserved=await reserveCoachUsage(pool,req.userId!,ai.monthlyLimit);
+    if(reserved!=='ok'){
+      res.status(429).json({error:reserved==='daily'?'Alcanzaste tu límite de propuestas de hoy. Podés seguir con la propuesta guiada.':'Se alcanzó el cupo mensual de la aplicación. Podés seguir con la propuesta guiada.',code:reserved,
+        usage:await loadCoachUsage(pool,req.userId!,ai.monthlyLimit)});return;
+    }
+    try{res.json({routine:await generateCoachRoutine(input,ai,options.coachFetch),usage:await loadCoachUsage(pool,req.userId!,ai.monthlyLimit)});}
+    catch{res.status(502).json({error:'No pudimos obtener una propuesta válida. Tu borrador sigue intacto; podés usar la propuesta guiada.',usage:await loadCoachUsage(pool,req.userId!,ai.monthlyLimit)});}
   }));
 
   app.get('/api/health', handle(async (_req, res) => {

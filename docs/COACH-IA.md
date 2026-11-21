@@ -16,6 +16,13 @@ Configuración privada, en `api/.env` o archivo de entorno del servicio:
 - `AI_MONTHLY_REQUEST_LIMIT`: tope global de solicitudes mensual, entero positivo. `0` desactiva.
 - `AI_BRANDS`: marcas habilitadas, separadas por comas. Vacío desactiva.
 
-El usuario debe fijar el presupuesto en el proveedor. FitApp controla número de solicitudes, no dólares: una reserva se consume antes de llamar al proveedor y no se devuelve si falla. La tabla `ai_monthly_usage` hace cumplir el límite incluso ante reinicios o solicitudes concurrentes. Hay además un límite de 10 intentos diarios por cuenta y proceso, tiempo máximo de 25 segundos y límite de salida. No hay reintentos automáticos.
+El usuario debe fijar el presupuesto en el proveedor. FitApp controla número de solicitudes, no dólares: una reserva se consume antes de llamar al proveedor y no se devuelve si falla. La tabla `ai_monthly_usage` hace cumplir el límite incluso ante reinicios o solicitudes concurrentes. La tabla `ai_daily_usage` (SQL 010) guarda además un límite de 10 solicitudes diarias por cuenta, tiempo máximo de 25 segundos y límite de salida. No hay reintentos automáticos.
 
 Para habilitar: elegir proveedor/modelo, configurar su límite de gasto, completar variables privadas, reiniciar la API y realizar una prueba con cuenta. Verificar resultado, error, demora, rechazo de salida inválida, agotamiento del cupo y retorno a propuesta guiada. Las pruebas automatizadas cubren respuestas simuladas y límites. Se añadió una prueba real de Gemini con un pedido general sintético de 20 minutos; la evaluación profesional de los resultados sigue en B-30. La salida válida se ajusta al tiempo reduciendo series y, si hace falta, ejercicios del final antes de presentarla. No se aumenta la carga ni se inventan ejercicios.
+
+
+## Cupo y acceso antes de generar (B-32)
+
+`GET /api/coach/usage?brand=fitapp` exige cuenta y devuelve saldo diario, saldo mensual compartido y fechas de renovación. Los períodos son UTC; la interfaz muestra la hora del dispositivo. Ambos contadores se reservan en una sola transacción con orden de bloqueo fijo; reiniciar la API no los reinicia. Pedidos rechazados antes de llamar al proveedor no consumen reserva. Fallas o cancelaciones después de enviarlo conservan el consumo.
+
+El editor ofrece ingresar desde Perfil, informa saldos y desactiva nuevas solicitudes al agotarse. El servidor siempre vuelve a comprobarlos. Borrar la cuenta elimina contadores diarios y conserva el consumo global del mes. Hay un límite adicional en memoria para ráfagas de solicitudes inválidas.

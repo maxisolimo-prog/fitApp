@@ -310,3 +310,17 @@ Evaluación inicial del 17 de noviembre de 2026. El mapa MIT y los recursos orig
 | [free-exercise-db](https://github.com/yuhonas/free-exercise-db) | Más de 800 ejercicios con músculos principales y secundarios, y dos fotos por ejercicio | [Unlicense](https://github.com/yuhonas/free-exercise-db/blob/main/LICENSE.md) (dominio público) | Datos de músculos: sí, para B-01. Fotos: no; son de personas y el repositorio no documenta su origen. |
 | [Gym Visual](https://gymvisual.com) | Animaciones anatómicas, el estilo que pidió el usuario | Paga; no encontré el precio publicado | Candidata para B-17. Pedir presupuesto. |
 | Otras bibliotecas | MuscleWiki API y alternativas comerciales | Comercial | Evaluación B-17 terminada en ANIMACIONES-LICENCIA.md; cotizar el alcance concreto antes de contratar. Los precios históricos sin verificar no se usan como presupuesto. |
+
+
+## Revisión del 21 de noviembre de 2026
+
+Pedido del usuario: planificar, tomar tarjetas, revisar mejoras e implementarlas, desde la experiencia del alumno y del gimnasio. Plan y evidencia: [PLAN-2026-11-21.md](PLAN-2026-11-21.md).
+
+| Tarjeta | Entrega | Estado |
+| --- | --- | --- |
+| B-31 | Editar programas conservando avance y borrador, con reinicio explícito y control de cambios concurrentes | Hecho |
+| B-32 | Cuenta previa, saldo visible y reserva diaria/mensual persistente de IA | Hecho |
+| B-33 | CI con pruebas, MariaDB descartable, tipos y compilación en GitHub | Implementado; pendiente de observar ejecución remota |
+| B-34 | Vista previa de la próxima sesión y demostración con regreso al programa | Hecho |
+
+Graphik, publicación en dominios propios y revisión profesional siguen abiertas.

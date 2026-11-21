@@ -60,3 +60,6 @@ npm run build
 ```
 
 Referencia de compatibilidad: https://angular.dev/reference/versions . Service worker: https://angular.dev/ecosystem/service-workers/getting-started .
+
+
+GitHub Actions verifica cada push a main/master y los pull requests: pruebas de app, tipos de API, pruebas contra MariaDB descartable y build. No requiere claves de Gemini ni credenciales de producción. Plan de revisión y mejoras: `docs/PLAN-2026-11-21.md`.

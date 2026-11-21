@@ -1,5 +1,4 @@
 import { randomUUID } from 'node:crypto';
-import type { Pool } from 'mysql2/promise';
 import { seedExercises } from '../../src/app/core/seed.ts';
 import { availableAt } from '../../src/app/core/routine-builder.ts';
 import { estimateRoutineMinutes, validateRoutine } from '../../src/app/core/workout-utils.ts';
@@ -28,13 +27,6 @@ export function parseCoachRequest(value:unknown):CoachRequest|null {
 }
 export function hasClinicalRequest(prompt:string):boolean {
   return /\b(dolor\w*|lesi[oó]n\w*|molest\w*|rehabili\w*|embaraz\w*|operad\w*|cirug\w*|diagn[oó]st\w*)\b/i.test(prompt.normalize('NFC'));
-}
-export async function reserveCoachRequest(pool:Pool,limit:number):Promise<boolean>{
-  // Reserva persistente global: reiniciar el servidor no reinicia el límite. Las fallas también consumen reserva.
-  const month=new Date().toISOString().slice(0,7);
-  await pool.query('INSERT IGNORE INTO ai_monthly_usage (month, requests) VALUES (?,0)',[month]);
-  const [result]=await pool.query('UPDATE ai_monthly_usage SET requests=requests+1 WHERE month=? AND requests<?',[month,limit]);
-  return (result as {affectedRows:number}).affectedRows===1;
 }
 export function validateCoachRoutine(raw:unknown,input:CoachRequest):Routine|null{
   if(!raw||typeof raw!=='object'||Array.isArray(raw))return null;

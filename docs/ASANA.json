@@ -4,12 +4,19 @@
     "name": "FitApp",
     "url": "https://app.asana.com/1/1218158297074103/project/1220742089470114"
   },
-  "updated": "2026-11-20",
+  "updated": "2026-11-21",
   "sections": [
     {
       "id": "1220742017653973",
       "name": "En curso",
-      "tasks": []
+      "tasks": [
+        {
+          "id": "1220756578628397",
+          "backlogId": "B-33",
+          "name": "B-33 · Verificación automática en GitHub y documentación vigente",
+          "completed": false
+        }
+      ]
     },
     {
       "id": "1220741645316615",
@@ -206,13 +213,31 @@
           "backlogId": "B-16",
           "name": "B-16 · Programa de entrenamientos en secuencia",
           "completed": true
+        },
+        {
+          "id": "1220756578641955",
+          "backlogId": "B-31",
+          "name": "B-31 · Editar programas sin perder avance ni borradores",
+          "completed": true
+        },
+        {
+          "id": "1220756597350890",
+          "backlogId": "B-32",
+          "name": "B-32 · Coach: cupo visible y límite diario persistente",
+          "completed": true
+        },
+        {
+          "id": "1220756579461861",
+          "backlogId": "B-34",
+          "name": "B-34 · Próxima sesión del programa: contenido y técnica antes de empezar",
+          "completed": true
         }
       ]
     }
   ],
   "counts": {
-    "total": 30,
-    "completed": 27,
-    "pending": 3
+    "total": 34,
+    "completed": 30,
+    "pending": 4
   }
 }

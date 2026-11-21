@@ -1,9 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {coachPeriods} from '../src/coach-usage.ts';
 import {coachEnabled,parseCoachRequest,hasClinicalRequest,generateCoachRoutine,validateCoachRoutine,type CoachConfig,type CoachRequest} from '../src/ai-coach.ts';
 const input:CoachRequest={prompt:'Quiero trabajar todo el cuerpo',level:'Principiante',place:'gimnasio',minutes:30,brand:'fitapp'};
 const config:CoachConfig={apiKey:'fake-test-key',model:'test-model',endpoint:'https://example.invalid/chat/completions',monthlyLimit:2,brands:['fitapp']};
 const routine={name:'General',description:'Borrador',category:'Fuerza',exercises:[{exerciseId:'goblet-squat',sets:2,reps:10,weight:0,restSeconds:60,durationSeconds:null}]};
+
+test('los cupos usan períodos UTC con renovación correcta al cambiar año o mes',()=>{
+  assert.deepEqual(coachPeriods(new Date('2026-12-31T23:59:59.999Z')),{date:'2026-12-31',month:'2026-12',dailyReset:'2027-01-01T00:00:00.000Z',monthlyReset:'2027-01-01T00:00:00.000Z'});
+  assert.equal(coachPeriods(new Date('2028-02-28T18:00:00.000Z')).dailyReset,'2028-02-29T00:00:00.000Z');
+});
 test('IA cerrada sin configuración, por marca y ante pedidos inválidos',()=>{
   assert.equal(coachEnabled({...config,apiKey:''},'fitapp'),false);assert.equal(coachEnabled(config,'qivox'),false);assert.equal(coachEnabled({...config,endpoint:'http://example.com'},'fitapp'),false);
   assert.ok(parseCoachRequest(input));for(const bad of [{...input,minutes:1},{...input,prompt:'x'},{...input,place:'otro'}])assert.equal(parseCoachRequest(bad),null);

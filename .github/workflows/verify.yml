@@ -1,0 +1,71 @@
+name: Verificar FitApp
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: fitapp-ci-only
+          MARIADB_DATABASE: fitapp_test
+          MARIADB_ROOT_HOST: '%'
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=6
+    env:
+      NG_BUILD_MAX_WORKERS: '2'
+      DB_HOST: 127.0.0.1
+      DB_PORT: '3306'
+      DB_USER: root
+      DB_PASSWORD: fitapp-ci-only
+      DB_NAME: fitapp
+      DB_NAME_TEST: fitapp_test
+      COOKIE_SECURE: 'false'
+      AI_API_KEY: ''
+      GEMINI_API_KEY: ''
+      AI_BRANDS: ''
+      AI_MONTHLY_REQUEST_LIMIT: '0'
+    steps:
+      - name: Obtener código
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Preparar Node 24
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '24.22.2'
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            api/package-lock.json
+      - name: Instalar frontend
+        run: npm ci
+      - name: Instalar API
+        run: npm ci --prefix api
+      - name: Pruebas de lógica y medios
+        run: npm test
+      - name: Tipos de la API
+        run: npm run typecheck --prefix api
+      - name: Pruebas de API con base descartable
+        run: npm test --prefix api
+      - name: Compilación de producción
+        run: npm run build

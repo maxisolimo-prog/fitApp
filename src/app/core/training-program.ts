@@ -19,3 +19,9 @@ export function advanceProgram(program: TrainingProgram | null, workout: Workout
     || program.routineIds[program.position] !== workout.routineId) return program;
   return {...program,position:program.position+1};
 }
+
+/** Solo el tramo ya completado fija el avance; las sesiones futuras se pueden reordenar. */
+export function canPreserveProgramProgress(program: TrainingProgram, routineIds: string[]): boolean {
+  return routineIds.length >= program.position
+    && program.routineIds.slice(0, program.position).every((id, index) => routineIds[index] === id);
+}

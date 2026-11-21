@@ -29,6 +29,7 @@ type View = 'home'|'routines'|'calendar'|'progress'|'library'|'profile'|'workout
 })
 export class AppComponent implements OnDestroy {
   readonly routineEditor = viewChild(RoutineEditorComponent);
+  readonly programEditor = viewChild(TrainingProgramComponent);
   readonly store = inject(WorkoutStore);
   readonly exerciseMedia = EXERCISE_MEDIA;
   readonly durationLabel = formatDuration;
@@ -65,7 +66,7 @@ export class AppComponent implements OnDestroy {
   readonly selectedRoutine = signal<Routine|null>(null);
   readonly selectedExercise = signal<Exercise|null>(null);
   readonly selectedHistory = signal<Workout|null>(null);
-  readonly exerciseSheet = signal<{exercise: Exercise; source: 'routine'|'session'}|null>(null);
+  readonly exerciseSheet = signal<{exercise: Exercise; source: 'routine'|'session'|'program'}|null>(null);
   /** Hay una hoja abierta: lo de atrás queda inactivo para el teclado y los lectores de pantalla. */
   readonly sheetOpen = computed(() => !!this.exerciseSheet() || !!this.substituteOptions());
   /** Serie de la sesión cuyo comentario se está escribiendo (su posición en la sesión). */
@@ -202,7 +203,8 @@ export class AppComponent implements OnDestroy {
     effect(() => {
       if (this.store.activeWorkout()) return;
       this.noteEditing.set(null);
-      if (untracked(this.exerciseSheet)?.source === 'routine') return;
+      const sheet=untracked(this.exerciseSheet);
+      if (sheet && sheet.source !== 'session') return;
       this.popSheetHistory();
       this.dropSheets();
     });
@@ -244,7 +246,7 @@ export class AppComponent implements OnDestroy {
     if(this.swUpdate.isEnabled) void this.swUpdate.checkForUpdate().catch(()=>false);
   }
 
-  openExerciseSheet(exercise: Exercise, source: 'routine'|'session', trigger: HTMLElement) {
+  openExerciseSheet(exercise: Exercise, source: 'routine'|'session'|'program', trigger: HTMLElement) {
     this.sheetTrigger = trigger;
     this.exerciseSheet.set({exercise, source});
     this.pushSheetHistory();
@@ -366,7 +368,7 @@ export class AppComponent implements OnDestroy {
   /** Minutos estimados de una rutina (se muestran con "≈"). */
   estimate(r:Routine){return estimateRoutineMinutes(r);}
   setCount(r:Routine){return r.exercises.reduce((total,entry)=>total+entry.sets,0);}
-  openRoutine(r:Routine){this.navigate('routines');this.selectedRoutine.set(r);}
+  openRoutine(r:Routine){this.navigate('routines',()=>this.selectedRoutine.set(r));}
   planRoutine(r:Routine){this.openSchedule();this.calendarRoutine=r.id;}
   cancelConfirmation(){if(this.confirmation()==='import')this.pendingImport='';this.confirmation.set(null);}
   /** Effective plan for a date: one-off plan, else weekly plan. */
@@ -380,16 +382,23 @@ export class AppComponent implements OnDestroy {
   private savedRest(){try{return Number(localStorage.getItem('fitapp-rest-until'))||0;}catch{return 0;}}
 
   initialView():View { const hash=location.hash.slice(1); return ['home','routines','calendar','progress','library','profile','workout','editor'].includes(hash)?hash as View:'home'; }
-  @HostListener('window:hashchange') hashChanged(){this.view.set(this.initialView());this.dropSheets();}
+  @HostListener('window:hashchange') hashChanged(){
+    const next=this.initialView(),program=this.programEditor();
+    if(program?.editing() && next!=='routines'){
+      history.replaceState(history.state,'','#routines');program.requestNavigation(()=>this.navigate(next));return;
+    }
+    this.view.set(next);this.dropSheets();
+  }
   @HostListener('window:online') wentOnline(){this.online.set(true);if(this.sync.account())void this.sync.syncNow();}
   @HostListener('window:offline') wentOffline(){this.online.set(false);}
   @HostListener('window:beforeinstallprompt', ['$event']) installReady(event:Event){event.preventDefault();this.installPrompt.set(event as unknown as { prompt(): Promise<unknown>; userChoice: Promise<{ outcome: string }> });}
   @HostListener('window:appinstalled') appInstalled(){this.installed.set(true);this.installPrompt.set(null);this.notify(`Listo, ${this.brand.name} quedó instalada.`);}
   ngOnDestroy(){clearInterval(this.interval);clearTimeout(this.toastTimer);}
-  navigate(view:View){
-    const go = () => {this.view.set(view);location.hash=view;this.dropSheets();this.selectedRoutine.set(null);this.selectedExercise.set(null);this.selectedHistory.set(null);if(view==='profile')this.profileDraft={...this.store.profile()};window.scrollTo({top:0,behavior:'instant'});};
+  navigate(view:View,after?:()=>void){
+    const go = () => {this.view.set(view);location.hash=view;this.dropSheets();this.selectedRoutine.set(null);this.selectedExercise.set(null);this.selectedHistory.set(null);if(view==='profile')this.profileDraft={...this.store.profile()};window.scrollTo({top:0,behavior:'instant'});after?.();};
     const editor = this.routineEditor();
-    if (this.view() === 'editor' && view !== 'editor' && editor?.dirty) editor.requestNavigation(go);
+    if (this.view() === 'editor' && view !== 'editor' && editor) editor.requestNavigation(go);
+    else if(this.programEditor()?.editing()) this.programEditor()!.requestNavigation(go);
     else go();
   }
   /** Un aviso con acción queda más tiempo a la vista, para llegar a tocarla. */

@@ -92,7 +92,7 @@ const MAX_EXERCISES = 50;
           </div>
         }
 
-        @if(builderOpen() && brand.features.aiCoach){<app-ai-routine [level]="level" [place]="place()" [minutes]="builderMinutes()" [hasEntries]="entries.length>0" (proposed)="applyAiProposal($event)" />}
+        @if(builderOpen() && brand.features.aiCoach){<app-ai-routine [level]="level" [place]="place()" [minutes]="builderMinutes()" [hasEntries]="entries.length>0" (proposed)="applyAiProposal($event)" (accountRequested)="accountRequested.emit()" />}
         @if (entries.length || !builderOpen()) {
           <div class="exercise-heading">
             <h3 id="exercises-title" tabindex="-1">Ejercicios</h3>
@@ -397,6 +397,7 @@ const MAX_EXERCISES = 50;
   `],
 })
 export class RoutineEditorComponent implements OnChanges, OnInit, OnDestroy {
+  @Output() accountRequested = new EventEmitter<void>();
   readonly brand=inject(BRAND);
   @Input() routine: Routine | null = null;
   @Output() readonly saved = new EventEmitter<void>();

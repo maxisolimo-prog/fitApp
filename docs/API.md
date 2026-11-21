@@ -78,3 +78,8 @@ La API actual usa estado v7: programa opcional y enlace de sesión a su paso. La
 La migración 009 agrega el contador mensual de solicitudes de IA. Endpoints y configuración en [COACH-IA.md](COACH-IA.md). El contador no guarda pedidos ni claves. El servicio permanece desactivado sin configuración completa y presupuesto definido.
 
 Configuración de publicación por marca en [PUBLICACION.md](PUBLICACION.md); aún no hay despliegue de producción.
+
+
+## Cupos persistentes del coach
+
+SQL 010 agrega `ai_daily_usage`, por usuario y fecha UTC. `GET /api/coach/usage` exige cuenta. `POST /api/coach/routine` devuelve saldo actualizado al completar o fallar la llamada al proveedor; errores de cupo son HTTP 429 con `code: daily` o `monthly`. La reserva es atómica y está probada con solicitudes concurrentes. No cambia FitAppState v7.
