@@ -194,10 +194,15 @@
             <h2 class="section-title">Ejercicios</h2>
             <ol class="plan-list">
               @for (entry of routine.exercises; track entry.exerciseId; let i = $index) {
+                @let item = exercise(entry.exerciseId);
                 <li>
-                  <span class="plan-thumb"><app-exercise-thumb [exercise]="exercise(entry.exerciseId)" /><span class="plan-index tabular" aria-hidden="true">{{ i + 1 }}</span></span>
-                  <span class="plan-name"><strong>{{ exercise(entry.exerciseId).name }}</strong><small>{{ exercise(entry.exerciseId).muscle }} · {{ exercise(entry.exerciseId).equipment }}</small></span>
-                  <span class="plan-numbers tabular">{{ entry.sets }} × {{ entry.reps }}<small>{{ entry.weight ? fmt(entry.weight) + ' kg' : 'sin carga' }} · {{ entry.restSeconds }} s</small></span>
+                  <button #exerciseButton type="button" class="plan-exercise" aria-haspopup="dialog"
+                    (click)="openExerciseSheet(item, 'routine', exerciseButton)">
+                    <span class="plan-thumb"><app-exercise-thumb [exercise]="item" /><span class="plan-index tabular" aria-hidden="true">{{ i + 1 }}</span></span>
+                    <span class="plan-name"><strong>{{ item.name }}</strong><small>{{ item.muscle }} · {{ item.equipment }}{{ exerciseMedia[item.id] ? ' · Animación' : '' }}</small><span class="plan-technique">Cómo hacerlo</span></span>
+                    <span class="plan-numbers tabular">{{ entry.sets }} × {{ entry.durationSeconds === undefined ? entry.reps : durationLabel(entry.durationSeconds) }}<small>{{ entry.durationSeconds === undefined ? (entry.weight ? fmt(entry.weight) + ' kg' : 'sin carga') + ' · ' : '' }}{{ entry.restSeconds }} s de descanso</small></span>
+                    <app-icon name="chevron" />
+                  </button>
                 </li>
               }
             </ol>
@@ -223,6 +228,7 @@
               </div>
               <button type="button" class="btn btn-primary" (click)="editRoutine(null)"><app-icon name="plus" />Crear rutina</button>
             </header>
+            <app-training-program (started)="navigate('workout')" />
             <div class="chips" role="group" aria-label="Filtrar rutinas">
               @for (filter of routineFilters; track filter) {
                 <button type="button" class="chip" [class.is-active]="routineFilter === filter" [attr.aria-pressed]="routineFilter === filter" (click)="routineFilter = filter">{{ filter }}</button>
@@ -291,12 +297,23 @@
               </div>
             }
 
-            @for (group of workoutGroups(); track group.id) {
+            <div class="session-view" role="group" aria-label="Vista de la sesión">
+              <button type="button" class="btn btn-small btn-outline-light" [attr.aria-pressed]="sessionView()==='list'" (click)="setSessionView('list')">Lista de ejercicios</button>
+              <button type="button" class="btn btn-small btn-outline-light" [attr.aria-pressed]="sessionView()==='focus'" (click)="setSessionView('focus')">Un ejercicio a la vez</button>
+            </div>
+            @if(sessionView()==='focus'){
+              <nav class="focus-nav" tabindex="-1" aria-label="Elegir ejercicio de la sesión">
+                <button type="button" class="btn btn-small btn-outline-light" [disabled]="focusedIndex()===0" (click)="focusExercise(focusedIndex()-1)">Anterior</button>
+                <label><span class="sr-only">Ejercicio actual</span><select [value]="focusedIndex()" (change)="focusExercise(+$any($event.target).value)">@for(g of workoutGroups();track g.id;let i=$index){<option [value]="i">{{i+1}} de {{workoutGroups().length}} · {{g.exercise.name}}</option>}</select></label>
+                <button type="button" class="btn btn-small btn-outline-light" [disabled]="focusedIndex()===workoutGroups().length-1" (click)="focusExercise(focusedIndex()+1)">Siguiente</button>
+              </nav>
+            }
+            @for (group of visibleWorkoutGroups(); track group.id) {
               <article class="exercise-block" [attr.aria-label]="group.exercise.name">
                 <header>
-                  <app-exercise-thumb [exercise]="group.exercise" (click)="openSessionExercise(group.exercise, nameButton)" />
+                  <app-exercise-thumb [exercise]="group.exercise" (click)="openExerciseSheet(group.exercise, 'session', nameButton)" />
                   <div class="block-title">
-                    <h2 [id]="'block-' + group.id"><button #nameButton type="button" class="block-name" aria-haspopup="dialog" aria-describedby="open-detail-hint" (click)="openSessionExercise(group.exercise, nameButton)">{{ group.exercise.name }}<app-icon name="info" /></button></h2>
+                    <h2 [id]="'block-' + group.id"><button #nameButton type="button" class="block-name" aria-haspopup="dialog" aria-describedby="open-detail-hint" (click)="openExerciseSheet(group.exercise, 'session', nameButton)">{{ group.exercise.name }}<app-icon name="info" /></button></h2>
                     <p>{{ group.exercise.muscle }} · {{ group.exercise.equipment }}</p>
                   </div>
                   @if (hasPending(group.sets)) {
@@ -304,6 +321,10 @@
                       [attr.aria-label]="'Cambiar ' + group.exercise.name + ' por otro ejercicio'" (click)="openSubstitute(group.exercise, swapButton)"><app-icon name="swap" /><span>Cambiar</span></button>
                   }
                 </header>
+                @if(sessionView()==='focus'){
+                  <dl class="focus-metrics"><div><dt>Series</dt><dd>{{group.sets.length}}</dd></div><div><dt>{{group.sets[0].set.durationSeconds===undefined?'Repeticiones':'Tiempo por serie'}}</dt><dd>{{group.sets[0].set.durationSeconds===undefined?group.sets[0].set.reps:durationLabel(group.sets[0].set.durationSeconds!)}}</dd></div><div><dt>Descanso</dt><dd>{{routineEntry(group.id)?.restSeconds??60}} s</dd></div></dl>
+                  @if(exerciseMedia[group.id];as media){<app-exercise-demonstration [media]="media" [captionId]="'focus-caption-'+group.id" />}
+                }
                 @if (suggestionFor(group.id); as suggestion) {
                   <div class="suggestion" [class.is-keep]="suggestion.kind === 'mantener'">
                     <app-icon [name]="suggestion.kind === 'mantener' ? 'info' : 'chart'" />
@@ -313,21 +334,26 @@
                     }
                   </div>
                 }
-                @if (loadAction(group.exercise.equipment); as hint) { <p class="load-hint">{{ hint }}</p> }
+                @if (group.sets[0].set.durationSeconds === undefined) { @if (loadAction(group.exercise.equipment); as hint) { <p class="load-hint">{{ hint }}</p> } }
                 <table class="sets-table">
                   <caption class="sr-only">Series de {{ group.exercise.name }}</caption>
-                  <thead><tr><th scope="col">Serie</th><th scope="col">Anterior</th><th scope="col">Kg</th><th scope="col">Reps</th><th scope="col"><span class="sr-only">Estado</span></th></tr></thead>
+                  <thead><tr><th scope="col">Serie</th><th scope="col">Anterior</th><th scope="col">{{ group.sets[0].set.durationSeconds === undefined ? 'Kg' : 'Min' }}</th><th scope="col">{{ group.sets[0].set.durationSeconds === undefined ? 'Reps' : 'Seg' }}</th><th scope="col"><span class="sr-only">Estado</span></th></tr></thead>
                   <tbody>
                     @for (row of group.sets; track row.index) {
                       <tr [class.is-done]="row.set.completed">
                         <th scope="row" class="tabular">{{ row.set.setNumber }}</th>
                         <td class="prev tabular">{{ previousLabel(group.id, row.set.setNumber) }}</td>
+                        @if (row.set.durationSeconds !== undefined) {
+                          <td><input #minutesInput type="number" inputmode="numeric" min="0" max="600" step="1" [value]="minutesPart(row.set.durationSeconds)" (change)="updateDuration(row.index, 'minutes', minutesInput.value, $event)" (focus)="minutesInput.select()" [attr.aria-label]="'Minutos, serie ' + row.set.setNumber + ' de ' + group.exercise.name"></td>
+                          <td><input #secondsInput type="number" inputmode="numeric" min="0" max="59" step="1" [value]="secondsPart(row.set.durationSeconds)" (change)="updateDuration(row.index, 'seconds', secondsInput.value, $event)" (focus)="secondsInput.select()" [attr.aria-label]="'Segundos, serie ' + row.set.setNumber + ' de ' + group.exercise.name"></td>
+                        } @else {
                         <td><input #weightInput type="number" inputmode="decimal" min="0" max="2000" step="0.5" [value]="row.set.weight"
                           (change)="updateSet(row.index, 'weight', weightInput.value, $event)" (focus)="weightInput.select()"
                           [attr.aria-label]="'Carga en kg' + (loadHint(group.exercise.equipment) ? ' ' + loadHint(group.exercise.equipment) : '') + ', serie ' + row.set.setNumber + ' de ' + group.exercise.name"></td>
                         <td><input #repsInput type="number" inputmode="numeric" min="1" max="999" step="1" [value]="row.set.reps"
                           (change)="updateSet(row.index, 'reps', repsInput.value, $event)" (focus)="repsInput.select()"
                           [attr.aria-label]="'Repeticiones, serie ' + row.set.setNumber + ' de ' + group.exercise.name"></td>
+                        }
                         <td>
                           <button type="button" class="set-check" [attr.aria-pressed]="row.set.completed" (click)="toggleSet(row.index)"
                             [attr.aria-label]="'Serie ' + row.set.setNumber + ' de ' + group.exercise.name + (row.set.completed ? ', completada' : ', marcar como completada')">
@@ -563,7 +589,7 @@
             <dl class="stat-tiles">
               <div><dt>Duración</dt><dd class="tabular">{{ duration(workout) }} <small>min</small></dd></div>
               <div><dt>Series completas</dt><dd class="tabular">{{ workout.sets.length }}</dd></div>
-              <div><dt>Volumen</dt><dd class="tabular">{{ fmt(volume(workout)) }} <small>kg</small></dd></div>
+              <div><dt>{{ volume(workout) || !timedSeconds(workout) ? 'Volumen' : 'Tiempo registrado' }}</dt><dd class="tabular">{{ volume(workout) || !timedSeconds(workout) ? fmt(volume(workout)) : durationLabel(timedSeconds(workout)) }} @if (volume(workout) || !timedSeconds(workout)) { <small>kg</small> }</dd></div>
             </dl>
             @if (recordsFor(workout); as records) {
               @if (records.length) {
@@ -582,10 +608,10 @@
             <div class="card table-card">
               <table class="data-table">
                 <caption class="sr-only">Series registradas</caption>
-                <thead><tr><th scope="col">Ejercicio</th><th scope="col">Serie</th><th scope="col">Reps</th><th scope="col">Kg</th>@if (historyHasTimes()) { <th scope="col">Hora</th> }</tr></thead>
+                <thead><tr><th scope="col">Ejercicio</th><th scope="col">Serie</th><th scope="col">Reps / tiempo</th><th scope="col">Kg</th>@if (historyHasTimes()) { <th scope="col">Hora</th> }</tr></thead>
                 <tbody>
                   @for (set of workout.sets; track $index; let i = $index) {
-                    <tr [class.has-note]="!!set.note"><th scope="row">{{ set.exerciseName }}</th><td class="tabular">{{ set.setNumber }}</td><td class="tabular">{{ set.reps }}</td><td class="tabular">{{ fmt(set.weight) }}</td>
+                    <tr [class.has-note]="!!set.note"><th scope="row">{{ set.exerciseName }}</th><td class="tabular">{{ set.setNumber }}</td><td class="tabular">{{ set.durationSeconds === undefined ? set.reps : durationLabel(set.durationSeconds) }}</td><td class="tabular">{{ set.durationSeconds === undefined ? fmt(set.weight) : '—' }}</td>
                       @if (historyHasTimes()) {
                         <td class="tabular set-time">
                           @if (set.completedAt) {
@@ -654,6 +680,7 @@
               </article>
             </div>
 
+            <app-weekly-muscles />
             <h2 class="section-title">Historial</h2>
             @if (store.history().length) {
               <ul class="history-list">
@@ -661,7 +688,7 @@
                   <li>
                     <button type="button" class="history-item" (click)="selectedHistory.set(workout)">
                       <span><strong>{{ workout.routineName }}</strong><small>{{ sessionDate(workout) }}</small></span>
-                      <span class="history-numbers tabular">{{ workout.sets.length }} series · {{ fmt(volume(workout)) }} kg</span>
+                      <span class="history-numbers tabular">{{ workout.sets.length }} series · {{ volume(workout) || !timedSeconds(workout) ? fmt(volume(workout)) + ' kg' : durationLabel(timedSeconds(workout)) }}</span>
                       <app-icon name="chevron" />
                     </button>
                   </li>
@@ -701,19 +728,25 @@
                 <button type="button" class="chip" [class.is-active]="muscle === option" [attr.aria-pressed]="muscle === option" (click)="muscle = option">{{ option }}</button>
               }
             </div>
+            <div class="library-filters">
+              <label class="animation-filter"><input type="checkbox" [(ngModel)]="onlyAnimated"> Solo con animación</label>
+              <label class="animation-filter"><input type="checkbox" [(ngModel)]="onlyFavorites"> Favoritos ({{ store.favoriteExerciseIds().length }})</label>
+            </div>
             <ul class="exercise-list">
               @for (item of filteredExercises; track item.id) {
-                <li>
+                <li class="library-row">
                   <button type="button" class="exercise-item" (click)="selectedExercise.set(item)">
                     <app-exercise-thumb [exercise]="item" />
                     <span class="exercise-text"><strong>{{ item.name }}</strong><small>{{ item.muscle }} · {{ item.equipment }}</small></span>
                     @if (recordFor(item.id) > 0) { <span class="exercise-record tabular"><small>Mejor</small>{{ fmt(recordFor(item.id)) }} kg</span> }
                     <app-icon name="chevron" />
                   </button>
+                  <app-exercise-favorite [exerciseId]="item.id" [exerciseName]="item.name" />
                 </li>
               } @empty {
-                <li class="empty card"><p class="strong">No encontramos ejercicios con esa búsqueda.</p>
-                  <button type="button" class="link" (click)="search = ''; muscle = 'Todos'">Limpiar filtros</button></li>
+                <li class="empty card"><p class="strong">{{ onlyFavorites && !store.favoriteExerciseIds().length ? 'Todavía no tenés ejercicios favoritos.' : 'No encontramos ejercicios con esos filtros.' }}</p>
+                  @if (onlyFavorites && !store.favoriteExerciseIds().length) { <p class="muted small">Tocá la estrella de un ejercicio para encontrarlo acá y al armar tu rutina.</p> }
+                  <button type="button" class="link" (click)="search = ''; muscle = 'Todos'; onlyAnimated = false; onlyFavorites = false">Ver todos los ejercicios</button></li>
               }
             </ul>
           </section>
@@ -876,16 +909,17 @@
   </nav>
 </div>
 
-@if (sessionExercise(); as exercise) {
+@if (exerciseSheet(); as sheet) {
   <div class="sheet-overlay" (click)="closeSheet()" aria-hidden="true"></div>
-  <div class="sheet" role="dialog" aria-modal="true" [attr.aria-label]="'Ficha de ' + exercise.name">
+  <div class="sheet" role="dialog" aria-modal="true" [attr.aria-label]="'Ficha de ' + sheet.exercise.name">
     <div class="sheet-bar">
-      <button type="button" class="btn btn-small btn-outline-light" data-sheet-focus (click)="closeSheet()"><app-icon name="left" />Volver a la sesión</button>
-      @if (restSeconds() > 0) {
+      <button type="button" class="btn btn-small btn-outline-light" data-sheet-focus (click)="closeSheet()"><app-icon name="left" />{{ sheet.source === 'routine' ? 'Volver a la rutina' : 'Volver a la sesión' }}</button>
+      @if (sheet.source === 'session' && restSeconds() > 0) {
         <p class="sheet-rest" role="timer" aria-label="Descanso"><app-icon name="clock" /><span class="tabular">{{ clock(restSeconds()) }}</span></p>
       }
     </div>
-    <app-exercise-detail [exercise]="exercise" [embedded]="true" (closed)="closeSheet()" />
+    <app-exercise-detail [exercise]="sheet.exercise" [embedded]="true"
+      [initialTab]="sheet.source === 'routine' ? 'instructions' : 'overview'" (closed)="closeSheet()" />
   </div>
 }
 

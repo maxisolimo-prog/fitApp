@@ -31,17 +31,20 @@ export async function loadState(db: Executor, userId: number): Promise<StoredSta
   if (revision === 0) return { revision, state: null };
 
   const routineRows = await rows(db, 'SELECT id, name, description, category, duration, level, custom FROM routines WHERE user_id = ? ORDER BY position', [userId]);
-  const exerciseRows = await rows(db, 'SELECT routine_id, exercise_id, sets, reps, weight, rest_seconds FROM routine_exercises WHERE user_id = ? ORDER BY routine_id, position', [userId]);
-  const workoutRows = await rows(db, 'SELECT id, is_active, routine_id, routine_name, started_at, finished_at, notes FROM workouts WHERE user_id = ? ORDER BY position', [userId]);
-  const setRows = await rows(db, 'SELECT workout_id, exercise_id, exercise_name, set_number, reps, weight, completed, completed_at, note FROM workout_sets WHERE user_id = ? ORDER BY workout_id, position', [userId]);
+  const exerciseRows = await rows(db, 'SELECT routine_id, exercise_id, sets, reps, weight, rest_seconds, duration_seconds FROM routine_exercises WHERE user_id = ? ORDER BY routine_id, position', [userId]);
+  const workoutRows = await rows(db, 'SELECT id, is_active, routine_id, routine_name, started_at, finished_at, notes, program_id, program_position FROM workouts WHERE user_id = ? ORDER BY position', [userId]);
+  const setRows = await rows(db, 'SELECT workout_id, exercise_id, exercise_name, set_number, reps, weight, completed, duration_seconds, completed_at, note FROM workout_sets WHERE user_id = ? ORDER BY workout_id, position', [userId]);
   const scheduleRows = await rows(db, 'SELECT id, date, routine_id FROM scheduled_workouts WHERE user_id = ? ORDER BY date', [userId]);
   const weightRows = await rows(db, 'SELECT id, date, weight FROM weight_records WHERE user_id = ? ORDER BY date', [userId]);
   const planRows = await rows(db, 'SELECT weekday, routine_id FROM weekly_plan WHERE user_id = ?', [userId]);
+  const favoriteRows = await rows(db, 'SELECT exercise_id FROM favorite_exercises WHERE user_id = ? ORDER BY exercise_id', [userId]);
+  const programRows = await rows(db, 'SELECT definition FROM training_programs WHERE user_id = ?', [userId]);
 
   const exercisesByRoutine = new Map<string, Routine['exercises']>();
   for (const row of exerciseRows) {
     const list = exercisesByRoutine.get(String(row['routine_id'])) ?? [];
-    list.push({ exerciseId: String(row['exercise_id']), sets: Number(row['sets']), reps: Number(row['reps']), weight: Number(row['weight']), restSeconds: Number(row['rest_seconds']) });
+    list.push({ exerciseId: String(row['exercise_id']), sets: Number(row['sets']), reps: Number(row['reps']), weight: Number(row['weight']), restSeconds: Number(row['rest_seconds']),
+      ...(row['duration_seconds'] === null ? {} : { durationSeconds: Number(row['duration_seconds']) }) });
     exercisesByRoutine.set(String(row['routine_id']), list);
   }
   const routines: Routine[] = routineRows.map((row) => ({
@@ -56,6 +59,7 @@ export async function loadState(db: Executor, userId: number): Promise<StoredSta
     const list = setsByWorkout.get(String(row['workout_id'])) ?? [];
     list.push({
       exerciseId: String(row['exercise_id']), exerciseName: String(row['exercise_name']), setNumber: Number(row['set_number']), reps: Number(row['reps']), weight: Number(row['weight']), completed: Number(row['completed']) === 1,
+      ...(row['duration_seconds'] === null ? {} : { durationSeconds: Number(row['duration_seconds']) }),
       ...(row['completed_at'] === null ? {} : { completedAt: fromSqlDateTime(String(row['completed_at'])) }),
       ...(row['note'] === null ? {} : { note: String(row['note']) }),
     });
@@ -70,6 +74,7 @@ export async function loadState(db: Executor, userId: number): Promise<StoredSta
       finishedAt: row['finished_at'] === null ? null : fromSqlDateTime(String(row['finished_at'])),
       sets: setsByWorkout.get(String(row['id'])) ?? [],
       ...(row['notes'] === null ? {} : { notes: String(row['notes']) }),
+      ...(row['program_id'] === null ? {} : {programStep:{programId:String(row['program_id']),position:Number(row['program_position'])}}),
     };
     if (Number(row['is_active']) === 1) activeWorkout = workout; else history.push(workout);
   }
@@ -79,9 +84,11 @@ export async function loadState(db: Executor, userId: number): Promise<StoredSta
   const weights: WeightRecord[] = weightRows.map((row) => ({ id: String(row['id']), date: String(row['date']), weight: Number(row['weight']) }));
 
   const state: FitAppState = {
-    version: 4,
+    version: 7,
     profile: { name: String(user['name']), goal: String(user['goal']), level: user['level'] as FitnessLevel, weeklyGoal: Number(user['weekly_goal']), weight: user['weight'] === null ? null : Number(user['weight']), focus: user['focus'] as TrainingFocus, place: user['place'] as TrainingPlace },
     routines, history, schedule, weeklyPlan, weights, activeWorkout,
+    favoriteExerciseIds: favoriteRows.map(row => String(row['exercise_id'])),
+    program: programRows.length ? JSON.parse(String(programRows[0]['definition'])) : null,
   };
   return { revision, state };
 }
@@ -117,7 +124,7 @@ export async function saveState(pool: Pool, userId: number, baseRevision: number
     if (current !== baseRevision) return { ok: false, conflict: await loadState(db, userId) };
 
     // Children go with ON DELETE CASCADE.
-    for (const table of ['routines', 'workouts', 'scheduled_workouts', 'weekly_plan', 'weight_records']) {
+    for (const table of ['routines', 'workouts', 'scheduled_workouts', 'weekly_plan', 'weight_records', 'favorite_exercises', 'training_programs']) {
       await db.query(`DELETE FROM ${table} WHERE user_id = ?`, [userId]);
     }
     const { profile } = state;
@@ -126,20 +133,22 @@ export async function saveState(pool: Pool, userId: number, baseRevision: number
 
     await insertMany(db, 'routines', ['user_id', 'id', 'position', 'name', 'description', 'category', 'duration', 'level', 'custom'],
       state.routines.map((r, i) => [userId, r.id, i, r.name, r.description, r.category, r.duration, r.level, r.custom === undefined ? null : r.custom ? 1 : 0]));
-    await insertMany(db, 'routine_exercises', ['user_id', 'routine_id', 'position', 'exercise_id', 'sets', 'reps', 'weight', 'rest_seconds'],
-      state.routines.flatMap((r) => r.exercises.map((e, i) => [userId, r.id, i, e.exerciseId, e.sets, e.reps, e.weight, e.restSeconds])));
+    await insertMany(db, 'routine_exercises', ['user_id', 'routine_id', 'position', 'exercise_id', 'sets', 'reps', 'weight', 'rest_seconds', 'duration_seconds'],
+      state.routines.flatMap((r) => r.exercises.map((e, i) => [userId, r.id, i, e.exerciseId, e.sets, e.reps, e.weight, e.restSeconds, e.durationSeconds ?? null])));
 
     const workouts = [...state.history.map((w) => ({ w, active: 0 })), ...(state.activeWorkout ? [{ w: state.activeWorkout, active: 1 }] : [])];
-    await insertMany(db, 'workouts', ['user_id', 'id', 'position', 'is_active', 'routine_id', 'routine_name', 'started_at', 'finished_at', 'notes'],
-      workouts.map(({ w, active }, i) => [userId, w.id, i, active, w.routineId, w.routineName, toSqlDateTime(w.startedAt), w.finishedAt === null ? null : toSqlDateTime(w.finishedAt), w.notes ?? null]));
-    await insertMany(db, 'workout_sets', ['user_id', 'workout_id', 'position', 'exercise_id', 'exercise_name', 'set_number', 'reps', 'weight', 'completed', 'completed_at', 'note'],
+    await insertMany(db, 'workouts', ['user_id', 'id', 'position', 'is_active', 'routine_id', 'routine_name', 'started_at', 'finished_at', 'notes', 'program_id', 'program_position'],
+      workouts.map(({ w, active }, i) => [userId, w.id, i, active, w.routineId, w.routineName, toSqlDateTime(w.startedAt), w.finishedAt === null ? null : toSqlDateTime(w.finishedAt), w.notes ?? null, w.programStep?.programId ?? null, w.programStep?.position ?? null]));
+    await insertMany(db, 'workout_sets', ['user_id', 'workout_id', 'position', 'exercise_id', 'exercise_name', 'set_number', 'reps', 'weight', 'completed', 'duration_seconds', 'completed_at', 'note'],
       workouts.flatMap(({ w }) => w.sets.map((s, i) => [userId, w.id, i, s.exerciseId, s.exerciseName, s.setNumber, s.reps, s.weight, s.completed ? 1 : 0,
-        s.completedAt === undefined ? null : toSqlDateTime(s.completedAt), s.note ?? null])));
+        s.durationSeconds ?? null, s.completedAt === undefined ? null : toSqlDateTime(s.completedAt), s.note ?? null])));
 
     await insertMany(db, 'scheduled_workouts', ['user_id', 'id', 'date', 'routine_id'], state.schedule.map((s) => [userId, s.id, s.date, s.routineId]));
     await insertMany(db, 'weight_records', ['user_id', 'id', 'date', 'weight'], state.weights.map((w) => [userId, w.id, w.date, w.weight]));
     await insertMany(db, 'weekly_plan', ['user_id', 'weekday', 'routine_id'],
       state.weeklyPlan.flatMap((routineId, weekday) => routineId === null ? [] : [[userId, weekday, routineId]]));
+    await insertMany(db, 'favorite_exercises', ['user_id', 'exercise_id'], state.favoriteExerciseIds.map(id => [userId, id]));
+    if (state.program) await insertMany(db,'training_programs',['user_id','definition'],[[userId,JSON.stringify(state.program)]]);
     return { ok: true, revision: current + 1 };
   });
 }

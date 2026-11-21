@@ -1,4 +1,5 @@
 import type { Exercise, Profile, Routine } from './models';
+import { EXERCISE_MEDIA } from './exercise-media';
 
 /**
  * Starter catalogue, not a personalized training prescription.
@@ -381,6 +382,35 @@ export const seedExercises: Exercise[] = [
  * dispositivo que todavía tiene esa plantilla dejaría de contar como "sin datos" al ingresar a una cuenta
  * (`isFactoryState` en workout-utils.ts).
  */
+seedExercises.push(
+  {
+    id: 'treadmill', name: 'Cinta de correr (caminata)', muscle: 'Cardio', equipment: 'Máquina',
+    movement: 'cardio', tracking: 'duration', primaryMuscles: ['quadriceps', 'calves'], secondaryMuscles: ['gluteal', 'hamstring'],
+    instructions: ['Con la cinta detenida, ubicá el botón de parada y colocá el clip de seguridad.', 'Empezá a baja velocidad y caminá con pasos naturales, mirando al frente.', 'Ajustá el ritmo de a poco. Reducí la velocidad hasta detener la cinta antes de bajar.'],
+  },
+  {
+    id: 'close-grip-lat-pulldown', name: 'Jalón al pecho con agarre cerrado', muscle: 'Espalda', equipment: 'Polea',
+    movement: 'traccion-vertical', primaryMuscles: ['upper-back'], secondaryMuscles: ['biceps', 'forearm'],
+    instructions: ['Ajustá el apoyo de los muslos y tomá el agarre cerrado con las palmas enfrentadas.', 'Llevá el agarre hacia la parte alta del pecho, con los codos cerca del cuerpo y sin balancearte.', 'Volvé extendiendo los brazos con control, sin dejar caer el peso.'],
+  },
+  {
+    id: 'seated-cable-fly', name: 'Vuelo sentado con polea', muscle: 'Pecho', equipment: 'Polea',
+    movement: 'apertura-pecho', primaryMuscles: ['chest'], secondaryMuscles: ['deltoids'],
+    instructions: ['Sentate entre las poleas con los pies apoyados y los agarres a los lados del pecho.', 'Con los codos ligeramente flexionados, acercá las manos frente al pecho sin cambiar el ángulo de los brazos.', 'Abrí despacio hasta un recorrido cómodo, manteniendo el torso estable.'],
+  },
+  {
+    id: 'parallel-bar-dip', name: 'Fondos de tríceps en paralelas', muscle: 'Tríceps', equipment: 'Paralelas',
+    movement: 'extension-triceps', primaryMuscles: ['triceps'], secondaryMuscles: ['chest', 'deltoids'],
+    instructions: ['Tomá las barras y sostené el cuerpo con los hombros estables. Usá asistencia si la necesitás.', 'Flexioná los codos y bajá solo hasta donde puedas mantener el control sin molestias.', 'Empujá las barras para subir, sin rebotes ni balanceos.'],
+  },
+  {
+    id: 'stair-climber', name: 'Escaladora', muscle: 'Cardio', equipment: 'Máquina',
+    movement: 'cardio', tracking: 'duration', primaryMuscles: ['quadriceps', 'gluteal'], secondaryMuscles: ['calves', 'hamstring'],
+    instructions: ['Subí con la máquina detenida y ubicá el control de parada.', 'Empezá despacio, alternando los pies y apoyándolos de forma estable en cada escalón.', 'Mantené el torso erguido y usá los apoyos para equilibrarte. Detené la máquina antes de bajar.'],
+  },
+);
+for (const exercise of seedExercises) exercise.image = EXERCISE_MEDIA[exercise.id]?.poster;
+
 export const seedRoutines: Routine[] = [
   {
     id: 'upper-body',

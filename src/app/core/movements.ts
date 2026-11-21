@@ -25,6 +25,7 @@ export const MOVEMENT_LABELS: Readonly<Record<MovementId, string>> = {
   gemelos: 'Gemelos',
   'flexion-tronco': 'Abdominales',
   'estabilidad-tronco': 'Estabilidad del tronco',
+  cardio: 'Cardio en máquina',
 };
 
 export function isMovementId(value: unknown): value is MovementId {

@@ -69,6 +69,29 @@ function finishOneWorkout(store: WorkoutStore): void {
   assert.ok(store.finishWorkout());
 }
 
+test('favoritos locales solos piden elegir copia y se sincronizan al reconectar', () => withStorage(async () => {
+  const server = new FakeServer();
+  server.state = accountState();
+  server.revision = 2;
+  const store = new WorkoutStore();
+  store.toggleFavorite('bench-press');
+  const sync = new SyncService(store, server.fetch);
+  await sync.login('a@b.co', 'una-clave-larga');
+  assert.equal(sync.status(), 'conflict');
+  assert.equal(server.puts, 0);
+  await sync.resolveConflict('local');
+  assert.deepEqual(server.state!.favoriteExerciseIds, ['bench-press']);
+  server.offline = true;
+  store.toggleFavorite('treadmill');
+  await sync.syncNow();
+  assert.deepEqual(new WorkoutStore().favoriteExerciseIds(), ['bench-press', 'treadmill']);
+  server.offline = false;
+  await sync.syncNow();
+  assert.deepEqual(server.state!.favoriteExerciseIds, ['bench-press', 'treadmill']);
+  await sync.logout();
+  assert.deepEqual(store.favoriteExerciseIds(), [], 'cerrar sesión limpia los favoritos del dispositivo');
+}));
+
 test('registering on a device with data uploads it to the empty account', () => withStorage(async () => {
   const server = new FakeServer();
   const store = new WorkoutStore();
@@ -149,7 +172,7 @@ test('the same data with its keys written in another order is not a conflict (re
 
 test('an account with data from a newer app version is neither offered as a choice nor overwritten (review of v4)', () => withStorage(async () => {
   const server = new FakeServer();
-  server.state = { ...accountState(), version: 5 } as unknown as FitAppState;
+  server.state = { ...accountState(), version: 8 } as unknown as FitAppState;
   server.revision = 3;
   const store = new WorkoutStore();
   store.updateProfile({ name: 'Local' });

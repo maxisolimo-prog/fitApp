@@ -1,29 +1,51 @@
-import { Component, computed, effect, inject, signal, OnDestroy, HostListener } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked, viewChild, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IconComponent } from './icon.component';
 import { WorkoutStore } from './core/workout-store';
 import { SyncService, type SyncStatus } from './core/sync.service';
 import { SwUpdate } from '@angular/service-worker';
-import { estimateRoutineMinutes, lastSetsFor, localDate, parseLocalDate, parseSessionSwaps, personalRecords, plannedRoutineId, recordSwap, setPauses, swapOrigin, suggestProgression, suggestWeeklyPlan, weekDates, workoutSummaryText, workoutVolume, workoutDurationMinutes, type ProgressionSuggestion, type SessionSwaps } from './core/workout-utils';
+import { formatDuration, workoutTimedSeconds, estimateRoutineMinutes, lastSetsFor, localDate, parseLocalDate, parseSessionSwaps, personalRecords, plannedRoutineId, recordSwap, setPauses, swapOrigin, suggestProgression, suggestWeeklyPlan, weekDates, workoutSummaryText, workoutVolume, workoutDurationMinutes, type ProgressionSuggestion, type SessionSwaps } from './core/workout-utils';
 import { MOVEMENT_LABELS, substitutesFor } from './core/movements';
 import { Routine, Profile, Workout, Exercise, WorkoutSet } from './core/models';
 import { RoutineEditorComponent } from './features/routine-editor.component';
 import { ExerciseDetailComponent } from './features/exercise-detail.component';
 import { ExerciseThumbComponent } from './features/exercise-thumb.component';
+import { ExerciseFavoriteComponent } from './features/exercise-favorite.component';
+import { WeeklyMusclesComponent } from './features/weekly-muscles.component';
 import { BodySpriteComponent } from './features/body-sprite';
 import { BRAND } from './brands/brand.token';
 import { BackClose, type BackLayer } from './back-close';
+import { EXERCISE_MEDIA } from './core/exercise-media';
 import { loadAction, loadHint } from './load-hint';
+import { TrainingProgramComponent } from './features/training-program.component';
+import { ExerciseDemonstrationComponent } from './features/exercise-demonstration.component';
 
 type View = 'home'|'routines'|'calendar'|'progress'|'library'|'profile'|'workout'|'editor';
 @Component({
   selector:'app-root', standalone:true,
-  imports:[CommonModule, FormsModule, IconComponent, RoutineEditorComponent, ExerciseDetailComponent, ExerciseThumbComponent, BodySpriteComponent],
+  imports:[CommonModule, FormsModule, IconComponent, RoutineEditorComponent, ExerciseDetailComponent, ExerciseThumbComponent, ExerciseFavoriteComponent, BodySpriteComponent, WeeklyMusclesComponent, TrainingProgramComponent, ExerciseDemonstrationComponent],
   templateUrl:'./app.component.html'
 })
 export class AppComponent implements OnDestroy {
+  readonly routineEditor = viewChild(RoutineEditorComponent);
   readonly store = inject(WorkoutStore);
+  readonly exerciseMedia = EXERCISE_MEDIA;
+  readonly durationLabel = formatDuration;
+  readonly timedSeconds = workoutTimedSeconds;
+  onlyAnimated = false;
+  onlyFavorites = false;
+  minutesPart(seconds: number) { return Math.floor(seconds / 60); }
+  secondsPart(seconds: number) { return seconds % 60; }
+  updateDuration(index: number, part: 'minutes' | 'seconds', value: string, event: Event) {
+    const current = this.store.activeWorkout()!.sets[index].durationSeconds!;
+    const n = Number(value);
+    const seconds = part === 'minutes' ? n * 60 + current % 60 : Math.floor(current / 60) * 60 + n;
+    if (!value.trim() || !Number.isInteger(n) || n < 0 || (part === 'seconds' && n > 59) || !this.store.updateDuration(index, seconds)) {
+      (event.target as HTMLInputElement).value = String(part === 'minutes' ? Math.floor(current / 60) : current % 60);
+      this.notify('Ingresá una duración entre 1 segundo y 600 minutos.');
+    }
+  }
   /** Marca activa: nombre, logo y funciones disponibles. No cambia con la app abierta. */
   readonly brand = inject(BRAND);
   readonly nav: {id:View; label:string; icon:string}[] = [
@@ -43,10 +65,9 @@ export class AppComponent implements OnDestroy {
   readonly selectedRoutine = signal<Routine|null>(null);
   readonly selectedExercise = signal<Exercise|null>(null);
   readonly selectedHistory = signal<Workout|null>(null);
-  /** Ficha de un ejercicio abierta encima de la sesión. La sesión sigue montada debajo: no se pierde nada de lo cargado. */
-  readonly sessionExercise = signal<Exercise|null>(null);
+  readonly exerciseSheet = signal<{exercise: Exercise; source: 'routine'|'session'}|null>(null);
   /** Hay una hoja abierta: lo de atrás queda inactivo para el teclado y los lectores de pantalla. */
-  readonly sheetOpen = computed(() => !!this.sessionExercise() || !!this.substituteOptions());
+  readonly sheetOpen = computed(() => !!this.exerciseSheet() || !!this.substituteOptions());
   /** Serie de la sesión cuyo comentario se está escribiendo (su posición en la sesión). */
   readonly noteEditing = signal<number|null>(null);
   /** Entrenamiento abierto en el historial: segundos desde la serie anterior, y si alguna serie tiene hora. */
@@ -64,7 +85,7 @@ export class AppComponent implements OnDestroy {
     const row = (exercise: Exercise) => {
       const last = lastSetsFor(this.store.history(), exercise.id)[0];
       const hint = loadHint(exercise.equipment);
-      return { exercise, used: inSession.has(exercise.id), last: !last ? '' : last.weight > 0 ? `${this.fmt(last.weight)} kg × ${last.reps}${hint ? ` (${hint})` : ''}` : `${last.reps} repeticiones` };
+      return { exercise, used: inSession.has(exercise.id), last: !last ? '' : last.durationSeconds !== undefined ? formatDuration(last.durationSeconds) : last.weight > 0 ? `${this.fmt(last.weight)} kg × ${last.reps}${hint ? ` (${hint})` : ''}` : `${last.reps} repeticiones` };
     };
     const { sameMovement, sameGroup } = substitutesFor(from, this.store.exercises());
     return [
@@ -123,6 +144,16 @@ export class AppComponent implements OnDestroy {
       return {id,exercise:this.exercise(id),sets,comment};
     });
   });
+  readonly sessionView = signal<'list'|'focus'>(this.savedSessionView());
+  readonly focusedExercise = signal('');
+  readonly focusedIndex = computed(() => {
+    const groups=this.workoutGroups();const index=groups.findIndex(g=>g.id===this.focusedExercise());
+    return index>=0?index:Math.max(0,groups.findIndex(g=>g.sets.some(s=>!s.set.completed)));
+  });
+  readonly visibleWorkoutGroups = computed(() => this.sessionView()==='list'?this.workoutGroups():this.workoutGroups().slice(this.focusedIndex(),this.focusedIndex()+1));
+  setSessionView(mode:'list'|'focus'){this.sessionView.set(mode);try{localStorage.setItem('fitapp-session-view',mode);}catch{}}
+  savedSessionView():'list'|'focus'{try{return localStorage.getItem('fitapp-session-view')==='focus'?'focus':'list';}catch{return 'list';}}
+  focusExercise(index:number){const group=this.workoutGroups()[index];if(!group)return;this.focusedExercise.set(group.id);this.noteEditing.set(null);setTimeout(()=>document.querySelector<HTMLElement>('.focus-nav')?.focus());}
   search=''; muscle='Todos'; routineFilter='Todas';
   calendarDate=this.today; calendarRoutine='full-body'; calendarForm=false;
   profileDraft: Profile={...this.store.profile()}; profileError='';
@@ -168,7 +199,13 @@ export class AppComponent implements OnDestroy {
   constructor(){
     // Las hojas y el comentario a medio escribir son de la sesión: si la sesión desaparece (otra pestaña la terminó,
     // llegó otra copia de la cuenta), se cierran solos y lo de atrás vuelve a responder.
-    effect(() => { if (!this.store.activeWorkout()) { this.popSheetHistory(); this.dropSheets(); this.noteEditing.set(null); } });
+    effect(() => {
+      if (this.store.activeWorkout()) return;
+      this.noteEditing.set(null);
+      if (untracked(this.exerciseSheet)?.source === 'routine') return;
+      this.popSheetHistory();
+      this.dropSheets();
+    });
     // Zoneless: move focus into an open dialog once it renders, and restore it afterwards.
     effect(() => {
       if (this.confirmation() || this.sync.conflict()) { this.lastFocus ??= document.activeElement as HTMLElement|null; setTimeout(() => (document.querySelector('.dialog button') as HTMLElement|null)?.focus()); }
@@ -207,10 +244,15 @@ export class AppComponent implements OnDestroy {
     if(this.swUpdate.isEnabled) void this.swUpdate.checkForUpdate().catch(()=>false);
   }
 
-  openSessionExercise(exercise:Exercise, trigger:HTMLElement){this.sheetTrigger=trigger;this.sessionExercise.set(exercise);this.pushSheetHistory();this.focusSheet();}
+  openExerciseSheet(exercise: Exercise, source: 'routine'|'session', trigger: HTMLElement) {
+    this.sheetTrigger = trigger;
+    this.exerciseSheet.set({exercise, source});
+    this.pushSheetHistory();
+    this.focusSheet();
+  }
   /** Cierra la hoja abierta y devuelve el foco a quien la abrió. */
   closeSheet(){if(!this.sheetOpen())return;this.popSheetHistory();this.dropSheets();const trigger=this.sheetTrigger;this.sheetTrigger=null;setTimeout(()=>{if(trigger?.isConnected)trigger.focus();});}
-  private dropSheets(){this.sessionExercise.set(null);this.substituting.set(null);}
+  private dropSheets(){this.exerciseSheet.set(null);this.substituting.set(null);}
   hasPending(rows:{set:WorkoutSet}[]){return rows.some(row=>!row.set.completed);}
   editNote(index:number){this.noteKey=this.setKey(index);this.noteEditing.set(index);setTimeout(()=>document.getElementById('set-note-'+index)?.focus());}
   /** Qué serie es la que ocupa una posición: si la sesión cambia mientras se escribe, el comentario no va a otra serie. */
@@ -276,7 +318,7 @@ export class AppComponent implements OnDestroy {
   private savedSwaps(){try{return parseSessionSwaps(localStorage.getItem('fitapp-session-swaps'));}catch{return null;}}
   private clearSwaps(){this.saveSwaps(null);}
   /** Renglón de la rutina que corresponde a un ejercicio de la sesión; para un reemplazo, el del ejercicio que reemplazó. */
-  private routineEntry(exerciseId:string){const workout=this.store.activeWorkout();if(!workout)return undefined;const origin=swapOrigin(this.sessionSwaps(),workout.id,exerciseId);return this.routine(workout.routineId)?.exercises.find(e=>e.exerciseId===origin);}
+  routineEntry(exerciseId:string){const workout=this.store.activeWorkout();if(!workout)return undefined;const origin=swapOrigin(this.sessionSwaps(),workout.id,exerciseId);return this.routine(workout.routineId)?.exercises.find(e=>e.exerciseId===origin);}
   private focusSheet(){setTimeout(()=>(document.querySelector('.sheet [data-sheet-focus]') as HTMLElement|null)?.focus());}
   @HostListener('document:keydown.escape') escapePressed(){if(!this.confirmation()&&!this.sync.conflict())this.closeSheet();}
 
@@ -287,7 +329,7 @@ export class AppComponent implements OnDestroy {
     if (workout) for (const id of new Set(workout.sets.map(s => s.exerciseId))) map.set(id, lastSetsFor(this.store.history(), id));
     return map;
   });
-  previousLabel(exerciseId:string, setNumber:number){const set=this.previousByExercise().get(exerciseId)?.[setNumber-1];return set?`${this.fmt(set.weight)} × ${set.reps}`:'—';}
+  previousLabel(exerciseId:string, setNumber:number){const set=this.previousByExercise().get(exerciseId)?.[setNumber-1];return set ? set.durationSeconds !== undefined ? formatDuration(set.durationSeconds) : `${this.fmt(set.weight)} × ${set.reps}` : '—';}
   addSet(exerciseId:string){if(!this.store.addSet(exerciseId))this.notify(this.store.actionError()??'No se pudo agregar la serie.');}
   removeLastSet(rows:{index:number}[]){const last=rows.at(-1);if(last&&!this.store.removeSet(last.index))this.notify(this.store.actionError()??'No se pudo quitar la serie.');}
   /** Records of a saved session, compared with the sessions before it (history is newest first). */
@@ -344,7 +386,12 @@ export class AppComponent implements OnDestroy {
   @HostListener('window:beforeinstallprompt', ['$event']) installReady(event:Event){event.preventDefault();this.installPrompt.set(event as unknown as { prompt(): Promise<unknown>; userChoice: Promise<{ outcome: string }> });}
   @HostListener('window:appinstalled') appInstalled(){this.installed.set(true);this.installPrompt.set(null);this.notify(`Listo, ${this.brand.name} quedó instalada.`);}
   ngOnDestroy(){clearInterval(this.interval);clearTimeout(this.toastTimer);}
-  navigate(view:View){this.view.set(view);location.hash=view; this.dropSheets();this.selectedRoutine.set(null);this.selectedExercise.set(null);this.selectedHistory.set(null);if(view==='profile') this.profileDraft={...this.store.profile()}; window.scrollTo({top:0,behavior:'instant'});}
+  navigate(view:View){
+    const go = () => {this.view.set(view);location.hash=view;this.dropSheets();this.selectedRoutine.set(null);this.selectedExercise.set(null);this.selectedHistory.set(null);if(view==='profile')this.profileDraft={...this.store.profile()};window.scrollTo({top:0,behavior:'instant'});};
+    const editor = this.routineEditor();
+    if (this.view() === 'editor' && view !== 'editor' && editor?.dirty) editor.requestNavigation(go);
+    else go();
+  }
   /** Un aviso con acción queda más tiempo a la vista, para llegar a tocarla. */
   notify(message:string,action:{label:string;run:()=>void;available?:()=>boolean}|null=null){
     // Si el foco estaba en el botón del aviso que se reemplaza, no se pierde: va al contenido.
@@ -361,7 +408,7 @@ export class AppComponent implements OnDestroy {
   routine(id:string){return this.store.routines().find(r=>r.id===id);}
   imageFor(id:string){return id==='at-home'?'images/home-workout.jpg':id==='lower-body'?'images/mobility.jpg':'images/strength.jpg';}
   get filteredRoutines(){return this.store.routines().filter(r => this.routineFilter==='Todas'||(this.routineFilter==='Mis creaciones'?r.custom:r.level===this.routineFilter));}
-  get filteredExercises(){const q=this.search.toLocaleLowerCase('es');return this.store.exercises().filter(e=>(this.muscle==='Todos'||e.muscle===this.muscle)&&`${e.name} ${e.muscle} ${e.equipment}`.toLocaleLowerCase('es').includes(q));}
+  get filteredExercises(){const q=this.search.toLocaleLowerCase('es');return this.store.exercises().filter(e=>(!this.onlyAnimated || !!EXERCISE_MEDIA[e.id])&&(!this.onlyFavorites || this.store.isFavorite(e.id))&&(this.muscle==='Todos'||e.muscle===this.muscle)&&`${e.name} ${e.muscle} ${e.equipment}`.toLocaleLowerCase('es').includes(q));}
   get muscles(){return ['Todos',...new Set(this.store.exercises().map(e=>e.muscle))];}
   dateLabel(date:string,options:Intl.DateTimeFormatOptions={day:'numeric',month:'short'}){return new Intl.DateTimeFormat('es-AR',options).format(new Date(date+'T12:00:00'));}
   get todayLabel(){return new Intl.DateTimeFormat('es-AR',{weekday:'long',day:'numeric',month:'long'}).format(new Date());}

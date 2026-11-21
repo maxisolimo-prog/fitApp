@@ -53,5 +53,5 @@ export const qivox: Brand = {
     radiusBtn: '999px',
     radiusField: '10px',
   },
-  features: { account: true, install: true },
+  features: { account: true, install: true, aiCoach: true },
 };

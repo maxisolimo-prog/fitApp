@@ -10,6 +10,7 @@ export type BrandId = 'fitapp' | 'qivox' | 'fitnessgroup';
  * marca) y envolver su entrada en la interfaz con `brand.features.<nombre>`.
  */
 export interface BrandFeatures {
+  aiCoach: boolean;
   /** Cuenta opcional y sincronización con la API (Perfil → Cuenta). */
   account: boolean;
   /** Instalación guiada como app (Perfil → Instalá). */

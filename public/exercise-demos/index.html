@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Demostraciones de ejercicios · FitApp</title>
+  <link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="preview.css">
+  <script src="preview.js" defer></script>
+</head>
+<body>
+  <main>
+    <a class="back" href="../#library">← Volver a FitApp</a>
+    <header><p class="eyebrow">FITAPP · DEMOSTRACIONES</p><h1>El movimiento, paso a paso.</h1><p>Los 48 ejercicios del catálogo, con animaciones y descargas.</p><a class="back" href="catalogo-gif.zip" download>Descargar los GIF del catálogo</a></header>
+    <div class="workspace">
+      <div class="catalog"><label for="search">Buscar ejercicio</label><input id="search" type="search" placeholder="Nombre, músculo o equipo" autocomplete="off"><p id="count" role="status"></p><nav aria-label="Elegir una demostración" id="exercises"></nav><p id="empty" hidden>No encontramos ejercicios con esa búsqueda.</p></div>
+      <section class="viewer" aria-labelledby="exercise-title">
+        <h2 id="exercise-title">Press de banca</h2>
+        <div class="stage"><video id="animation" muted controls playsinline loop preload="metadata" poster="bench-press.webp" width="704" height="504" aria-label="Demostración de press de banca" aria-describedby="description"></video></div>
+        <p id="description"></p>
+        <p id="error" role="alert" hidden>La animación no se pudo cargar. Podés volver a seleccionarla o descargar el archivo.</p>
+        <div class="controls">
+          <button id="toggle" type="button" aria-pressed="false">Reproducir</button>
+          <a id="gif-download" hidden download>Descargar GIF</a>
+          <a id="video-download" href="bench-press.webm" download>Descargar video</a>
+        </div>
+      </section>
+    </div>
+    <noscript><p>Activá JavaScript para cambiar de ejercicio. Los archivos también están disponibles por sus enlaces de descarga.</p></noscript>
+  </main>
+</body>
+</html>

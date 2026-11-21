@@ -1,0 +1,1035 @@
+{
+  "date": "2026-11-20",
+  "generator": "ImageGen integrado en Codex",
+  "entries": [
+    {
+      "id": "seated-row",
+      "description": "Llevá el agarre hacia el torso con los codos cerca del cuerpo y volvé sin balancearte.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. SEATED LOW CABLE ROW with a neutral V handle held in both hands. Fixed three-quarter rear-side view, facing left, upper back highlighted. Sit on black bench with feet braced on footplates, knees softly bent, spine neutral, torso stationary. Simple low pulley and taut horizontal cable ahead at waist level. Frame1 arms extended forward; frames2-5 progressively bend elbows close to torso; frame6 V handle at lower ribs, elbows behind torso. Hands always grasp same handle, cable remains connected and taut. Entire bench and pulley visible.",
+      "source": "exec-f1ee983c-434c-4d4e-9c57-457c989f0590.png",
+      "name": "Remo en polea",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "seated-row.gif",
+        "video": "seated-row.webm",
+        "poster": "seated-row.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "lat-pulldown",
+      "description": "Llevá la barra por delante de la cabeza hacia el pecho y volvé con control.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. WIDE GRIP LAT PULLDOWN, fixed PURE SIDE slightly frontal three-quarter view so FACE AND FRONT OF CHEST ARE VISIBLE; DO NOT show back view. Simple cable machine in FRONT of seated figure. Hands overhand wide on single long bar. Frame1 arms fully overhead bar ABOVE AND IN FRONT of forehead;2 bar at forehead;3 bar at eye level IN FRONT OF NOSE;4 bar at chin IN FRONT OF MOUTH;5 bar at collarbone;6 bar touches upper FRONT CHEST below chin, elbows down. Bar is never behind head. Hips/thigh pad/feet/back unchanged, chest slightly tilted back. Six clearly different elbow angles, cable taut from bar CENTER to pulley high in front. Full equipment fits.",
+      "source": "exec-340038e0-c69c-4f6a-9a26-7f31d89779f1.png",
+      "name": "Jalón al pecho",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "lat-pulldown.gif",
+        "video": "lat-pulldown.webm",
+        "poster": "lat-pulldown.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "shoulder-press",
+      "description": "Empujá las mancuernas por encima de los hombros y bajá sin arquear la espalda.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. SEATED DUMBBELL SHOULDER PRESS: six lowering poses, first frame MUST show BOTH ARMS FULLY STRAIGHT VERTICAL ABOVE HEAD elbows175degrees, last frame elbows90degrees weights at shoulders. Fixed front three-quarter view, upright black bench, head back hips feet entirely unchanged. Deltoids highlighted. Scale full scene to fit with 20% EMPTY WHITE SPACE ABOVE extended weights; no cropping. Frames1-6 elbow interior angles175,160,145,125,105,90 degrees. First image has hands much higher than head, arm length fully stretched. Both dumbbells always present.",
+      "source": "exec-8b8e6375-aeb6-4e24-bc87-55dad5120d21.png",
+      "name": "Press de hombros",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "shoulder-press.gif",
+        "video": "shoulder-press.webm",
+        "poster": "shoulder-press.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "lateral-raise",
+      "description": "Elevá las mancuernas hacia los lados sin encoger los hombros y bajá con control.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. STANDING DUMBBELL LATERAL RAISE, fixed front three-quarter view. Deltoids highlighted. Feet and torso stationary, slight constant elbow bend, neutral wrists. Six arm positions: hands beside thighs; arms20 degrees;40;60;75;85 degrees from body, ending just BELOW shoulder height. Dumbbells move out to the sides, never in front or overhead. Full figure with ample side margins.",
+      "source": "exec-51266a0e-254a-4baa-803b-68eca33259b3.png",
+      "name": "Elevaciones laterales",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "lateral-raise.gif",
+        "video": "lateral-raise.webm",
+        "poster": "lateral-raise.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "biceps-curl",
+      "description": "Subí las mancuernas flexionando los codos, con las palmas hacia arriba y sin balancearte.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. STANDING SUPINATED DUMBBELL BICEPS CURL, front three-quarter view. Biceps highlighted. Two dumbbells held palms FORWARD/up through full movement, upper arms stay beside ribs, no torso swinging. Frame1 elbows nearly extended, weights at thighs; 2 elbow flexion30;3 flexion55;4 flexion80;5 flexion105;6 flexion125 weights near front of shoulders. Whole body centered.",
+      "source": "exec-9394e6a1-e2f2-412f-80a4-b1dd72cae927.png",
+      "name": "Curl de bíceps",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "biceps-curl.gif",
+        "video": "biceps-curl.webm",
+        "poster": "biceps-curl.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "triceps-pushdown",
+      "description": "Extendé los codos hacia abajo, manteniéndolos cerca del torso, y volvé lentamente.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. STANDING HIGH CABLE TRICEPS PUSHDOWN with a short straight bar grasped overhand in both hands. Fixed SIDE three-quarter view showing cable to overhead pulley in front. Triceps highlighted. Upper arms vertical and pinned beside torso. Frame1 elbows90 degrees bar at lower chest;2 elbows110;3 130;4 145;5 160;6 elbows175 bar beside upper thighs. Only elbows extend, torso and upper arms stay still. Taut cable attached to bar center, not hands.",
+      "source": "exec-31ec4c2e-d170-4cd2-a8c2-84e5f4181852.png",
+      "name": "Extensión de tríceps",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "triceps-pushdown.gif",
+        "video": "triceps-pushdown.webm",
+        "poster": "triceps-pushdown.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "goblet-squat",
+      "description": "Bajá con la mancuerna cerca del pecho y subí manteniendo los pies firmes.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. GOBLET SQUAT holding ONE vertical dumbbell close to chest with both hands. Fixed three-quarter side view. Quadriceps and glutes highlighted. Six descending phases: upright; quarter bend;third;half;two-thirds; thighs near parallel to floor at comfortable depth. Heels planted in exact same position, knees track toes, neutral spine, torso modest forward inclination, dumbbell remains near sternum. Complete body visible.",
+      "source": "exec-bd0964f5-1e49-419b-8215-fd20fdd6c0e1.png",
+      "name": "Sentadilla goblet",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "goblet-squat.gif",
+        "video": "goblet-squat.webm",
+        "poster": "goblet-squat.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "leg-press",
+      "description": "Acercá la plataforma con control y empujá sin despegar la pelvis ni bloquear las rodillas.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. 45 DEGREE SLED LEG PRESS machine, side three-quarter view. Quadriceps highlighted. Figure reclined against fixed backrest, pelvis supported, feet shoulder width on moving plate. Six phases from knees nearly straight (never locked) to knees comfortably bent about90 degrees. Plate moves down its two inclined rails toward body; hands hold side grips; knees track toes; pelvis and back never lift. Entire compact machine fits cell. Same sled and rails in all frames.",
+      "source": "exec-9ee3d5a0-7e3c-4987-b90e-4c1a0e198ecf.png",
+      "name": "Prensa de piernas",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "leg-press.gif",
+        "video": "leg-press.webm",
+        "poster": "leg-press.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "romanian-deadlift",
+      "description": "Llevá la cadera atrás y bajá las mancuernas cerca de las piernas con la espalda estable.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. DUMBBELL ROMANIAN DEADLIFT, two dumbbells. Fixed pure side three-quarter view. Hamstrings and glutes highlighted. Six descending hip-hinge phases from standing to hips back and torso inclined about60 degrees, weights close to shins. Knees remain slightly bent with minimal change. Neutral straight back, head aligned; arms hang straight, weights near legs; planted feet stay fixed. This is a hip hinge, NOT a squat.",
+      "source": "exec-225f5549-3422-4548-a34d-4dbb3ba642b6.png",
+      "name": "Peso muerto rumano",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "romanian-deadlift.gif",
+        "video": "romanian-deadlift.webm",
+        "poster": "romanian-deadlift.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "reverse-lunge",
+      "description": "Da un paso atrás, bajá con control y volvé. Repetí también del otro lado.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. BODYWEIGHT REVERSE LUNGE, fixed side three-quarter view. Quadriceps and glutes highlighted. Show SAME working side all six frames:1 standing feet together;2 right foot stepping backward;3 right toes plant behind;4 both knees bend;5 lower further;6 left/front thigh near parallel and right/rear knee hovering above floor. Front heel stays planted at exact same point. Torso tall, hands on hips, no weights. This sequence will reverse to standing.",
+      "source": "exec-d4aada7d-e350-4f95-8dc0-bd80cf9e9f46.png",
+      "name": "Zancada hacia atrás",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "reverse-lunge.gif",
+        "video": "reverse-lunge.webm",
+        "poster": "reverse-lunge.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "glute-bridge",
+      "description": "Elevá la pelvis hasta alinear tronco y muslos, sin arquear de más la espalda.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. FLOOR GLUTE BRIDGE, fixed side three-quarter view, head left feet right. Glutes highlighted. Figure lies supine on slim dark mat, knees bent, feet flat, arms along floor. Six ascending phases: pelvis resting; pelvis lifted20%;40%;60%;80%;top shoulders hips and knees align in straight diagonal. Head shoulders arms and feet stationary, do not arch lumbar spine. No barbell or bench.",
+      "source": "exec-17804162-62a6-43cb-851d-c481bd1085c9.png",
+      "name": "Puente de glúteos",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "glute-bridge.gif",
+        "video": "glute-bridge.webm",
+        "poster": "glute-bridge.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "push-up",
+      "description": "Bajá el pecho manteniendo el cuerpo alineado y empujá para volver.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. FLOOR PUSH UP, fixed side three-quarter view, head left feet right. Chest and triceps highlighted. Six descending phases from arms straight high plank to chest close to floor. Hands fixed under slightly wider than shoulders, toes fixed, head shoulders hips ankles move as a rigid aligned plank. Elbows bend about45 degrees from torso. No sagging hips or kneeling, full body visible.",
+      "source": "exec-af434f06-3b91-4039-afc0-3ba4ef807a96.png",
+      "name": "Flexiones de brazos",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "push-up.gif",
+        "video": "push-up.webm",
+        "poster": "push-up.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "bird-dog",
+      "description": "Desde cuatro apoyos, extendé un brazo y la pierna contraria sin girar la pelvis. Alterná los lados.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. BIRD DOG on dark mat, fixed side three-quarter view. Glutes and spinal muscles softly highlighted. SIX phases extending ONLY LEFT ARM AND RIGHT LEG from all-fours to horizontal: frame1 hands under shoulders knees under hips;2 left hand/right knee lift slightly;3 limbs half extended;4 three quarters;5 near full;6 left arm straight ahead and RIGHT leg straight back at torso height. RIGHT HAND and LEFT KNEE remain planted, pelvis square, spine neutral, head aligned. No ipsilateral arm and leg. Reverse playback returns to all-fours.",
+      "source": "exec-07a55839-0fd0-4d0f-a34a-08154de80816.png",
+      "name": "Bird dog",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "bird-dog.gif",
+        "video": "bird-dog.webm",
+        "poster": "bird-dog.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "dead-bug",
+      "description": "Extendé un brazo y la pierna contraria sin despegar la zona lumbar. Volvé y alterná.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. DEAD BUG, supine on dark mat, fixed side three-quarter camera, head left feet right. Abs highlighted. Frame1 both arms vertical, hips/knees90 degrees, lower legs horizontal. Frames2-6 progressively lower LEFT ARM overhead toward floor and extend RIGHT LEG away until hovering close to floor. Opposite RIGHT ARM stays vertical, LEFT HIP/KNEE remain90 degrees. Lower back and torso stay on mat. Clearly only contralateral limbs extend, no same-side pattern. Endpoints within cell.",
+      "source": "exec-a9984c55-7976-424d-a4be-a6c44881d92e.png",
+      "editPrompt": "Fix this six-frame anatomical DEAD BUG sprite sheet. Preserve style, gray anatomy, terracotta abs, white background, 3x2 layout and fixed scale. CRITICAL ERROR: the stationary bent leg has a missing lower leg and foot in frames2–6. Every frame must clearly contain exactly TWO COMPLETE LEGS with two thighs, two shins and TWO SHOES connected naturally at knees/ankles. Change camera to a slightly elevated three-quarter view so stationary far shin and shoe remain unobscured. Torso/head/lower back rest on mat. Frame1 both hips/knees90degrees arms upward. Frames2–6 progressively extend the NEAR LEG away and lower the OPPOSITE FAR ARM overhead. Stationary leg stays in tabletop: thigh vertical, shin horizontal, shoe visible. Near arm remains vertical. End pose one extended leg and opposite arm hover above mat, other leg still fully present bent90degrees, other arm straight up. Keep all fingers toes shoes and mat inside each cell, reduce figure scale if necessary. No text or lines.",
+      "previousSource": "exec-44141300-f2af-491e-81eb-9438b03ee9d1.png",
+      "framingPrompt": "Keep this exact six-pose dead bug exercise sequence, all anatomy, limbs, two shoes and pose order. Fix ONLY framing/registration: each of the SIX full scenes must fit ENTIRELY inside its own equal cell with a minimum 45px white margin on all FOUR edges. In particular extended fingertips in bottom-middle must NOT enter bottom-left. Scale EVERY body AND mat down to 78 percent within each cell, around the identical torso anchor, preserving identical scale/camera across all cells. Canvas1536x1024, exact3columns2rows at x0/512/1024 and y0/512. No body, fingers, shoes or mat within45px of ANY cell edge. Pure white background, no cell divider lines. Keep all 6 complete bodies, 12 shoes, same scientific gray/red style. Do not crop or omit any limb.",
+      "name": "Dead bug",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "dead-bug.gif",
+        "video": "dead-bug.webm",
+        "poster": "dead-bug.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "dumbbell-fly",
+      "description": "Abrí los brazos en arco con una leve flexión de codos y volvé sobre el pecho.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. FLAT BENCH DUMBBELL CHEST FLY, fixed elevated front three-quarter view showing BOTH arms. Chest highlighted. Figure lies on flat black bench, head back hips supported, feet planted. SIX opening phases starting both weights above chest, palms inward, elbows slightly flexed20 degrees. Gradually lower weights outward in wide arcs to either side; final upper arms approximately level with torso and hands wide. Keep elbow bend CONSTANT, do NOT turn into a press. Same bench and camera.",
+      "source": "exec-61ee3914-f1bf-41ea-ac78-7af320207b3c.png",
+      "editPrompt": "Correct this six-frame anatomy DUMBBELL FLY sprite sheet. The bench must be COMPLETELY FLAT HORIZONTAL, not incline: ONE SINGLE STRAIGHT horizontal black pad supports head, shoulders, back and hips, all on the SAME LEVEL. Fixed elevated three-quarter SIDE camera, head on LEFT and feet on RIGHT so horizontal pad is clearly visible. Same gray anatomy and red pectorals, shorts and shoes, white background, 3columns2rows. Six poses of opening a chest fly: frame1 weights together vertically above chest, elbows softly bent20degrees; frames2–6 weights move outward in wide arcs until upper arms level with torso. Elbow bend CONSTANT. Last position arms spread WIDE, not bent like a press. Feet fixed on floor, knees90degrees, pelvis and head never move. Leave ample margins for weights on both sides. No cropping, labels, arrows or borders.",
+      "previousSource": "exec-f4602225-ca0a-4187-80d4-250c989bc91b.png",
+      "name": "Aperturas con mancuernas",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "dumbbell-fly.gif",
+        "video": "dumbbell-fly.webm",
+        "poster": "dumbbell-fly.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "chest-press-machine",
+      "description": "Empujá las manijas hacia adelante y volvé despacio con la espalda apoyada.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. SEATED CHEST PRESS MACHINE, fixed side three-quarter view. Chest highlighted. Back against upright pad, feet planted, handles at midchest connected to machine lever arms. Six forward press phases: elbows90 degrees handles near chest;20%;40%;60%;80%;arms nearly straight forward. Shoulders down, wrists neutral, handles connected at every frame. Full simple machine fits cell.",
+      "source": "exec-e5a1771a-89c7-4cf8-823b-c4cfa4bdd288.png",
+      "name": "Press de pecho en máquina",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "chest-press-machine.gif",
+        "video": "chest-press-machine.webm",
+        "poster": "chest-press-machine.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "cable-crossover",
+      "description": "Acercá las manos hacia adelante y abajo, manteniendo una leve flexión de codos.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. STANDING HIGH CABLE CHEST FLY/CROSSOVER, front three-quarter view. Two tall compact cable towers left/right with pulleys ABOVE SHOULDER height. Chest highlighted. Split stance fixed, torso slightly forward. Six closing phases: arms open at shoulder level with softly bent elbows; hands move forward/down20%;40%;60%;80%;handles meet in front of lower chest. Elbow bend stays constant. Two taut cables always connect handles to their respective towers. Full body, towers and hands within frame.",
+      "source": "exec-563934bb-6fdb-486f-9df3-d8bfa90b4689.png",
+      "name": "Cruce de poleas",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "cable-crossover.gif",
+        "video": "cable-crossover.webm",
+        "poster": "cable-crossover.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "barbell-row",
+      "description": "Llevá la barra al abdomen y bajá con control, manteniendo estable la inclinación del torso.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. BENT OVER BARBELL ROW, fixed rear-side three-quarter view. Upper back highlighted. Feet fixed, knees softly bent, hip-hinged neutral back torso about40 degrees above horizontal remains unchanged. One straight barbell, small plates each end, overhand grip shoulder width. Six pulling phases from arms straight bar below shoulders to bar at lower ribs/abdomen, elbows pass behind torso. No torso swing or upright posture change.",
+      "source": "exec-5e52f106-b640-469b-9005-a0be1e4f2a0d.png",
+      "name": "Remo con barra",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "barbell-row.gif",
+        "video": "barbell-row.webm",
+        "poster": "barbell-row.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "one-arm-row",
+      "description": "Llevá la mancuerna hacia la cadera sin girar el torso. Repetí del otro lado.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. ONE ARM DUMBBELL BENCH ROW, fixed RIGHT SIDE three-quarter camera showing working right arm and whole bench. Upper back highlighted. LEFT knee and LEFT hand fixed on bench, RIGHT foot fixed on floor, flat torso parallel to floor. RIGHT hand holds one dumbbell. Six phases from right arm hanging straight below shoulder to right elbow drawn beside ribs with dumbbell near right hip. No torso rotation, same three support points.",
+      "source": "exec-73d28a92-e705-4d04-ac92-b0986024cf63.png",
+      "name": "Remo con mancuerna a una mano",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "one-arm-row.gif",
+        "video": "one-arm-row.webm",
+        "poster": "one-arm-row.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "assisted-pull-up",
+      "description": "Subí hacia la barra con la asistencia de la máquina y bajá con control.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. ASSISTED PULL UP on counterweight machine, fixed rear three-quarter view. Upper back highlighted. Both knees rest on BLACK MOVING ASSISTANCE PAD, hands overhand on overhead wide bar, all equipment visible. Six rising phases: arms nearly straight; body20%raised;40%;60%;80%;chin near bar with elbows bent downward. Kneepad rises together with knees, machine fixed, no swinging. Bar stays above/in front of head, not behind neck.",
+      "source": "exec-1793baf6-c036-4ec0-9f37-bf7200f40256.png",
+      "name": "Dominadas asistidas",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "assisted-pull-up.gif",
+        "video": "assisted-pull-up.webm",
+        "poster": "assisted-pull-up.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "pull-up",
+      "description": "Subí hacia la barra sin balancearte y bajá hasta extender los brazos con control.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. BODYWEIGHT PULL UP on simple freestanding bar, fixed front three-quarter view. Upper back and biceps highlighted. Hands overhand slightly wider than shoulders on stationary horizontal bar. Six rising phases from near straight arms hanging to chin just above bar, elbows pulling down, knees softly bent same angle, feet hanging. Torso steady, no kip or kicking. Full bar frame and body fit.",
+      "source": "exec-f6149381-f4b4-4256-96f5-901e894a9bc7.png",
+      "name": "Dominadas",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "pull-up.gif",
+        "video": "pull-up.webm",
+        "poster": "pull-up.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "overhead-press",
+      "description": "Empujá la barra por encima de la cabeza y bajá con el abdomen firme.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. STANDING BARBELL OVERHEAD PRESS, fixed front-side three-quarter view. Deltoids highlighted. Start FIRST FRAME with arms STRAIGHT VERTICAL OVERHEAD elbows175 degrees, bar directly above shoulders. Figure scaled small enough for20% headroom ABOVE BAR. Frames2-6 LOWER bar progressively: elbows160,140,120,100,90 at top of chest/collarbone. Bar passes IN FRONT of face. Feet fixed, torso upright neutral back, no leg push, same body and bar scale.",
+      "source": "exec-68103b5b-203b-43a0-ad84-ea3e963b7d95.png",
+      "name": "Press militar con barra",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "overhead-press.gif",
+        "video": "overhead-press.webm",
+        "poster": "overhead-press.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "rear-delt-fly",
+      "description": "Abrí los brazos hacia los lados sin levantar ni balancear el torso.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. BENT OVER DUMBBELL REVERSE FLY, fixed rear three-quarter camera. Rear deltoids highlighted. Hip hinge torso almost parallel floor, knees soft, neutral spine, two dumbbells hanging under shoulders. Six phases lift arms outward to sides until upper arms near horizontal in T shape. Elbows slightly bent with CONSTANT angle. Torso and hips stay fixed. Full feet dumbbells and hands fit frame.",
+      "source": "exec-2e71d413-4fbb-4966-8b7d-80584ea06380.png",
+      "name": "Vuelos posteriores",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "rear-delt-fly.gif",
+        "video": "rear-delt-fly.webm",
+        "poster": "rear-delt-fly.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "face-pull",
+      "description": "Tirá de la cuerda hacia la frente separando las manos y volvé sin balancearte.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. STANDING CABLE ROPE FACE PULL, fixed rear-side three-quarter view showing hands in front of face and pulley ahead. Rear shoulders/upper back highlighted. Pulley at eye height, two-ended rope. Six phases arms extended toward pulley to hands BESIDE temples with elbows wide and high, rope center in front of nose. Pull ends apart progressively. Torso upright steady, feet fixed, taut cable. Do not pull behind head.",
+      "source": "exec-d7f7f578-9b4f-43d8-98a9-a9164fc0f395.png",
+      "name": "Face pull",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "face-pull.gif",
+        "video": "face-pull.webm",
+        "poster": "face-pull.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "barbell-curl",
+      "description": "Flexioná los codos para subir la barra sin mover el torso y bajá despacio.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. STANDING STRAIGHT BARBELL BICEPS CURL, fixed front three-quarter view. Biceps highlighted. One straight bar with modest plates, UNDERHAND palms up grip shoulder width. Six phases from bar at thighs elbows nearly straight to bar near upper chest elbows flexed125 degrees. Upper arms stay at ribs, wrists straight, no back swing, feet planted. Same bar and plate count.",
+      "source": "exec-c953423f-1036-4b8a-bd98-67fd5838569b.png",
+      "name": "Curl con barra",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "barbell-curl.gif",
+        "video": "barbell-curl.webm",
+        "poster": "barbell-curl.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "hammer-curl",
+      "description": "Subí las mancuernas con las palmas enfrentadas y los codos cerca del cuerpo.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. STANDING TWO DUMBBELL HAMMER CURL, fixed front three-quarter view. Biceps and brachioradialis highlighted. PALMS FACE EACH OTHER/INWARD throughout, dumbbell axes vertical when forearms horizontal. Six phases both elbows nearly straight to flexed125 degrees weights near shoulders. Upper arms pinned beside ribs, no wrist supination or torso movement. Two identical dumbbells.",
+      "source": "exec-26173fdc-90f9-4be5-a52a-8b50541119d4.png",
+      "name": "Curl martillo",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "hammer-curl.gif",
+        "video": "hammer-curl.webm",
+        "poster": "hammer-curl.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "overhead-triceps",
+      "description": "Bajá la mancuerna detrás de la cabeza flexionando los codos y extendé sin arquearte.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. SEATED TWO-HAND SINGLE DUMBBELL OVERHEAD TRICEPS EXTENSION, fixed rear-side three-quarter view. Triceps highlighted. Start FRAME1 both arms STRAIGHT UP elbows175 degrees holding ONE vertical dumbbell overhead, both hands supporting same upper head. Ample20% overhead margin. Frames2-6 progressively bend elbows to lower dumbbell BEHIND head, ending elbow90 degrees. Upper arms stay vertical, elbows close, back supported on bench, feet fixed. No second dumbbell.",
+      "source": "exec-82f7376d-c93f-4342-b269-eb1d8bd40b2e.png",
+      "name": "Extensión de tríceps sobre la cabeza",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "overhead-triceps.gif",
+        "video": "overhead-triceps.webm",
+        "poster": "overhead-triceps.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "bench-dip",
+      "description": "Flexioná los codos en un recorrido cómodo para los hombros y empujá para subir.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. BENCH TRICEPS DIP with bent knees, fixed side three-quarter view. Triceps highlighted. Hands on near edge of black bench BEHIND torso, feet planted in front, knees90 degrees. Hips immediately in front of bench. Six lowering phases elbows nearly straight to comfortable bend about90 degrees. Shoulders remain stable, hips close to bench, feet and hand contacts fixed. Full bench/body fit.",
+      "source": "exec-331286f6-45f8-41ee-ba21-ca10c9adccef.png",
+      "name": "Fondos en banco",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "bench-dip.gif",
+        "video": "bench-dip.webm",
+        "poster": "bench-dip.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "back-squat",
+      "description": "Bajá con la barra sobre la espalda y subí empujando el piso, con los pies firmes.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. BARBELL BACK SQUAT in safety rack, fixed side three-quarter view. Quadriceps/glutes highlighted. Bar rests on upper BACK/trapezius NOT neck, hands firmly holding. Stationary simple rack with safety bars below squat bottom, no posts blocking body. Six descending phases from upright to thighs near parallel. Neutral spine, heels planted, knees follow toes, bar over midfoot, no knee collapse. Same bar modest plates and body scale.",
+      "source": "exec-47703463-a396-4418-bf33-cfc8add4d975.png",
+      "name": "Sentadilla con barra",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "back-squat.gif",
+        "video": "back-squat.webm",
+        "poster": "back-squat.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "leg-extension",
+      "description": "Extendé las rodillas sin despegar la cadera del asiento y bajá lentamente.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "forward",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. SEATED LEG EXTENSION MACHINE, fixed side three-quarter view. Quadriceps highlighted. Figure seated back supported, hips stationary, knees aligned with machine pivot, padded roller against FRONT lower shins just ABOVE ankles. Six phases from knees bent90 degrees shins downward to knees almost straight lower legs forward horizontal. Hands fixed on handles. Roller follows shins through arc, not knees, machine stationary.",
+      "source": "exec-f7a618f6-2710-466e-ad76-a73f6dbcab66.png",
+      "name": "Extensión de cuádriceps",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "delays": [
+        60,
+        60,
+        60,
+        60,
+        60,
+        60
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "leg-extension.gif",
+        "video": "leg-extension.webm",
+        "poster": "leg-extension.jpg"
+      },
+      "frames": 6,
+      "seconds": 3.6
+    },
+    {
+      "id": "leg-curl",
+      "description": "Flexioná las rodillas acercando los talones a los glúteos y volvé con control.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. PRONE LYING LEG CURL MACHINE, fixed side three-quarter view. Hamstrings highlighted. Figure lies FACE DOWN on black angled bench, knees just past pad edge, hands hold handles, hips/chest stable. Padded roller against BACK of ankles. Six phases legs almost straight to knees bent about100 degrees with heels toward glutes. Both lower legs curl upward together, machine lever roller follows ankles; torso never rises.",
+      "source": "exec-ed09c88e-88a4-4a22-afbb-05aa8004ee90.png",
+      "name": "Curl femoral",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "leg-curl.gif",
+        "video": "leg-curl.webm",
+        "poster": "leg-curl.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "calf-raise",
+      "description": "Subí en puntas de pie y bajá los talones con control, manteniendo el apoyo delantero.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. STANDING CALF RAISE MACHINE, fixed side three-quarter view. Calves highlighted. Shoulder pads rest on shoulders, hands hold handles, forefeet fixed on raised step with heels free. Six phases: heels slightly below step;heels level;slightly raised;half raised;threequarters;tiptoe highest comfortable position. Knees remain almost straight, whole body and shoulder pads rise a SMALL realistic distance through ankle plantarflexion only. Feet never leave step. Machine base fixed.",
+      "source": "exec-f5825a1e-83d0-40bc-9c7e-3b2cfadc5e1e.png",
+      "name": "Elevación de talones",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "calf-raise.gif",
+        "video": "calf-raise.webm",
+        "poster": "calf-raise.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "bulgarian-split-squat",
+      "description": "Bajá con un pie apoyado atrás y subí con la pierna delantera. Repetí del otro lado.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. DUMBBELL BULGARIAN SPLIT SQUAT, fixed side three-quarter view. Front-leg quads/glutes highlighted. LEFT foot flat forward on ground, RIGHT rear instep on black bench behind, one dumbbell hanging in each hand. Six descending phases left knee mostly extended to left thigh near parallel and right knee lowered toward floor. Front heel and rear instep stationary, pelvis level, torso slight forward natural inclination. No hand support on bench.",
+      "source": "exec-54226677-3a38-4070-aab6-e172676147ca.png",
+      "name": "Sentadilla búlgara",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "bulgarian-split-squat.gif",
+        "video": "bulgarian-split-squat.webm",
+        "poster": "bulgarian-split-squat.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "hip-thrust",
+      "description": "Elevá la cadera con la espalda alta apoyada y bajá sin arquear la zona lumbar.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "forward",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. Sports coaching demonstration of BARBELL HIP THRUST. Adult male athlete fully dressed in an opaque gray fitted T-SHIRT, loose BLACK KNEE-LENGTH SPORTS SHORTS and trainers. Entire body seen from fixed side three-quarter view, ordinary gym technique diagram, no nudity. Upper back supported on black bench, feet planted shoulder-width, knees bent. Padded barbell rests across front of upper thighs with both hands securing it. SIX sequential positions raising body from low seated position to a bridge where torso and thighs are horizontal, then playback reverses. Shoulders pivot at bench, feet and bench never move, bar follows body upward. Spine neutral, no overarching. White background; modest weights on bar; same equipment throughout.",
+      "source": "exec-6bb2a38b-9042-4e10-bde5-01e47f120727.png",
+      "name": "Hip thrust",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "delays": [
+        60,
+        60,
+        60,
+        60,
+        60,
+        60
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "hip-thrust.gif",
+        "video": "hip-thrust.webm",
+        "poster": "hip-thrust.jpg"
+      },
+      "frames": 6,
+      "seconds": 3.6
+    },
+    {
+      "id": "cable-kickback",
+      "description": "Llevá la pierna hacia atrás sin mover la pelvis ni arquear la espalda. Alterná los lados.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "forward",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. STANDING CABLE GLUTE KICKBACK, fixed side three-quarter view. Glute highlighted. Figure faces low pulley column, both hands hold column, slight hip hinge torso fixed. LEFT supporting foot planted, cable ankle strap on RIGHT ankle connected to pulley near floor IN FRONT. Six phases right leg near left to right leg extended BACK only about25 degrees, knee softly bent fixed, pelvis square. No lumbar arch or high leg kick. Cable taut.",
+      "source": "exec-04b6873e-985e-4f78-b6c1-cf5976b4e0d7.png",
+      "name": "Patada de glúteo en polea",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "delays": [
+        60,
+        60,
+        60,
+        60,
+        60,
+        60
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "cable-kickback.gif",
+        "video": "cable-kickback.webm",
+        "poster": "cable-kickback.jpg"
+      },
+      "frames": 6,
+      "seconds": 3.6
+    },
+    {
+      "id": "hip-abduction",
+      "description": "Abrí las piernas empujando las almohadillas hacia afuera y cerrá con control.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. SEATED HIP ABDUCTION MACHINE, fixed FRONT three-quarter view clearly showing both knees. Lateral glutes highlighted. Back supported, hips90 degrees, padded resistance arms on OUTSIDE of knees, feet on moving footrests. Six phases knees near each other to opened comfortably about45 degrees each. Both thighs rotate OUTWARD symmetrically, pads and footrests travel with knees, torso stays still. No inward adduction depiction.",
+      "source": "exec-382ba998-2b79-473f-a240-4aba8541ceb4.png",
+      "name": "Abducción de cadera en máquina",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "hip-abduction.gif",
+        "video": "hip-abduction.webm",
+        "poster": "hip-abduction.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "deadlift",
+      "description": "Levantá la barra cerca del cuerpo extendiendo cadera y rodillas y bajá con control.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. CONVENTIONAL BARBELL DEADLIFT, fixed side three-quarter view. Glutes/hamstrings highlighted. One bar with modest floor-height plates, hands outside knees overhand. Six UPWARD phases:1 bar on floor over midfoot, hips hinged knees bent neutral spine;2 bar below knees;3 near knees;4 above knees;5 mid thighs;6 standing tall bar at upper thighs. Arms remain straight, bar close to legs, hips/knees extend together, feet fixed. No backward hyperextension at top.",
+      "source": "exec-09a3fbf4-8047-42d3-817b-c4b5db59b929.png",
+      "name": "Peso muerto con barra",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "deadlift.gif",
+        "video": "deadlift.webm",
+        "poster": "deadlift.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "back-extension",
+      "description": "Flexioná desde la cadera y subí solo hasta alinear el cuerpo, sin hiperextender la espalda.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "forward",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. 45 DEGREE ROMAN CHAIR HIP/BACK EXTENSION, fixed side three-quarter view. Glutes/spinal muscles highlighted. Feet secured on lower footplate and ankle rollers, pad under upper thighs/hip crease, arms crossed on chest. Six phases from body straight aligned with legs to torso hinged down about50 degrees at hips, neutral straight spine. Feet and legs fixed, bend ONLY hip not lumbar back. Full apparatus. Reverse returns ONLY to straight body, never hyperextended.",
+      "source": "exec-5dd48015-d9af-44a3-92a2-2efa631e45fe.png",
+      "name": "Hiperextensiones",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "delays": [
+        60,
+        60,
+        60,
+        60,
+        60,
+        60
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "back-extension.gif",
+        "video": "back-extension.webm",
+        "poster": "back-extension.jpg"
+      },
+      "frames": 6,
+      "seconds": 3.6
+    },
+    {
+      "id": "crunch",
+      "description": "Despegá los hombros contrayendo el abdomen, sin tirar del cuello, y bajá despacio.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "forward",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. FLOOR ABDOMINAL CRUNCH, fixed side three-quarter view head left feet right. Rectus abdominis highlighted. Supine on thin dark mat, feet flat knees bent, fingertips lightly at temples elbows open. Six upward SMALL curl phases from head/shoulders resting to shoulder blades lifted about15cm. Lower back and pelvis STAY ON MAT, hips do not rise, not a full sit-up. Neck neutral not pulled by hands.",
+      "source": "exec-88d18404-a142-4d4d-8dc7-e6b030f82ebd.png",
+      "name": "Abdominales crunch",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "delays": [
+        60,
+        60,
+        60,
+        60,
+        60,
+        60
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "crunch.gif",
+        "video": "crunch.webm",
+        "poster": "crunch.jpg"
+      },
+      "frames": 6,
+      "seconds": 3.6
+    },
+    {
+      "id": "leg-raise",
+      "description": "Elevá y bajá las piernas sin despegar la zona lumbar; flexioná las rodillas si hace falta.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. LYING LEG RAISE, fixed side three-quarter view head left feet right. Abs highlighted. Supine on thin dark mat, arms alongside hips hands under pelvis, head and lower back remain supported. Knees slightly bent CONSTANT comfortable bend. Six rising phases both legs together from heels hovering20cm above mat to legs nearly vertical80 degrees. No pelvis lifting, no lumbar arch. Leave room above for raised feet.",
+      "source": "exec-89903976-016c-49dd-98c3-079ee48830d5.png",
+      "name": "Elevación de piernas",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "leg-raise.gif",
+        "video": "leg-raise.webm",
+        "poster": "leg-raise.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "pallof-press",
+      "description": "Extendé las manos al frente sin dejar que el torso gire hacia la polea y volvé al pecho.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "prompt": "Use case: scientific-educational. Generate an ORIGINAL 6-frame anatomical exercise sprite sheet for FitApp: EXACTLY 3 columns by 2 rows, 1536x1024 landscape, equal square cells. Frames read left-to-right then next row. NO text, numbers, arrows, lines, borders or logos. Pure white background. Identical realistic gray/silver athletic adult male, opaque charcoal shorts and dark trainers; working muscles softly highlighted terracotta. Premium medical anatomy atlas illustration, accurate proportions, detailed muscles, not a robot. Fixed camera, identical scale and registration in ALL six cells. Center the complete body plus equipment within each 512x512 cell, leave 10% safety margins on every side. No objects crossing cell boundaries, no clipped body parts. Equipment and floor stay stationary; only necessary joints change. SIX visibly distinct successive poses spanning the described one-way movement, to be played forward and backward as a repetition. Anatomically correct two arms, two legs, natural joints, same equipment throughout. STANDING CABLE PALLOF ANTI-ROTATION PRESS. Fixed elevated FRONT three-quarter view. Figure faces toward camera, cable pulley located clearly to FIGURE'S LEFT SIDE at chest height. Obliques softly highlighted. Both hands clasp one handle at sternum. Six phases extend hands FORWARD AWAY FROM CHEST (perpendicular to lateral cable):20%,40%,60%,80%,arms almost straight. Cable travels diagonally from lateral pulley to hands. Chest and pelvis NEVER rotate, feet shoulder width fixed, knees soft. Not a cable row or fly.",
+      "source": "exec-5e2428c3-fc5e-4d87-a9ba-af99638ac0d7.png",
+      "name": "Pallof press",
+      "crop": [
+        2,
+        2,
+        508,
+        508
+      ],
+      "visualReview": "Secuencia revisada visualmente; validación técnica profesional pendiente en B-30.",
+      "files": {
+        "gif": "pallof-press.gif",
+        "video": "pallof-press.webm",
+        "poster": "pallof-press.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    }
+  ]
+}

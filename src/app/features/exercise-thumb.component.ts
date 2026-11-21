@@ -1,4 +1,4 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import type { Exercise } from '../core/models';
 import { BodySprite, bodyRef } from './body-sprite';
 import { thumbView } from './muscle-focus';
@@ -16,8 +16,8 @@ import { thumbView } from './muscle-focus';
   standalone: true,
   template: `
     <span class="thumb" aria-hidden="true">
-      @if (exercise().image; as image) {
-        <img [src]="image" alt="" loading="lazy" decoding="async">
+      @if (exercise().image && !imageFailed()) {
+        <img [src]="exercise().image" alt="" loading="lazy" decoding="async" (error)="imageFailed.set(true)">
       } @else if (parts(); as parts) {
         <svg [attr.viewBox]="view().viewBox" focusable="false">
           <use class="base" [attr.href]="'#' + ref(view().side)"/>
@@ -42,6 +42,7 @@ import { thumbView } from './muscle-focus';
 export class ExerciseThumbComponent {
   readonly exercise = input.required<Pick<Exercise, 'name' | 'primaryMuscles' | 'secondaryMuscles' | 'image'>>();
   readonly sprite = inject(BodySprite);
+  readonly imageFailed = linkedSignal(() => { this.exercise(); return false; });
   readonly ref = bodyRef;
   readonly view = computed(() => thumbView(this.exercise().primaryMuscles));
   /** Músculos del ejercicio que se ven del lado elegido; null hasta que llega el dibujo. */

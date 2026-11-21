@@ -5,7 +5,7 @@ import { WorkoutStore } from '../src/app/core/workout-store';
 import {
   buildWorkout, cleanSetNote, completeWorkout, createInitialState, deserializeState, isFactoryState, lastSetsFor, localDate, personalRecords, plannedRoutineId, suggestProgression, suggestWeeklyPlan, workoutSummaryText,
   parseLocalDate, parseSessionSwaps, recordSwap, removeRoutine, serializeState, setPauses, startOfWeek, substituteExercise, swapOrigin, validateState,
-  STORAGE_KEY, validSetValues, weekDates, workoutDurationMinutes, workoutVolume,
+  STORAGE_KEY, validSetValues, weekDates, workoutDurationMinutes, workoutVolume, estimateRoutineMinutes, workoutTimedSeconds, formatDuration,
 } from '../src/app/core/workout-utils';
 
 function withStorage(run: (storage: Storage) => void): void {
@@ -25,6 +25,113 @@ function withStorage(run: (storage: Storage) => void): void {
     else Reflect.deleteProperty(globalThis, 'localStorage');
   }
 }
+
+test('favoritos migran vacíos desde v1–v5 y v6 valida ids únicos del catálogo', () => {
+  const { favoriteExerciseIds, ...old } = createInitialState();
+  for (const version of [1, 2, 3, 4, 5]) {
+    assert.deepEqual(validateState({ ...old, version })?.favoriteExerciseIds, []);
+  }
+  assert.equal(validateState(old), null, 'v6 exige la lista');
+  for (const favorites of [null, 'bench-press', [1], ['no-existe'], ['bench-press', 'bench-press']]) {
+    assert.equal(validateState({ ...old, favoriteExerciseIds: favorites }), null);
+  }
+  assert.deepEqual(validateState({ ...old, favoriteExerciseIds: ['treadmill', 'bench-press'] })?.favoriteExerciseIds, ['bench-press', 'treadmill']);
+});
+
+test('favoritos sobreviven a recarga y respaldo; no cambian rutinas ni registros y dejan de ser estado vacío', () => withStorage(() => {
+  const store = new WorkoutStore();
+  const original = store.snapshot();
+  assert.equal(store.toggleFavorite('no-existe'), false);
+  assert.deepEqual(store.favoriteExerciseIds(), []);
+  assert.equal(store.toggleFavorite('treadmill'), true);
+  store.toggleFavorite('bench-press');
+  assert.equal(store.isFavorite('bench-press'), true);
+  assert.equal(isFactoryState(store.snapshot()), false);
+  assert.deepEqual(store.routines(), original.routines);
+  assert.deepEqual(store.history(), original.history);
+  assert.equal(store.activeWorkout(), original.activeWorkout);
+  const restored = new WorkoutStore();
+  assert.deepEqual(restored.favoriteExerciseIds(), ['bench-press', 'treadmill']);
+  const backup = store.exportJson();
+  restored.toggleFavorite('bench-press');
+  assert.equal(restored.isFavorite('bench-press'), false);
+  assert.equal(restored.importJson(backup), true);
+  assert.deepEqual(restored.favoriteExerciseIds(), ['bench-press', 'treadmill']);
+  assert.equal(restored.importJson(serializeState(original)), true);
+  assert.deepEqual(restored.favoriteExerciseIds(), []);
+}));
+
+test('v1 a v4 conservan series antiguas sin reinterpretarlas como tiempo; guarda una rutina mixta', () => {
+  for (const version of [1, 2, 3, 4]) {
+    const original = createInitialState();
+    original.activeWorkout = buildWorkout(original.routines[0], `old-${version}`);
+    const migrated = validateState({ ...original, version })!;
+    assert.equal(migrated.version, 7);
+    assert.deepEqual(migrated.activeWorkout, original.activeWorkout);
+    assert.equal(migrated.activeWorkout!.sets[0].durationSeconds, undefined);
+  }
+  const state = createInitialState();
+  const routine = { ...state.routines[0], id: 'timed', exercises: [
+    { exerciseId: 'treadmill', sets: 1, reps: 0, weight: 0, restSeconds: 0, durationSeconds: 1200 },
+    { exerciseId: 'bench-press', sets: 2, reps: 10, weight: 30, restSeconds: 60 },
+    { exerciseId: 'stair-climber', sets: 1, reps: 0, weight: 0, restSeconds: 0, durationSeconds: 600 },
+  ] };
+  state.routines.push(routine);
+  const active = buildWorkout(routine, 'mixed');
+  active.sets.forEach(set => set.completed = true);
+  state.history.push(completeWorkout(active)!);
+  state.activeWorkout = buildWorkout(routine, 'next', undefined, state.history);
+  assert.deepEqual(deserializeState(serializeState(state)), state);
+  assert.equal(workoutVolume(active), 600);
+  assert.equal(workoutTimedSeconds(active), 1800);
+  assert.equal(estimateRoutineMinutes(routine), 35);
+  assert.equal(formatDuration(1225), '20 min 25 s');
+  assert.equal(personalRecords(active, []).length, 0);
+  assert.match(workoutSummaryText(state.history[0], []), /30 min/);
+  const changedMode = { ...routine, exercises: [{ exerciseId: 'bench-press', sets: 1, reps: 0, weight: 0, restSeconds: 0, durationSeconds: 45 }] };
+  assert.equal(buildWorkout(changedMode, 'mode', undefined, state.history).sets[0].reps, 0);
+});
+
+test('tiempo rechaza valores inválidos y la combinación de duración con carga o repeticiones', () => {
+  const initial = createInitialState();
+  const timed = { exerciseId: 'treadmill', sets: 1, reps: 0, weight: 0, restSeconds: 0, durationSeconds: 1200 };
+  for (const change of [{ durationSeconds: 0 }, { durationSeconds: 36001 }, { durationSeconds: 1.5 }, { durationSeconds: null }, { durationSeconds: '60' }, { durationSeconds: undefined }, { reps: 10 }, { weight: 20 }]) {
+    const state = { ...initial, routines: [{ ...initial.routines[0], exercises: [{ ...timed, ...change }] }] };
+    assert.equal(validateState(state), null, JSON.stringify(change));
+  }
+});
+
+test('registro por tiempo sobrevive a edición, comentario, copia de serie, sustitución y recarga', () => {
+  withStorage(() => {
+    const store = new WorkoutStore();
+    const routine = { ...createInitialState().routines[0], id: 'timed', custom: true, exercises: [
+      { exerciseId: 'treadmill', sets: 2, reps: 0, weight: 0, restSeconds: 0, durationSeconds: 1200 },
+    ] };
+    assert.equal(store.saveRoutine(routine), true);
+    assert.equal(store.startWorkout(routine.id), true);
+    assert.equal(store.updateSet(0, 10, 5), false);
+    assert.equal(store.applyLoad('treadmill', 10), false);
+    assert.equal(store.applyReps('treadmill', 10), false);
+    assert.equal(store.updateDuration(0, 1225), true);
+    assert.equal(store.updateDuration(0, 0), false);
+    store.toggleSet(0);
+    store.setSetNote(0, 'Ritmo cómodo');
+    store.addSet('treadmill');
+    assert.equal(store.activeWorkout()!.sets[2].durationSeconds, 1200);
+    assert.equal(store.activeWorkout()!.sets[2].note, undefined);
+    const copy = new WorkoutStore();
+    assert.deepEqual(copy.activeWorkout(), store.activeWorkout());
+    assert.equal(copy.substituteExercise('treadmill', 'stair-climber'), true);
+    assert.equal(copy.activeWorkout()!.sets[0].durationSeconds, 1225);
+    assert.equal(copy.activeWorkout()!.sets[1].exerciseId, 'stair-climber');
+    assert.equal(copy.activeWorkout()!.sets[1].durationSeconds, 1200);
+    copy.toggleSet(1);
+    const completed = copy.finishWorkout()!;
+    assert.equal(workoutTimedSeconds(completed), 2425);
+    assert.equal(workoutVolume(completed), 0);
+    assert.deepEqual(deserializeState(copy.exportJson()), copy.snapshot());
+  });
+});
 
 test('calendar dates and weeks use the local calendar across a year boundary', () => {
   const sunday = new Date(2027, 0, 3, 23, 59);
@@ -86,7 +193,7 @@ test('corrupt, mismatched or invalid imports are rejected', () => {
   assert.equal(deserializeState('null'), null);
   assert.equal(deserializeState('{}'), null);
   // Una versión más nueva que la que conoce esta app no se adivina: se rechaza.
-  assert.equal(validateState({ ...createInitialState(), version: 5 }), null);
+  assert.equal(validateState({ ...createInitialState(), version: 8 }), null);
   assert.equal(validateState({ ...createInitialState(), version: 0 }), null);
   const invalid = createInitialState();
   invalid.routines[0].exercises[0].weight = Number.NaN;
@@ -206,7 +313,7 @@ test('v1 data (before the weekly plan) upgrades to the current version with ever
   v1.version = 1;
   delete v1.weeklyPlan;
   const upgraded = validateState(v1)!;
-  assert.equal(upgraded.version, 4);
+  assert.equal(upgraded.version, 7);
   assert.equal(upgraded.profile.focus, 'fuerza');
   assert.equal(upgraded.profile.place, 'gimnasio');
   assert.deepEqual(upgraded.weeklyPlan, [null, null, null, null, null, null, null]);
@@ -342,17 +449,17 @@ test('substituting an exercise changes only its pending sets; completed ones and
   });
 });
 
-test('v3 data (before set time and note) upgrades to v4 without inventing either; v4 round trips with both (B-10, B-11)', () => {
+test('v3 data (before set time and note) upgrades to v5 without inventing either; v4 round trips with both (B-10, B-11)', () => {
   const routine = createInitialState().routines[0];
   const done = buildWorkout(routine, 'w-done', '2026-11-18T10:00:00.000Z');
   done.sets[0] = { ...done.sets[0], completed: true, weight: 40 };
   const v3 = { ...JSON.parse(serializeState(createInitialState())), version: 3, history: [completeWorkout(done, '2026-11-18T10:30:00.000Z')] };
   const upgraded = validateState(v3)!;
-  assert.equal(upgraded.version, 4);
+  assert.equal(upgraded.version, 7);
   assert.deepEqual(Object.keys(upgraded.history[0].sets[0]).sort(), ['completed', 'exerciseId', 'exerciseName', 'reps', 'setNumber', 'weight']);
 
   const state = createInitialState();
-  assert.equal(state.version, 4);
+  assert.equal(state.version, 7);
   const withFields = buildWorkout(routine, 'w-v4', '2026-11-19T10:00:00.000Z');
   withFields.sets[0] = { ...withFields.sets[0], completed: true, completedAt: '2026-11-19T10:05:00.000Z', note: 'Me costó la última' };
   withFields.sets[1] = { ...withFields.sets[1], completed: true };
@@ -484,7 +591,7 @@ test('a note that did not change is not a change, and half an emoji is never sto
 test('data saved by a newer version of the app is never overwritten (review of v4)', () => {
   // Al abrir: lo guardado es de una versión que esta app no conoce.
   withStorage((storage) => {
-    const newer = JSON.stringify({ ...createInitialState(), version: 5, algoNuevo: true });
+    const newer = JSON.stringify({ ...createInitialState(), version: 8, algoNuevo: true });
     storage.setItem(STORAGE_KEY, newer);
     const store = new WorkoutStore();
     assert.match(store.storageError()!, /versión más nueva/);
@@ -504,7 +611,7 @@ test('data saved by a newer version of the app is never overwritten (review of v
     try {
       const store = new WorkoutStore();
       assert.equal(store.updateProfile({ name: 'Pestaña vieja' }), true);
-      const newer = JSON.stringify({ ...createInitialState(), version: 5 });
+      const newer = JSON.stringify({ ...createInitialState(), version: 8 });
       storage.setItem(STORAGE_KEY, newer);
       listeners.forEach((listener) => listener({ key: STORAGE_KEY, newValue: newer }));
       assert.match(store.storageError()!, /versión más nueva/);
@@ -658,7 +765,7 @@ test('v2 profiles get focus and place defaults; invalid values are rejected', ()
   delete v2.profile.focus;
   delete v2.profile.place;
   const upgraded = validateState(v2)!;
-  assert.deepEqual([upgraded.version, upgraded.profile.focus, upgraded.profile.place], [4, 'fuerza', 'gimnasio']);
+  assert.deepEqual([upgraded.version, upgraded.profile.focus, upgraded.profile.place], [7, 'fuerza', 'gimnasio']);
   const bad = createInitialState() as unknown as { profile: { focus: string } };
   bad.profile.focus = 'volar';
   assert.equal(validateState(bad), null);

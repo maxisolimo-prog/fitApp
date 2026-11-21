@@ -46,5 +46,5 @@ export const fitapp: Brand = {
     radiusBtn: '10px',
     radiusField: '10px',
   },
-  features: { account: true, install: true },
+  features: { account: true, install: true, aiCoach: true },
 };

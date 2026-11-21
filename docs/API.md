@@ -69,3 +69,12 @@ mensaje "Actualizá la app": esa app no puede leer los datos de la versión actu
 
 `COOKIE_SECURE=true` bajo HTTPS, usuario de base con permisos mínimos, copias de seguridad, límites compartidos
 si hay más de un proceso, recuperación de contraseña y registro de errores.
+
+
+## Estado v7 y coach opcional
+
+La API actual usa estado v7: programa opcional y enlace de sesión a su paso. La migración 008 agrega `training_programs` y columnas del paso en `workouts`. Copias v1–v6 migran sin programa; un cliente anterior no puede sobrescribir datos v7. Programa, avance, pausas y sesión activa se exportan y sincronizan juntos.
+
+La migración 009 agrega el contador mensual de solicitudes de IA. Endpoints y configuración en [COACH-IA.md](COACH-IA.md). El contador no guarda pedidos ni claves. El servicio permanece desactivado sin configuración completa y presupuesto definido.
+
+Configuración de publicación por marca en [PUBLICACION.md](PUBLICACION.md); aún no hay despliegue de producción.

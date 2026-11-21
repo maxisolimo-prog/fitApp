@@ -1,0 +1,21 @@
+# Completar variables de entorno antes de iniciar Caddy. No publicar sin HTTPS.
+(fitapp) {
+  root * /srv/fitapp/dist
+  encode zstd gzip
+  handle /api/* {
+    reverse_proxy 127.0.0.1:3401
+  }
+  handle {
+    try_files {path} {path}/index.html /index.html
+    file_server
+  }
+}
+{$FITAPP_HOST} {
+  import fitapp
+}
+{$QIVOX_HOST} {
+  import fitapp
+}
+{$FITNESSGROUP_HOST} {
+  import fitapp
+}

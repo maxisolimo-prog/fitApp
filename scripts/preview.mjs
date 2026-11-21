@@ -6,7 +6,7 @@ const root = resolve('dist');
 const port = Number(process.env.PORT) || 4200;
 /** /api/* is forwarded to the Express API so the session cookie stays same-origin (also through ngrok). */
 const api = new URL(process.env.API_URL || 'http://127.0.0.1:3401');
-const types = { '.html':'text/html; charset=utf-8', '.js':'text/javascript', '.css':'text/css', '.json':'application/json', '.webmanifest':'application/manifest+json', '.svg':'image/svg+xml', '.png':'image/png', '.jpg':'image/jpeg', '.webp':'image/webp', '.woff2':'font/woff2' };
+const types = { '.html':'text/html; charset=utf-8', '.js':'text/javascript', '.css':'text/css', '.json':'application/json', '.webmanifest':'application/manifest+json', '.svg':'image/svg+xml', '.png':'image/png', '.jpg':'image/jpeg', '.gif':'image/gif', '.webp':'image/webp', '.webm':'video/webm', '.woff2':'font/woff2' };
 
 function proxy(req, res) {
   const forwardedFor = [req.headers['x-forwarded-for'], req.socket.remoteAddress].filter(Boolean).join(', ');

@@ -1,5 +1,6 @@
 import { computed, Injectable, signal } from '@angular/core';
-import type { Profile, Routine, ScheduledWorkout, WeeklyPlan, WeightRecord, Workout, WorkoutSet } from './models';
+import type { Profile, Routine, ScheduledWorkout, WeeklyPlan, WeightRecord, Workout, WorkoutSet, TrainingProgram } from './models';
+import { advanceProgram, validateProgram } from './training-program';
 import { seedExercises } from './seed';
 import {
   buildWorkout, cleanSetNote, completeWorkout, createInitialState, deserializeState, FitAppState, isNewerVersion,
@@ -44,7 +45,8 @@ function storedByNewerVersion(raw: string): boolean {
 function orderedSet(set: WorkoutSet, completed: boolean, completedAt: string | undefined, note: string | undefined): WorkoutSet {
   return {
     exerciseId: set.exerciseId, exerciseName: set.exerciseName, setNumber: set.setNumber, reps: set.reps, weight: set.weight,
-    completed, ...(completedAt ? { completedAt } : {}), ...(note ? { note } : {}),
+    completed, ...(set.durationSeconds === undefined ? {} : { durationSeconds: set.durationSeconds }),
+    ...(completedAt ? { completedAt } : {}), ...(note ? { note } : {}),
   };
 }
 
@@ -69,6 +71,13 @@ export class WorkoutStore {
   readonly weeklyPlan = signal<WeeklyPlan>(createInitialState().weeklyPlan);
   readonly weights = signal<WeightRecord[]>([]);
   readonly activeWorkout = signal<Workout | null>(null);
+  readonly favoriteExerciseIds = signal<string[]>([]);
+  readonly program = signal<TrainingProgram | null>(null);
+  readonly nextProgramRoutine = computed(() => {
+    const p = this.program();
+    return p && !p.paused ? this.routines().find(r => r.id === p.routineIds[p.position]) ?? null : null;
+  });
+  readonly favoriteIds = computed(() => new Set(this.favoriteExerciseIds()));
   readonly storageError = signal<string | null>(null);
   readonly actionError = signal<string | null>(null);
   readonly completedThisWeek = computed(() => {
@@ -100,6 +109,16 @@ export class WorkoutStore {
     }
   }
 
+  isFavorite(id: string): boolean { return this.favoriteIds().has(id); }
+
+  toggleFavorite(id: string): boolean {
+    if (this.frozen) return this.fail(NEWER_VERSION);
+    if (!this.exercises().some(exercise => exercise.id === id)) return this.fail('No encontramos ese ejercicio.');
+    this.favoriteExerciseIds.update(ids => ids.includes(id) ? ids.filter(value => value !== id) : [...ids, id].sort());
+    this.persist();
+    return true;
+  }
+
   updateProfile(patch: Partial<Profile>): boolean {
     const current = this.profile();
     const validated = validateProfile({
@@ -125,6 +144,7 @@ export class WorkoutStore {
   }
 
   deleteRoutine(id: string): boolean {
+    if (this.program()?.routineIds.includes(id)) return this.fail('Esa rutina forma parte de tu programa. Quitala del programa antes de eliminarla.');
     if (this.routines().length <= 1) return this.fail('Conservá al menos una rutina para entrenar.');
     if (!this.routines().some((routine) => routine.id === id)) return this.fail('No encontramos esa rutina.');
     const next = removeRoutine(this.state(), id);
@@ -163,7 +183,7 @@ export class WorkoutStore {
   /** Sets the load of every not-yet-completed set of an exercise in the session (applying a suggestion). */
   applyLoad(exerciseId: string, weight: number): boolean {
     const workout = this.activeWorkout();
-    if (!workout || !validSetValues(1, weight)) return this.fail('Esa carga no es válida.');
+    if (!workout || workout.sets.some(set => set.exerciseId === exerciseId && set.durationSeconds !== undefined) || !validSetValues(1, weight)) return this.fail('Esa carga no es válida.');
     if (!workout.sets.some((set) => set.exerciseId === exerciseId && !set.completed)) return this.fail('No quedan series pendientes de ese ejercicio.');
     this.activeWorkout.set({ ...workout, sets: workout.sets.map((set) => set.exerciseId === exerciseId && !set.completed ? { ...set, weight } : set) });
     this.persist();
@@ -173,7 +193,7 @@ export class WorkoutStore {
   /** Sets the reps of every not-yet-completed set of an exercise (bodyweight suggestion). */
   applyReps(exerciseId: string, reps: number): boolean {
     const workout = this.activeWorkout();
-    if (!workout || !validSetValues(reps, 0)) return this.fail('Esas repeticiones no son válidas.');
+    if (!workout || workout.sets.some(set => set.exerciseId === exerciseId && set.durationSeconds !== undefined) || !validSetValues(reps, 0)) return this.fail('Esas repeticiones no son válidas.');
     if (!workout.sets.some((set) => set.exerciseId === exerciseId && !set.completed)) return this.fail('No quedan series pendientes de ese ejercicio.');
     this.activeWorkout.set({ ...workout, sets: workout.sets.map((set) => set.exerciseId === exerciseId && !set.completed ? { ...set, reps } : set) });
     this.persist();
@@ -198,10 +218,47 @@ export class WorkoutStore {
     return true;
   }
 
+  saveProgram(name: string, routineIds: string[]): boolean {
+    if (this.frozen) return this.fail(NEWER_VERSION);
+    if (this.activeWorkout()?.programStep) return this.fail('Terminá o descartá la sesión del programa antes de cambiarlo.');
+    const p = validateProgram({id:this.id('program'),name,routineIds,position:0,paused:false},this.routines());
+    if (!p) return this.fail('Dale un nombre y elegí de 1 a 100 sesiones válidas.');
+    this.program.set(p); this.persist(); return true;
+  }
+
+  pauseProgram(paused: boolean): boolean {
+    if (this.frozen || !this.program()) return false;
+    this.program.update(p => p ? {...p,paused} : null); this.persist(); return true;
+  }
+
+  clearProgram(): boolean {
+    if (this.frozen) return this.fail(NEWER_VERSION);
+    if (this.activeWorkout()?.programStep) return this.fail('Terminá o descartá la sesión del programa antes de quitarlo.');
+    this.program.set(null); this.persist(); return true;
+  }
+
+  startProgramWorkout(): boolean {
+    const p = this.program(), routine = this.nextProgramRoutine();
+    if (this.frozen) return this.fail(NEWER_VERSION);
+    if (!p || !routine) return this.fail('No hay una sesión pendiente en el programa activo.');
+    if (this.activeWorkout()) return this.fail('Ya tenés una sesión en curso.');
+    this.activeWorkout.set({...buildWorkout(routine,this.id('workout'),undefined,this.history()),programStep:{programId:p.id,position:p.position}});
+    this.persist(); return true;
+  }
+
   updateSet(index: number, reps: number, weight: number): boolean {
     const workout = this.activeWorkout();
-    if (!workout || !Number.isInteger(index) || !workout.sets[index] || !validSetValues(reps, weight)) return this.fail('Ingresá repeticiones enteras de 1 a 999 y un peso entre 0 y 2000 kg.');
+    if (!workout || !Number.isInteger(index) || !workout.sets[index] || workout.sets[index].durationSeconds !== undefined || !validSetValues(reps, weight)) return this.fail('Ingresá repeticiones enteras de 1 a 999 y un peso entre 0 y 2000 kg.');
     this.activeWorkout.set({ ...workout, sets: workout.sets.map((set, position) => position === index ? { ...set, reps, weight } : set) });
+    this.persist();
+    return true;
+  }
+
+  updateDuration(index: number, seconds: number): boolean {
+    const workout = this.activeWorkout();
+    if (!workout || !Number.isInteger(index) || workout.sets[index]?.durationSeconds === undefined
+      || !Number.isInteger(seconds) || seconds < 1 || seconds > 36000) return this.fail('Ingresá una duración entre 1 segundo y 600 minutos.');
+    this.activeWorkout.set({ ...workout, sets: workout.sets.map((set, position) => position === index ? { ...set, durationSeconds: seconds } : set) });
     this.persist();
     return true;
   }
@@ -242,6 +299,7 @@ export class WorkoutStore {
     const added: WorkoutSet = {
       exerciseId: last.set.exerciseId, exerciseName: last.set.exerciseName, setNumber: ofExercise.length + 1,
       reps: last.set.reps, weight: last.set.weight, completed: false,
+      ...(last.set.durationSeconds === undefined ? {} : { durationSeconds: last.set.durationSeconds }),
     };
     const sets = [...workout.sets.slice(0, last.index + 1), added, ...workout.sets.slice(last.index + 1)];
     this.activeWorkout.set({ ...workout, sets });
@@ -326,6 +384,7 @@ export class WorkoutStore {
       return null;
     }
     this.history.update((entries) => [completed, ...entries]);
+    this.program.set(advanceProgram(this.program(),completed));
     this.activeWorkout.set(null);
     this.persist();
     return completed;
@@ -408,8 +467,9 @@ export class WorkoutStore {
 
   private state(): FitAppState {
     return {
-      version: 4, profile: this.profile(), routines: this.routines(), history: this.history(),
+      version: 7, profile: this.profile(), routines: this.routines(), history: this.history(),
       schedule: this.schedule(), weeklyPlan: this.weeklyPlan(), weights: this.weights(), activeWorkout: this.activeWorkout(),
+      favoriteExerciseIds: this.favoriteExerciseIds(), program: this.program(),
     };
   }
 
@@ -421,6 +481,8 @@ export class WorkoutStore {
     this.weeklyPlan.set(state.weeklyPlan);
     this.weights.set(state.weights);
     this.activeWorkout.set(state.activeWorkout);
+    this.favoriteExerciseIds.set(state.favoriteExerciseIds);
+    this.program.set(state.program);
   }
 
   /** notify = a user change: it is marked pending for sync in the same write. */

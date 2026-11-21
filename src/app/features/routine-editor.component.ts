@@ -11,7 +11,12 @@ import {
 import { WorkoutStore } from '../core/workout-store';
 import { estimateRoutineMinutes } from '../core/workout-utils';
 import { ExerciseThumbComponent } from './exercise-thumb.component';
+import { ExerciseFavoriteComponent } from './exercise-favorite.component';
+import { MOVEMENT_LABELS } from '../core/movements';
+import { replaceRoutineExercise, canUndoRoutineReplacement, undoRoutineReplacement, type RoutineReplacementUndo } from '../core/routine-replacement';
 import { MuscleMapComponent } from './muscle-map.component';
+import { AiRoutineComponent } from './ai-routine.component';
+import { BRAND } from '../brands/brand.token';
 
 /** Same bound as validateRoutine in workout-utils: generous, not a product limit. */
 const MAX_EXERCISES = 50;
@@ -19,9 +24,9 @@ const MAX_EXERCISES = 50;
 @Component({
   selector: 'app-routine-editor',
   standalone: true,
-  imports: [FormsModule, ExerciseThumbComponent, MuscleMapComponent],
+  imports: [FormsModule, ExerciseThumbComponent, ExerciseFavoriteComponent, MuscleMapComponent, AiRoutineComponent],
   template: `
-    <section class="routine-editor" aria-labelledby="routine-editor-title">
+    <section class="routine-editor" aria-labelledby="routine-editor-title" [inert]="pickerOpen() || leaveAsk()">
       <header class="editor-header">
         <div>
           <p class="eyebrow">{{ eyebrow }}</p>
@@ -87,6 +92,7 @@ const MAX_EXERCISES = 50;
           </div>
         }
 
+        @if(builderOpen() && brand.features.aiCoach){<app-ai-routine [level]="level" [place]="place()" [minutes]="builderMinutes()" [hasEntries]="entries.length>0" (proposed)="applyAiProposal($event)" />}
         @if (entries.length || !builderOpen()) {
           <div class="exercise-heading">
             <h3 id="exercises-title" tabindex="-1">Ejercicios</h3>
@@ -127,17 +133,36 @@ const MAX_EXERCISES = 50;
                     </button>
                   </div>
                 </div>
-                <div class="exercise-numbers" [class.with-weights]="showWeights()">
+                @if (exerciseById(entry.exerciseId)?.tracking !== 'duration') {
+                  <label class="tracking-field">Registrar por
+                    <select [name]="'tracking-' + i" [ngModel]="entry.durationSeconds === undefined ? 'reps' : 'duration'" (ngModelChange)="setTracking(entry, $event)">
+                      <option value="reps">Repeticiones</option><option value="duration">Tiempo</option>
+                    </select>
+                  </label>
+                }
+                <div class="exercise-numbers" [class.with-weights]="showWeights() && entry.durationSeconds === undefined">
                   <label class="field"><span>Series</span><input type="number" [name]="'sets-' + i" [(ngModel)]="entry.sets" min="1" max="30" step="1" required inputmode="numeric" [attr.aria-invalid]="attempted && !integerInRange(entry.sets, 1, 30)"></label>
-                  <label class="field"><span>Reps</span><input type="number" [name]="'reps-' + i" [(ngModel)]="entry.reps" min="1" max="999" step="1" required inputmode="numeric" [attr.aria-invalid]="attempted && !integerInRange(entry.reps, 1, 999)"></label>
-                  @if (showWeights()) {
+                  @if (entry.durationSeconds !== undefined) {
+                    <label class="field"><span>Tiempo ({{ durationUnit(entry) === 60 ? 'min' : 's' }})</span><input type="number" [name]="'duration-' + i" [ngModel]="entry.durationSeconds / durationUnit(entry)" (ngModelChange)="setDuration(entry, $event)" min="0.01" [max]="36000 / durationUnit(entry)" step="any" required inputmode="decimal" [attr.aria-invalid]="attempted && !integerInRange(entry.durationSeconds, 1, 36000)"></label>
+                  } @else {
+                    <label class="field"><span>Reps</span><input type="number" [name]="'reps-' + i" [(ngModel)]="entry.reps" min="1" max="999" step="1" required inputmode="numeric" [attr.aria-invalid]="attempted && !integerInRange(entry.reps, 1, 999)"></label>
+                  }
+                  @if (showWeights() && entry.durationSeconds === undefined) {
                     <label class="field"><span>Kg</span><input class="weight-input" type="number" [name]="'weight-' + i" [(ngModel)]="entry.weight" min="0" max="2000" step="0.5" required inputmode="decimal" [attr.aria-invalid]="attempted && !numberInRange(entry.weight, 0, 2000)"></label>
                   }
                   <label class="field"><span>Descanso (s)</span><input type="number" [name]="'rest-' + i" [(ngModel)]="entry.restSeconds" min="0" max="3600" step="5" required inputmode="numeric" [attr.aria-invalid]="attempted && !integerInRange(entry.restSeconds, 0, 3600)"></label>
                 </div>
                 @if (attempted && !validEntry(entry)) {
-                  <p class="row-error" role="alert">Revisá los valores: 1–30 series, 1–999 repeticiones, 0–2.000 kg y hasta 3.600 s de descanso.</p>
+                  <p class="row-error" role="alert">Revisá los valores: 1–30 series, {{ entry.durationSeconds === undefined ? '1–999 repeticiones y 0–2.000 kg' : '1 segundo a 600 minutos por serie' }}, y hasta 3.600 s de descanso.</p>
                 }
+                <div class="row-actions">
+                  <button type="button" class="text-button" [attr.data-replace-id]="entry.exerciseId" [attr.aria-label]="'Cambiar ' + exerciseName(entry.exerciseId)" aria-haspopup="dialog" (click)="openReplacement(entry.exerciseId)">Cambiar ejercicio</button>
+                  @if (replacementUndo; as undo) {
+                    @if (undo.after.exerciseId === entry.exerciseId && canUndoReplacement()) {
+                      <button type="button" class="text-button" (click)="undoReplacement()">Volver a {{ exerciseName(undo.before.exerciseId) }}</button>
+                    }
+                  }
+                </div>
               </fieldset>
             </li>
           }
@@ -219,21 +244,25 @@ const MAX_EXERCISES = 50;
       <div class="picker-overlay" (click)="closePicker()" aria-hidden="true"></div>
       <div class="picker" role="dialog" aria-modal="true" aria-labelledby="picker-title" (keydown.escape)="closePicker()">
         <header class="picker-header">
-          <h3 id="picker-title">Elegí ejercicios</h3>
+          <h3 id="picker-title">{{ replacingId() ? 'Elegí un reemplazo' : 'Elegí ejercicios' }}</h3>
           <button type="button" class="tool-button" (click)="closePicker()" aria-label="Cerrar">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg>
           </button>
         </header>
+        @if (replacingId(); as fromId) {
+          <p class="replacement-context">Para {{ exerciseName(fromId) }}. Mismo movimiento: {{ replacementMovement() }}. Se conservan series, repeticiones o tiempo y descanso; la carga del nuevo ejercicio empieza en 0.</p>
+        }
         <label class="picker-search">
           <span class="sr-only">Buscar ejercicio</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m21 21-5-5M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0"/></svg>
           <input id="picker-search-input" type="search" [value]="pickerSearch()" (input)="pickerSearch.set($any($event.target).value)" placeholder="Buscá por nombre, músculo o equipo" autocomplete="off">
         </label>
-        <div class="picker-chips" role="group" aria-label="Filtrar por grupo muscular">
+        @if (!replacingId()) { <div class="picker-chips" role="group" aria-label="Filtrar por grupo muscular">
           @for (option of muscles(); track option) {
             <button type="button" class="chip" [class.is-active]="pickerMuscle() === option" [attr.aria-pressed]="pickerMuscle() === option" (click)="pickerMuscle.set(option)">{{ option }}</button>
           }
-        </div>
+        </div> }
+        <label class="picker-place"><input type="checkbox" [checked]="pickerFavoritesOnly()" (change)="pickerFavoritesOnly.set($any($event.target).checked)"><span>Solo favoritos ({{ store.favoriteExerciseIds().length }})</span></label>
         @if (place() !== 'gimnasio') {
           <label class="picker-place">
             <input type="checkbox" [checked]="pickerPlaceOnly()" (change)="pickerPlaceOnly.set($any($event.target).checked)">
@@ -242,25 +271,27 @@ const MAX_EXERCISES = 50;
         }
         <ul class="picker-list">
           @for (exercise of pickerExercises(); track exercise.id) {
-            <li>
+            <li class="picker-exercise-row">
               <button type="button" class="picker-item" [class.is-picked]="picked().has(exercise.id)" [class.is-used]="isUsed(exercise.id)"
-                [disabled]="isUsed(exercise.id)" [attr.aria-pressed]="picked().has(exercise.id)" (click)="togglePick(exercise.id)">
+                [disabled]="isUsed(exercise.id)" [attr.aria-pressed]="replacingId() ? null : picked().has(exercise.id)" (click)="replacingId() ? chooseReplacement(exercise.id) : togglePick(exercise.id)">
                 <app-exercise-thumb [exercise]="exercise" />
                 <span class="picker-text"><strong>{{ exercise.name }}</strong><small>{{ exercise.muscle }} · {{ exercise.equipment }}{{ isUsed(exercise.id) ? ' · ya está en la rutina' : '' }}</small></span>
-                <span class="picker-check" aria-hidden="true">
+                @if (replacingId()) { <svg class="replacement-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg> }
+                @else { <span class="picker-check" aria-hidden="true">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m5 12 4 4L19 6"/></svg>
-                </span>
+                </span> }
               </button>
+              <app-exercise-favorite [exerciseId]="exercise.id" [exerciseName]="exercise.name" />
             </li>
           } @empty {
-            <li class="picker-empty">No encontramos ejercicios con esos filtros.@if (place() !== 'gimnasio' && pickerPlaceOnly()) { <span> Destildá «{{ placeFilterLabel }}» para ver todo el catálogo.</span> }</li>
+            <li class="picker-empty">{{ replacingId() ? 'No hay reemplazos del mismo movimiento con estos filtros.' : 'No encontramos ejercicios con esos filtros.' }}@if (pickerFavoritesOnly()) { <span> Desactivá «Solo favoritos» o marcá ejercicios con la estrella en la Biblioteca.</span> }@if (place() !== 'gimnasio' && pickerPlaceOnly()) { <span> Destildá «{{ placeFilterLabel }}» para ver todo el catálogo.</span> }</li>
           }
         </ul>
         <footer class="picker-footer">
           <button type="button" class="secondary-button" (click)="closePicker()">Cancelar</button>
-          <button type="button" class="primary-button" (click)="confirmPick()" [disabled]="!picked().size">
+          @if (!replacingId()) { <button type="button" class="primary-button" (click)="confirmPick()" [disabled]="!picked().size">
             {{ picked().size ? 'Agregar ' + picked().size + (picked().size === 1 ? ' ejercicio' : ' ejercicios') : 'Elegí al menos uno' }}
-          </button>
+          </button> }
         </footer>
       </div>
     }
@@ -340,7 +371,11 @@ const MAX_EXERCISES = 50;
     .picker-place{display:flex;align-items:center;gap:10px;min-height:44px;font-size:13px;line-height:1.4;color:var(--ink);cursor:pointer}
     .picker-place input{flex-shrink:0;width:20px;height:20px;min-height:0;margin:0;padding:0;accent-color:var(--strong);cursor:pointer}
     .picker-list{list-style:none;margin:0;padding:0;overflow-y:auto;display:flex;flex-direction:column;gap:6px;flex:1;min-height:120px}
-    .picker-item{display:flex;align-items:center;gap:12px;width:100%;min-height:60px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);text-align:left}
+    .row-actions{display:flex;flex-wrap:wrap;gap:0 20px;margin-top:6px}.row-actions .text-button{white-space:normal;text-align:left}
+    .replacement-context{margin:0;font-size:13px;line-height:1.5;color:var(--ink-2)}
+    .replacement-chevron{width:20px;height:20px;flex-shrink:0;color:var(--ink-2)}
+    .picker-exercise-row{display:flex;align-items:center;gap:4px;min-width:0}
+    .picker-item{display:flex;align-items:center;gap:12px;flex:1;min-width:0;width:100%;min-height:60px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);text-align:left}
     .picker-item:hover:not(:disabled){border-color:var(--ink)}.picker-item.is-picked{border-color:var(--strong);background:var(--bg-tint)}
     .picker-item app-exercise-thumb{--thumb-radius:10px}
     .picker-text{flex:1;min-width:0;display:flex;flex-direction:column}.picker-text strong{font-size:15px}.picker-text small{font-size:12px;color:var(--ink-2)}
@@ -362,6 +397,7 @@ const MAX_EXERCISES = 50;
   `],
 })
 export class RoutineEditorComponent implements OnChanges, OnInit, OnDestroy {
+  readonly brand=inject(BRAND);
   @Input() routine: Routine | null = null;
   @Output() readonly saved = new EventEmitter<void>();
   @Output() readonly cancelled = new EventEmitter<void>();
@@ -376,6 +412,7 @@ export class RoutineEditorComponent implements OnChanges, OnInit, OnDestroy {
   /** Se está preguntando si salir sin guardar. */
   readonly leaveAsk = signal(false);
   private leaveFocus: HTMLElement | null = null;
+  private pendingNavigation: (() => void) | null = null;
   readonly categories: RoutineCategory[] = ['Fuerza', 'Movilidad', 'Resistencia'];
   readonly levels: FitnessLevel[] = ['Principiante', 'Intermedio', 'Avanzado'];
   name = '';
@@ -428,6 +465,10 @@ export class RoutineEditorComponent implements OnChanges, OnInit, OnDestroy {
   private ready = false;
 
   readonly pickerOpen = signal(false);
+  readonly replacingId = signal<string | null>(null);
+  readonly pickerFavoritesOnly = signal(false);
+  replacementUndo: RoutineReplacementUndo | null = null;
+  private pickerTrigger: HTMLElement | null = null;
   readonly pickerSearch = signal('');
   readonly pickerMuscle = signal('Todos');
   /** En casa, el selector arranca mostrando solo lo que se puede hacer con ese equipo. */
@@ -438,7 +479,10 @@ export class RoutineEditorComponent implements OnChanges, OnInit, OnDestroy {
     const query = this.pickerSearch().trim().toLocaleLowerCase('es');
     const muscle = this.pickerMuscle();
     const place = this.pickerPlaceOnly() ? this.place() : 'gimnasio';
+    const source = this.exerciseById(this.replacingId() ?? '');
     return this.store.exercises().filter((exercise) => (muscle === 'Todos' || exercise.muscle === muscle)
+      && (!source || (exercise.id !== source.id && exercise.movement === source.movement))
+      && (!this.pickerFavoritesOnly() || this.store.isFavorite(exercise.id))
       && availableAt(place, exercise)
       && `${exercise.name} ${exercise.muscle} ${exercise.equipment}`.toLocaleLowerCase('es').includes(query));
   });
@@ -460,6 +504,8 @@ export class RoutineEditorComponent implements OnChanges, OnInit, OnDestroy {
     this.category = this.routine?.category ?? 'Fuerza';
     this.level = this.routine?.level ?? profile.level;
     this.entries = this.routine?.exercises.map((entry) => ({ ...entry })) ?? [];
+    this.replacementUndo = null;
+    this.replacingId.set(null);
     this.place.set(profile.place);
     this.builderOpen.set(!this.routine);
     this.proposalNote.set(false);
@@ -516,11 +562,17 @@ export class RoutineEditorComponent implements OnChanges, OnInit, OnDestroy {
 
   /** "Cancelar" y "Volver a mis rutinas": con cambios sin guardar, pregunta. */
   requestLeave(): void {
+    this.requestNavigation(() => this.cancelled.emit());
+  }
+
+  requestNavigation(then: () => void): void {
+    this.pendingNavigation = then;
     if (this.dirty) this.askLeave();
-    else this.leave(() => this.cancelled.emit());
+    else { this.pendingNavigation = null; this.leave(then); }
   }
 
   stay(): void {
+    this.pendingNavigation = null;
     this.leaveAsk.set(false);
     const element = this.leaveFocus;
     this.leaveFocus = null;
@@ -529,7 +581,10 @@ export class RoutineEditorComponent implements OnChanges, OnInit, OnDestroy {
 
   confirmLeave(): void {
     this.leaveAsk.set(false);
-    this.leave(() => this.cancelled.emit());
+    const then = this.pendingNavigation ?? (() => this.cancelled.emit());
+    this.pendingNavigation = null;
+    this.initial = this.formState();
+    this.leave(then);
   }
 
   /** Sale del editor: primero saca su entrada del historial y recién después navega. */
@@ -629,6 +684,7 @@ export class RoutineEditorComponent implements OnChanges, OnInit, OnDestroy {
   applyProposal(): void {
     const proposal = this.proposal();
     if (!proposal.exercises.length) return;
+    this.replacementUndo = null;
     this.undoEntries = this.entries.length ? this.entries.map((entry) => ({ ...entry })) : null;
     this.undoRest = this.undoEntries ? { name: this.name, suggestedName: this.suggestedName, note: this.proposalNote(), level: this.proposalLevel } : null;
     this.entries = proposal.exercises.map((entry) => ({ ...entry }));
@@ -642,9 +698,21 @@ export class RoutineEditorComponent implements OnChanges, OnInit, OnDestroy {
     setTimeout(() => document.getElementById('exercises-title')?.focus());
   }
 
+  applyAiProposal(routine:Routine):void {
+    this.replacementUndo=null;
+    this.undoEntries=this.entries.length?this.entries.map(e=>({...e})):null;
+    this.undoRest=this.undoEntries?{name:this.name,suggestedName:this.suggestedName,note:this.proposalNote(),level:this.proposalLevel}:null;
+    this.entries=routine.exercises.map(e=>({...e}));
+    if(!this.name.trim()||this.name===this.suggestedName)this.name=this.suggestedName=routine.name;
+    this.builderOpen.set(false);this.proposalNote.set(true);this.proposalUsed=true;this.proposalLevel=this.level;
+    this.announcement.set('Propuesta de IA aplicada al borrador. Revisá los ejercicios antes de guardar.');
+    setTimeout(()=>document.getElementById('exercises-title')?.focus());
+  }
+
   /** Vuelve a la lista que había antes del reemplazo, con su nombre y su aviso: la pantalla queda como estaba. */
   undoProposal(): void {
     if (!this.undoEntries) return;
+    this.replacementUndo = null;
     this.entries = this.undoEntries;
     if (this.undoRest) {
       this.name = this.undoRest.name;
@@ -679,7 +747,13 @@ export class RoutineEditorComponent implements OnChanges, OnInit, OnDestroy {
       && new Set(this.entries.map((entry) => entry.exerciseId)).size === this.entries.length;
   }
 
-  private exerciseById(id: string): Exercise | undefined { return this.store.exercises().find((exercise) => exercise.id === id); }
+  exerciseById(id: string): Exercise | undefined { return this.store.exercises().find((exercise) => exercise.id === id); }
+  durationUnit(entry: RoutineExercise): number { return this.exerciseById(entry.exerciseId)?.tracking === 'duration' ? 60 : 1; }
+  setDuration(entry: RoutineExercise, value: number | null): void { entry.durationSeconds = value === null ? Number.NaN : Math.round(value * this.durationUnit(entry)); }
+  setTracking(entry: RoutineExercise, mode: string): void {
+    if (mode === 'duration') { entry.durationSeconds = 30; entry.reps = entry.weight = 0; }
+    else { delete entry.durationSeconds; entry.reps = 10; entry.weight = 0; }
+  }
   exerciseName(id: string): string { return this.exerciseById(id)?.name ?? id; }
   /** Grupo, equipo y, si hace falta, qué representa el número de Kg ("kg por mancuerna"). */
   exerciseMeta(id: string): string {
@@ -700,8 +774,10 @@ export class RoutineEditorComponent implements OnChanges, OnInit, OnDestroy {
   /** Same ranges as validateRoutine. */
   validEntry(entry: RoutineExercise): boolean {
     return !!this.exerciseById(entry.exerciseId)
-      && this.integerInRange(entry.sets, 1, 30) && this.integerInRange(entry.reps, 1, 999)
-      && this.numberInRange(entry.weight, 0, 2000) && this.integerInRange(entry.restSeconds, 0, 3600);
+      && this.integerInRange(entry.sets, 1, 30)
+      && (entry.durationSeconds === undefined ? this.integerInRange(entry.reps, 1, 999) && this.numberInRange(entry.weight, 0, 2000)
+        : this.integerInRange(entry.durationSeconds, 1, 36000) && entry.reps === 0 && entry.weight === 0)
+      && this.integerInRange(entry.restSeconds, 0, 3600);
   }
 
   isUsed(exerciseId: string): boolean {
@@ -709,6 +785,58 @@ export class RoutineEditorComponent implements OnChanges, OnInit, OnDestroy {
   }
 
   openPicker(): void {
+    this.replacingId.set(null);
+    this.pickerTrigger = document.querySelector<HTMLElement>('app-routine-editor .add-button');
+    this.showPicker();
+  }
+
+  openReplacement(fromId: string): void {
+    if (!this.isUsed(fromId)) return;
+    this.replacingId.set(fromId);
+    this.pickerMuscle.set('Todos');
+    this.pickerFavoritesOnly.set(false);
+    this.pickerTrigger = this.replacementButton(fromId);
+    this.showPicker();
+  }
+
+  replacementMovement(): string {
+    const movement = this.exerciseById(this.replacingId() ?? '')?.movement;
+    return movement ? MOVEMENT_LABELS[movement].toLocaleLowerCase('es') : '';
+  }
+
+  private replacementButton(id: string): HTMLElement | null {
+    return Array.from(document.querySelectorAll<HTMLElement>('app-routine-editor [data-replace-id]')).find(button => button.dataset['replaceId'] === id) ?? null;
+  }
+
+  chooseReplacement(toId: string): void {
+    const fromId = this.replacingId();
+    if (!fromId) return;
+    const next = replaceRoutineExercise(this.entries, fromId, toId, this.store.exercises());
+    if (!next) return;
+    this.replacementUndo = { before: { ...this.entries.find(entry => entry.exerciseId === fromId)! }, after: { ...next.find(entry => entry.exerciseId === toId)! } };
+    this.entries = next;
+    this.listEdited();
+    this.announcement.set(`Cambiaste ${this.exerciseName(fromId)} por ${this.exerciseName(toId)}. La carga empieza en 0. Podés deshacer el cambio.`);
+    this.closePicker(false);
+    setTimeout(() => this.replacementButton(toId)?.focus());
+  }
+
+  canUndoReplacement(): boolean {
+    return !!this.replacementUndo && canUndoRoutineReplacement(this.entries, this.replacementUndo);
+  }
+
+  undoReplacement(): void {
+    if (!this.replacementUndo) return;
+    const next = undoRoutineReplacement(this.entries, this.replacementUndo);
+    if (!next) return;
+    const id = this.replacementUndo.before.exerciseId;
+    this.entries = next;
+    this.replacementUndo = null;
+    this.announcement.set(`Volvió ${this.exerciseName(id)} con sus valores anteriores.`);
+    setTimeout(() => this.replacementButton(id)?.focus());
+  }
+
+  private showPicker(): void {
     this.picked.set(new Set());
     this.pickerSearch.set('');
     this.pickerOpen.set(true);
@@ -723,7 +851,10 @@ export class RoutineEditorComponent implements OnChanges, OnInit, OnDestroy {
     void layer?.close();
     if (!this.pickerOpen()) return;
     this.pickerOpen.set(false);
-    if (refocus) setTimeout(() => document.querySelector<HTMLElement>('app-routine-editor .add-button')?.focus());
+    this.replacingId.set(null);
+    const trigger = this.pickerTrigger;
+    this.pickerTrigger = null;
+    if (refocus) setTimeout(() => trigger?.isConnected && trigger.focus());
   }
 
   togglePick(id: string): void {
@@ -739,7 +870,8 @@ export class RoutineEditorComponent implements OnChanges, OnInit, OnDestroy {
     const added = this.store.exercises().filter((exercise) => this.picked().has(exercise.id) && !this.isUsed(exercise.id));
     const focus = this.store.profile().focus;
     const firstNew = this.entries.length;
-    this.entries = [...this.entries, ...added.map((exercise) => ({ exerciseId: exercise.id, ...defaultPrescription(exercise, focus, this.level), weight: 0 }))];
+    this.entries = [...this.entries, ...added.map((exercise) => ({ exerciseId: exercise.id,
+      ...(exercise.tracking === 'duration' ? { sets: 1, reps: 0, restSeconds: 0, durationSeconds: 1200 } : defaultPrescription(exercise, focus, this.level)), weight: 0 }))];
     // Eligió a mano: la propuesta deja de ocupar lugar, y ya no se puede deshacer hacia una lista anterior.
     this.builderOpen.set(false);
     this.undoEntries = null;
@@ -786,7 +918,7 @@ export class RoutineEditorComponent implements OnChanges, OnInit, OnDestroy {
       category: this.category, level: this.level, custom: true,
       exercises: this.entries.map((entry) => ({ ...entry })),
     };
-    if (this.store.saveRoutine(routine)) this.leave(() => this.saved.emit());
+    if (this.store.saveRoutine(routine)) { this.initial = this.formState(); this.leave(() => this.saved.emit()); }
     else this.saveError = this.store.actionError() ?? 'No pudimos guardar la rutina. Revisá los datos e intentá otra vez.';
   }
 }

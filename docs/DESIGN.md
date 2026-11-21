@@ -116,3 +116,23 @@ Mientras no haya imagen del movimiento, la ficha muestra qué músculos trabaja 
 ## Lenguaje y contenido
 
 Usar español rioplatense conciso: “Empezá”, “Guardá”, “Agregá una serie”. Las instrucciones de ejercicios deben ser comprensibles, sin promesas de resultados ni atribuir personalización que todavía no exista. Los registros y estadísticas deben surgir de los datos del alumno; el estado inicial no debe inventar actividad, peso ni logros.
+
+### Demostraciones integradas (20 de noviembre de 2026)
+
+Los 48 ejercicios tienen recursos originales de ImageGen, con figura gris y músculos resaltados sobre fondo claro, según el estilo aprobado. Son bucles de poses ilustradas. Se reproducen localmente en la ficha compartida, respetan movimiento reducido y ofrecen controles nativos; 47 permiten descargar y reproducir un GIF alternativo si falla WebM. El press de banca original conserva video y poster. Catálogo central: `src/app/core/exercise-media.ts`; origen y prompts: `docs/ASSETS.md`. Las miniaturas son posters estáticos y, si fallan, vuelve el mapa muscular. La galería `/exercise-demos/index.html` reúne los 48 ejercicios con búsqueda, reproducción y descarga individual o conjunta de GIF.
+
+Los ejercicios por tiempo usan segundos internamente y muestran minutos/segundos; nunca se cuentan como repeticiones ni kilos. El mapa semanal cuenta participación en series finalizadas, con valores en texto y sin porcentajes de activación.
+
+### Vista enfocada, programas e IA (20 de noviembre de 2026)
+
+La sesión permite alternar entre lista y un ejercicio a la vez. El modo enfocado muestra posición, selector directo, anterior/siguiente, series, repeticiones o tiempo, descanso y demostración. Usa las mismas series y acciones que la lista; alternar no guarda otra copia ni descarta datos. La preferencia de vista se conserva localmente. La navegación es manual para no cambiar de ejercicio al marcar una serie.
+
+En Mis rutinas se puede crear una secuencia de 1 a 100 sesiones, repetir rutinas, ordenar, pausar y retomar. Solo avanza una sesión iniciada desde el programa y guardada con al menos una serie completada. Descartar o hacer una rutina libre no avanza. Editar reinicia el recorrido y lo advierte antes de guardar. Calendario y semana tipo conservan sus prioridades y sus descansos. Estado v7, compatible con v1–v6; tabla SQL 008.
+
+El editor ofrece la propuesta con IA dentro de un detalle opcional. Presenta una vista previa y requiere aplicarla al borrador; no guarda una rutina automáticamente. El servidor puede desactivarla por configuración y marca. Gemini está conectado en FitApp con cuenta y cupo mensual; ver [COACH-IA.md](COACH-IA.md).
+
+### Favoritos y reemplazos: interacción
+
+La estrella es un botón independiente de 44 × 44 px, con nombre accesible y `aria-pressed`; marcarla no abre la ficha ni elige el ejercicio. Aparece en Biblioteca, ficha y selector. Los filtros muestran el número de favoritos y explican cómo empezar cuando la lista está vacía.
+
+En el editor, «Cambiar ejercicio» abre un selector de alternativas del mismo movimiento. La flecha indica que elegir una aplica el cambio directamente al borrador. Se conservan series, repeticiones o tiempo y descanso, pero la carga empieza en cero. «Volver a…» queda visible en la fila mientras pueda restaurarse sin pisar ediciones nuevas. El selector cierra con Cancelar, Escape o Atrás y devuelve el foco a su origen; la rutina se guarda solo al confirmarla.

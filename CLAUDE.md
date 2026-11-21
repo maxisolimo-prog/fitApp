@@ -42,7 +42,7 @@ ya está en el entorno. Procesos largos con afinidad `0xF` y prioridad `BelowNor
 | `src/app/core/sync.service.ts` | Cuenta opcional y sincronización por revisión (conflicto → el alumno elige). |
 | `api/src/` | Express: `app.ts` rutas, `auth.ts` scrypt/sesiones/límites, `state-repo.ts` SQL ↔ `FitAppState`. |
 | `api/migrations/` | SQL versionado; nunca editar uno aplicado, agregar `00N_*.sql`. |
-| `src/app/core/seed.ts` | 43 ejercicios (con músculos principales y secundarios) y 4 plantillas. Cargas en 0: nunca inventar pesos ni historial. |
+| `src/app/core/seed.ts` | 48 ejercicios (con músculos principales y secundarios) y 4 plantillas. Cargas en 0: nunca inventar pesos ni historial. |
 | `src/app/core/muscles.ts` | Lista cerrada de 16 músculos (los que el mapa puede dibujar), nombres y textos. |
 | `src/app/core/workout-utils.ts` | Funciones puras: fechas locales, volumen, validación estricta, serialización. |
 | `src/app/core/routine-builder.ts` | Rutina propuesta por reglas al crear una ("Armámela"), valores iniciales de series y descansos, y músculos que trabaja una rutina. Sin IA. Cambiar una regla exige actualizar `docs/REVISION-PROFESIONAL.md`. |
@@ -75,7 +75,7 @@ ya está en el entorno. Procesos largos con afinidad `0xF` y prioridad `BelowNor
 - **Licencias:** no descargar ni incrustar GIF/animaciones de Gym Visual u otros sin licencia. Registrar todo recurso
   nuevo en `docs/ASSETS.md`. Única excepción, decidida por el usuario: los logos de Qivox y Fitness Group en
   `public/brand-logos/`, tomados de sus webs para mostrar sus versiones; no publicarlas sin el acuerdo de cada gimnasio.
-- Fuera de alcance (no simular como si existiera): Google Login, recuperación de contraseña, pagos, IA, portal de entrenador.
+- Fuera de alcance (no simular como si existiera): Google Login, recuperación de contraseña, pagos y portal de entrenador. El coach con Gemini es opcional, con clave en servidor y cupo mensual; ver `docs/COACH-IA.md`.
 
 ## Agentes del proyecto (`.claude/agents/`)
 

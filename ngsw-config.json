@@ -5,6 +5,7 @@
   "assetGroups": [
     { "name": "app", "installMode": "prefetch", "resources": { "files": ["/favicon.ico", "/index.html", "/*.css", "/*.js", "/manifest.webmanifest", "/manifest.*.webmanifest", "/icons/**", "/fonts/**"] } },
     { "name": "images", "installMode": "prefetch", "resources": { "files": ["/images/**"] } },
+    { "name": "exercise-demos", "installMode": "lazy", "updateMode": "lazy", "resources": { "files": ["/exercise-demos/*.webm", "/exercise-demos/*.gif", "/exercise-demos/*.jpg", "/exercise-demos/*.webp"] } },
     { "name": "brand-assets", "installMode": "lazy", "updateMode": "prefetch", "resources": { "files": ["/brand-fonts/*.woff2", "/brand-logos/**"] } }
   ]
 }

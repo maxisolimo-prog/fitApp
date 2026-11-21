@@ -1,0 +1,114 @@
+{
+  "date": "2026-11-20",
+  "generator": "ImageGen integrado en Codex",
+  "entries": [
+    {
+      "id": "treadmill",
+      "name": "Cinta de correr",
+      "source": "exec-f69986ba-8e58-4549-a703-41c262d66fbd.png",
+      "prompt": "Use case: scientific-educational. Create an ORIGINAL six-frame exercise animation sprite sheet for FitApp. Exactly 3 columns and 2 rows, SIX equally sized square cells, in a landscape image. Read frames left to right then next row. Uniform white background, no text, labels, arrows, borders, numbers or logos. Each cell shows the same full adult athletic male anatomy figure, gray and silver clearly modeled muscles and subtle fibers, opaque dark shorts and trainers, selected working muscles highlighted muted terracotta red. Clinical realistic anatomical illustration with soft shading and smooth surfaces matching a premium exercise atlas, no low-poly or robot style. Same person, fixed camera, same scale, same lighting in all cells. At least 10% margin inside every cell. Whole body and working equipment visible, all equipment stationary relative to cell boundaries across frames. Accurate hands and joints, realistic range of motion. These frames will play consecutively, so change ONLY body joints required by the exercise. Every cell must show a visibly different, successive phase. No contact or limb changes that are anatomically impossible. Brisk WALKING on a motorized treadmill, moderate pace. Full machine with black moving belt, gray rails and console. Fixed three-quarter side view facing left. Arms swing naturally and hands free. Torso upright. Highlight quadriceps, glutes and calves softly. SIX phases forming ONE complete WALKING gait cycle: 1 left heel forward contact and right foot trailing toe-off; 2 left midstance and right knee swinging forward; 3 right heel about to contact with left heel rising; 4 right heel forward contact and left foot trailing toe-off; 5 right midstance and left knee swinging forward; 6 left heel about to contact with right heel rising. Feet always at treadmill deck height when bearing weight. Exactly six illustrations.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "forward",
+      "crop": null,
+      "files": {
+        "gif": "treadmill.gif",
+        "video": "treadmill.webm",
+        "poster": "treadmill.jpg"
+      },
+      "frames": 6,
+      "seconds": 1.8
+    },
+    {
+      "id": "incline-press",
+      "name": "Press inclinado con mancuernas",
+      "source": "exec-038d9db7-418c-4fca-8924-7525316fd4e5.png",
+      "prompt": "Use case: scientific-educational. Create an ORIGINAL six-frame exercise animation sprite sheet for FitApp. Exactly 3 columns and 2 rows, SIX equally sized square cells, in a landscape image. Read frames left to right then next row. Uniform white background, no text, labels, arrows, borders, numbers or logos. Each cell shows the same full adult athletic male anatomy figure, gray and silver clearly modeled muscles and subtle fibers, opaque dark shorts and trainers, selected working muscles highlighted muted terracotta red. Clinical realistic anatomical illustration with soft shading and smooth surfaces matching a premium exercise atlas, no low-poly or robot style. Same person, fixed camera, same scale, same lighting in all cells. At least 10% margin inside every cell. Whole body and working equipment visible, all equipment stationary relative to cell boundaries across frames. Accurate hands and joints, realistic range of motion. These frames will play consecutively, so change ONLY body joints required by the exercise. Every cell must show a visibly different, successive phase. No contact or limb changes that are anatomically impossible. Incline DUMBBELL BENCH PRESS, bench backrest fixed at 45 degrees. Black padded bench, two identical black dumbbells. Fixed three-quarter front-side view, feet toward bottom right, head toward upper left, so both arms are visible. Upper pectorals highlighted terracotta, deltoids and triceps lightly rose. Back and head remain supported by the incline, hips on seat, feet planted. Six sequential frames depict only the UPWARD phase from bottom to top: 1 dumbbells just outside upper chest, elbows bent around 90 degrees and forearms vertical; 2 hands 15% raised; 3 35% raised; 4 60% raised; 5 85% raised; 6 arms nearly extended above upper chest, dumbbells close but not colliding. Press direction toward ceiling, not forward along slope of bench. Shoulders stable, neutral wrists, realistic identical body and bench in each cell.",
+      "editPrompt": "Correct this original six-frame incline dumbbell bench press sprite sheet. Keep the same realistic anatomy style, figure, bench at 45 degrees, white background, red upper pecs, 3 columns by 2 rows. CRITICAL: show an actual full press range of motion from dumbbells at chest to FULL ARM EXTENSION. Change all six cell framing to leave ample overhead whitespace, scale the figure down to 75% size so extended arms and dumbbells fit. First frame elbows bent 90 degrees. Second elbows 110 degrees. Third elbows 130 degrees. Fourth elbows 150 degrees. Fifth elbows 165 degrees. Sixth elbows 175 degrees, arms STRAIGHT vertical over the shoulders, dumbbells far above the head. The arms at the final pose must have visibly straight nearly collinear upper arms and forearms. Keep back and head supported on bench, chest at same angle, feet and hips in exact same position. Fixed camera and scale between all six cells, one phase per cell. Full figure plus overhead weights visible. No letters, borders or labels. Anatomy must be identical except shoulder and elbow joints.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "crop": [
+        85,
+        75,
+        340,
+        420
+      ],
+      "files": {
+        "gif": "incline-press.gif",
+        "video": "incline-press.webm",
+        "poster": "incline-press.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "close-grip-lat-pulldown",
+      "name": "Jalón al pecho con agarre cerrado",
+      "source": "exec-999583b0-b727-41cd-bbde-3d20758b3743.png",
+      "prompt": "Use case: scientific-educational. Create an ORIGINAL six-frame exercise animation sprite sheet for FitApp. Exactly 3 columns and 2 rows, SIX equally sized square cells, in a landscape image. Read frames left to right then next row. Uniform white background, no text, labels, arrows, borders, numbers or logos. Each cell shows the same full adult athletic male anatomy figure, gray and silver clearly modeled muscles and subtle fibers, opaque dark shorts and trainers, selected working muscles highlighted muted terracotta red. Clinical realistic anatomical illustration with soft shading and smooth surfaces matching a premium exercise atlas, no low-poly or robot style. Same person, fixed camera, same scale, same lighting in all cells. At least 10% margin inside every cell. Whole body and working equipment visible, all equipment stationary relative to cell boundaries across frames. Accurate hands and joints, realistic range of motion. These frames will play consecutively, so change ONLY body joints required by the exercise. Every cell must show a visibly different, successive phase. No contact or limb changes that are anatomically impossible. Seated CLOSE-GRIP NEUTRAL-GRIP LAT PULLDOWN, one compact V-shaped handle held by both hands, palms facing each other. Tall simple gray cable machine, single cable vertically from the V handle to the overhead pulley, black seat and thigh pads. Fixed three-quarter REAR-SIDE view shows lats, right profile, arms and handle, entire working apparatus inside every cell. Highlight latissimus dorsi on back terracotta, biceps lightly rose. Thighs under pad, feet on ground, hips stay on seat, torso only slightly leaned back and stationary. SIX consecutive downward pulling positions: 1 arms overhead nearly extended; 2 handle descended 15%; 3 35%; 4 60%; 5 85%; 6 handle at upper front chest, elbows down alongside torso, forearms toward handle. Handle stays in FRONT of face and chest, not behind neck. Cable taut in every frame. Emphasize the difference between first frame straight overhead arms and final frame deeply bent arms, handle against upper chest. Keep identical camera.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "crop": null,
+      "files": {
+        "gif": "close-grip-lat-pulldown.gif",
+        "video": "close-grip-lat-pulldown.webm",
+        "poster": "close-grip-lat-pulldown.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "seated-cable-fly",
+      "name": "Aperturas de pecho sentado en poleas",
+      "source": "exec-d6ac8cc9-777d-4ee6-a94b-cb7f71943bba.png",
+      "prompt": "Use case: scientific-educational. Create an ORIGINAL six-frame exercise animation sprite sheet for FitApp. Exactly 3 columns and 2 rows, SIX equally sized square cells, in a landscape image. Read frames left to right then next row. Uniform white background, no text, labels, arrows, borders, numbers or logos. Each cell shows the same full adult athletic male anatomy figure, gray and silver clearly modeled muscles and subtle fibers, opaque dark shorts and trainers, selected working muscles highlighted muted terracotta red. Clinical realistic anatomical illustration with soft shading and smooth surfaces matching a premium exercise atlas, no low-poly or robot style. Same person, fixed camera, same scale, same lighting in all cells. At least 10% margin inside every cell. Whole body and working equipment visible, all equipment stationary relative to cell boundaries across frames. Accurate hands and joints, realistic range of motion. These frames will play consecutively, so change ONLY body joints required by the exercise. Every cell must show a visibly different, successive phase. No contact or limb changes that are anatomically impossible. Seated CHEST CABLE FLY on upright black bench between TWO gray adjustable cable towers. Each hand holds its own D-shaped handle attached to its own taut cable from a pulley slightly behind shoulder height. Fixed slightly elevated front three-quarter view showing both arms and both cables. Pectorals highlighted terracotta, front deltoids lightly rose. Head neutral, torso stable against backrest, feet planted. Six consecutive closing phase frames: 1 arms open to sides at chest height, elbows softly bent about 20 degrees; 2 hands start arc inward; 3 halfway inward; 4 hands 70% toward center; 5 hands nearly together; 6 handles close together in front of sternum, arms remain softly curved and elbow angle stays constant. This is a fly arc with nearly fixed elbow angle, not a press. Never cross cables through body, maintain tower positions and one handle in each hand.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "crop": null,
+      "files": {
+        "gif": "seated-cable-fly.gif",
+        "video": "seated-cable-fly.webm",
+        "poster": "seated-cable-fly.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "parallel-bar-dip",
+      "name": "Fondos de tríceps en paralelas",
+      "source": "exec-0dad9038-502a-4e98-a164-dea769c1a969.png",
+      "prompt": "Use case: scientific-educational. Create an ORIGINAL six-frame exercise animation sprite sheet for FitApp. Exactly 3 columns and 2 rows, SIX equally sized square cells, in a landscape image. Read frames left to right then next row. Uniform white background, no text, labels, arrows, borders, numbers or logos. Each cell shows the same full adult athletic male anatomy figure, gray and silver clearly modeled muscles and subtle fibers, opaque dark shorts and trainers, selected working muscles highlighted muted terracotta red. Clinical realistic anatomical illustration with soft shading and smooth surfaces matching a premium exercise atlas, no low-poly or robot style. Same person, fixed camera, same scale, same lighting in all cells. At least 10% margin inside every cell. Whole body and working equipment visible, all equipment stationary relative to cell boundaries across frames. Accurate hands and joints, realistic range of motion. These frames will play consecutively, so change ONLY body joints required by the exercise. Every cell must show a visibly different, successive phase. No contact or limb changes that are anatomically impossible. Bodyweight TRICEPS DIP on two sturdy PARALLEL BARS in a simple open steel frame, hands on bars beside hips. Fixed three-quarter side view clearly reveals both arms and torso. Highlight triceps on back of upper arms terracotta, chest and front deltoids subtly rose. Legs bent behind, feet together suspended clear of floor. Near upright torso with modest forward lean. SIX consecutive lowering phase frames: 1 top support, arms almost straight and shoulders down; 2 elbows flexed 15 degrees; 3 30 degrees; 4 50 degrees; 5 70 degrees; 6 elbows around 90 degrees, shoulders near elbow height. Hands stay fixed on stationary bars through all six cells, body lowers. Avoid excessive deep shoulder extension. Bar frame and hand positions registered identically across all cells. No bench.",
+      "columns": 3,
+      "rows": 2,
+      "cycle": "reverse",
+      "crop": null,
+      "files": {
+        "gif": "parallel-bar-dip.gif",
+        "video": "parallel-bar-dip.webm",
+        "poster": "parallel-bar-dip.jpg"
+      },
+      "frames": 10,
+      "seconds": 3.6
+    },
+    {
+      "id": "stair-climber",
+      "name": "Escaladora",
+      "source": "exec-71c759ac-e2d1-4111-b236-cff6440eb5ea.png",
+      "prompt": "Original anatomical exercise animation sprite sheet showing an athletic adult man using a rotating stair-climber, exactly FOUR images arranged in 2 columns by 2 rows. All four images must be viewed DIRECTLY FROM BEHIND, perfectly centered symmetrical rear view with both legs equally visible. The person's back faces the viewer, his face is invisible. Fixed machine with two broad side rails and four rectangular stair treads, black shorts, dark shoes. Realistic detailed silver-gray human anatomy with muted red glute and calf muscles. White empty background, identical fixed camera, identical machine and scale in all 4 equal frames, no letters or borders. FRAME TOP LEFT: image-left thigh slants upward and left KNEE is high, left FOOT placed on the highest visible stair, image-right leg is long and STRAIGHT with its foot on lowest stair. FRAME TOP RIGHT: left leg supports body while right knee bends and right foot lifts off lower stair. FRAME BOTTOM LEFT: exact leg configuration opposite top-left, image-RIGHT knee HIGH with RIGHT foot on highest stair, image-LEFT leg STRAIGHT reaching lowest stair. FRAME BOTTOM RIGHT: right leg supports while left knee bends and left foot lifts to take next step. Hands always rest on same fixed side rails. Critical: top-left and bottom-left are anatomically mirrored leg poses. This must clearly show ALTERNATING steps by both legs, never repeatedly lifting the same leg. Whole body and machine in every frame with margins, clinical fitness atlas rendering.",
+      "columns": 2,
+      "rows": 2,
+      "cycle": "forward",
+      "crop": null,
+      "files": {
+        "gif": "stair-climber.gif",
+        "video": "stair-climber.webm",
+        "poster": "stair-climber.jpg"
+      },
+      "frames": 4,
+      "seconds": 1.8
+    }
+  ]
+}

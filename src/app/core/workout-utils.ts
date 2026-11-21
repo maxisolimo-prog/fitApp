@@ -1,13 +1,14 @@
 import type {
   FitnessLevel, Profile, Routine, RoutineCategory, ScheduledWorkout, TrainingFocus, TrainingPlace, WeeklyPlan,
-  WeightRecord, Workout, WorkoutSet,
+  WeightRecord, Workout, WorkoutSet, TrainingProgram,
 } from './models';
+import { validateProgram } from './training-program';
 import { defaultProfile, seedExercises, seedRoutines } from './seed';
 
 export const STORAGE_KEY = 'fitapp-state-v1';
 
 /** Versión actual de FitAppState. La API rechaza guardar una anterior y la app no pisa datos de una posterior. */
-export const STATE_VERSION = 4;
+export const STATE_VERSION = 7;
 
 /** Largo máximo del comentario de una serie; es también el de la columna `workout_sets.note` de la API. */
 export const SET_NOTE_MAX = 200;
@@ -26,11 +27,11 @@ export function isNewerVersion(value: unknown): boolean {
 }
 
 /**
- * Current format. v1 had no weeklyPlan, v2 no profile focus/place, v3 no time or note per set; validateState
- * upgrades all of them (the newer fields are simply absent in older data).
+ * v1 had no weeklyPlan, v2 no profile focus/place, v3 no completion time/note, v4 no duration, v5 no favorites.
+ * validateState upgrades all of them without reinterpreting historical repetition counts as seconds.
  */
 export interface FitAppState {
-  version: 4;
+  version: 7;
   profile: Profile;
   routines: Routine[];
   history: Workout[];
@@ -40,6 +41,9 @@ export interface FitAppState {
   weeklyPlan: WeeklyPlan;
   weights: WeightRecord[];
   activeWorkout: Workout | null;
+  /** Identificadores del catálogo, únicos y ordenados para comparar copias durante la sincronización. */
+  favoriteExerciseIds: string[];
+  program: TrainingProgram | null;
 }
 
 const levels: FitnessLevel[] = ['Principiante', 'Intermedio', 'Avanzado'];
@@ -75,7 +79,16 @@ export function weekDates(value = new Date()): string[] {
 }
 
 export function workoutVolume(workout: Pick<Workout, 'sets'>): number {
-  return workout.sets.reduce((total, set) => total + (set.completed ? set.reps * set.weight : 0), 0);
+  return workout.sets.reduce((total, set) => total + (set.completed && set.durationSeconds === undefined ? set.reps * set.weight : 0), 0);
+}
+
+export function formatDuration(seconds: number): string {
+  const minutes = Math.floor(seconds / 60), rest = seconds % 60;
+  return minutes ? `${minutes} min${rest ? ` ${rest} s` : ''}` : `${rest} s`;
+}
+
+export function workoutTimedSeconds(workout: Pick<Workout, 'sets'>): number {
+  return workout.sets.reduce((total, set) => total + (set.completed ? set.durationSeconds ?? 0 : 0), 0);
 }
 
 export function workoutDurationMinutes(workout: Pick<Workout, 'startedAt' | 'finishedAt'>): number {
@@ -99,7 +112,8 @@ export const SETUP_SECONDS_PER_EXERCISE = 60;
 export function estimateRoutineMinutes(routine: Pick<Routine, 'exercises'>): number {
   const seconds = routine.exercises.reduce((total, entry) => {
     if (!number(entry.sets, 1, 30) || !number(entry.restSeconds, 0, 3600)) return total;
-    return total + SETUP_SECONDS_PER_EXERCISE + entry.sets * (WORK_SECONDS_PER_SET + entry.restSeconds);
+    if (entry.durationSeconds !== undefined && !number(entry.durationSeconds, 1, 36000, true)) return total;
+    return total + SETUP_SECONDS_PER_EXERCISE + entry.sets * ((entry.durationSeconds ?? WORK_SECONDS_PER_SET) + entry.restSeconds);
   }, 0);
   return Math.min(600, Math.max(5, Math.round(seconds / 300) * 5));
 }
@@ -122,7 +136,7 @@ export function plannedRoutineId(state: Pick<FitAppState, 'schedule' | 'weeklyPl
 
 export function createInitialState(): FitAppState {
   return {
-    version: 4,
+    version: 7,
     profile: { ...defaultProfile },
     routines: seedRoutines.map((routine) => ({ ...routine, exercises: routine.exercises.map((exercise) => ({ ...exercise })) })),
     history: [],
@@ -130,6 +144,7 @@ export function createInitialState(): FitAppState {
     weeklyPlan: emptyWeeklyPlan(),
     weights: [],
     activeWorkout: null,
+    favoriteExerciseIds: [], program: null,
   };
 }
 
@@ -146,7 +161,7 @@ export function createInitialState(): FitAppState {
 export function isFactoryState(state: FitAppState): boolean {
   const templates = new Set(seedRoutines.map((routine) => routine.id));
   return state.history.length === 0 && state.schedule.length === 0 && state.weights.length === 0
-    && state.activeWorkout === null && state.weeklyPlan.every((slot) => slot === null)
+    && state.activeWorkout === null && state.program === null && state.favoriteExerciseIds.length === 0 && state.weeklyPlan.every((slot) => slot === null)
     && (Object.keys(defaultProfile) as (keyof Profile)[]).every((key) => state.profile[key] === defaultProfile[key])
     && state.routines.every((routine) => !routine.custom && templates.has(routine.id));
 }
@@ -178,6 +193,12 @@ export function validSetValues(reps: unknown, weight: unknown): boolean {
   return number(reps, 1, 999, true) && number(weight, 0, 2000);
 }
 
+/** Tiempo y repeticiones son excluyentes; no se inventan repeticiones para el cardio. */
+export function validExerciseValues(value: { exerciseId: unknown; reps: unknown; weight: unknown; durationSeconds?: unknown }): boolean {
+  if (value.durationSeconds !== undefined) return number(value.durationSeconds, 1, 36000, true) && value.reps === 0 && value.weight === 0;
+  return !seedExercises.some(exercise => exercise.id === value.exerciseId && exercise.tracking === 'duration') && validSetValues(value.reps, value.weight);
+}
+
 export const focuses: TrainingFocus[] = ['fuerza', 'musculo', 'grasa', 'salud'];
 export const places: TrainingPlace[] = ['gimnasio', 'casa-pesas', 'casa-sin-equipo'];
 
@@ -205,11 +226,12 @@ export function validateRoutine(value: unknown): Routine | null {
   const exercises: Routine['exercises'] = [];
   for (const candidate of value['exercises']) {
     if (!record(candidate) || !text(candidate['exerciseId'], 100) || !exerciseIds.has(candidate['exerciseId'])
-      || !number(candidate['sets'], 1, 30, true) || !validSetValues(candidate['reps'], candidate['weight'])
+      || !number(candidate['sets'], 1, 30, true) || !validExerciseValues({ exerciseId: candidate['exerciseId'], reps: candidate['reps'], weight: candidate['weight'], durationSeconds: candidate['durationSeconds'] })
       || !number(candidate['restSeconds'], 0, 3600, true)) return null;
     exercises.push({
       exerciseId: candidate['exerciseId'], sets: candidate['sets'], reps: candidate['reps'] as number,
       weight: candidate['weight'] as number, restSeconds: candidate['restSeconds'],
+      ...(candidate['durationSeconds'] === undefined ? {} : { durationSeconds: candidate['durationSeconds'] as number }),
     });
   }
   if (exercises.reduce((sum, exercise) => sum + exercise.sets, 0) > 500
@@ -229,10 +251,12 @@ export function validateWorkout(value: unknown, active: boolean): Workout | null
     || !Array.isArray(value['sets']) || value['sets'].length < 1 || value['sets'].length > 500
     || (value['notes'] !== undefined && !text(value['notes'], 4000, true))) return null;
   if (!active && Date.parse(value['finishedAt'] as string) < Date.parse(value['startedAt'])) return null;
+  const step = value['programStep'];
+  if (step !== undefined && (!record(step) || !text(step['programId'],100) || !number(step['position'],0,99,true))) return null;
   const sets: WorkoutSet[] = [];
   for (const candidate of value['sets']) {
     if (!record(candidate) || !text(candidate['exerciseId'], 100) || !exerciseIds.has(candidate['exerciseId']) || !text(candidate['exerciseName'], 100)
-      || !number(candidate['setNumber'], 1, 30, true) || !validSetValues(candidate['reps'], candidate['weight'])
+      || !number(candidate['setNumber'], 1, 30, true) || !validExerciseValues({ exerciseId: candidate['exerciseId'], reps: candidate['reps'], weight: candidate['weight'], durationSeconds: candidate['durationSeconds'] })
       || typeof candidate['completed'] !== 'boolean' || (!active && !candidate['completed'])
       || (candidate['completedAt'] !== undefined && !timestamp(candidate['completedAt']))
       || (candidate['note'] !== undefined && !text(candidate['note'], SET_NOTE_MAX, true))) return null;
@@ -241,6 +265,7 @@ export function validateWorkout(value: unknown, active: boolean): Workout | null
       exerciseId: candidate['exerciseId'], exerciseName: candidate['exerciseName'],
       setNumber: candidate['setNumber'], reps: candidate['reps'] as number,
       weight: candidate['weight'] as number, completed: candidate['completed'],
+      ...(candidate['durationSeconds'] === undefined ? {} : { durationSeconds: candidate['durationSeconds'] as number }),
       // La hora solo vale en una serie completada: en una pendiente se descarta, no invalida el resto. Forma
       // canónica (UTC con milisegundos), igual que la que devuelve la API.
       ...(candidate['completed'] && candidate['completedAt'] !== undefined ? { completedAt: new Date(candidate['completedAt']).toISOString() } : {}),
@@ -254,12 +279,13 @@ export function validateWorkout(value: unknown, active: boolean): Workout | null
     startedAt: new Date(value['startedAt']).toISOString(),
     finishedAt: value['finishedAt'] === null ? null : new Date(value['finishedAt'] as string).toISOString(), sets,
     ...(value['notes'] === undefined ? {} : { notes: value['notes'] as string }),
+    ...(step === undefined ? {} : {programStep:{programId:(step as Record<string,unknown>)['programId'] as string,position:(step as Record<string,unknown>)['position'] as number}}),
   };
 }
 
 /** Strictly reconstruct known fields: imported objects are never assigned to app state. */
 export function validateState(value: unknown): FitAppState | null {
-  if (!record(value) || ![1, 2, 3, 4].includes(value['version'] as number) || !Array.isArray(value['routines'])
+  if (!record(value) || ![1, 2, 3, 4, 5, 6, 7].includes(value['version'] as number) || !Array.isArray(value['routines'])
     || !Array.isArray(value['history']) || !Array.isArray(value['schedule']) || !Array.isArray(value['weights'])
     || value['routines'].length < 1 || value['routines'].length > 200 || value['history'].length > 10_000
     || value['schedule'].length > 5000 || value['weights'].length > 10_000) return null;
@@ -305,7 +331,14 @@ export function validateState(value: unknown): FitAppState | null {
   // Calendar and weights are kept in date order everywhere (store and API).
   schedule.sort((a, b) => a.date.localeCompare(b.date));
   weights.sort((a, b) => a.date.localeCompare(b.date));
-  return { version: 4, profile, routines, history, schedule, weeklyPlan, weights, activeWorkout };
+  const favorites = value['favoriteExerciseIds'] === undefined && Number(value['version']) < 6 ? [] : value['favoriteExerciseIds'];
+  if (!Array.isArray(favorites) || favorites.length > exerciseIds.size
+    || !favorites.every(id => typeof id === 'string' && exerciseIds.has(id)) || new Set(favorites).size !== favorites.length) return null;
+  const program = Number(value['version']) < 7 ? null : value['program'] === null ? null : validateProgram(value['program'],routines);
+  if (Number(value['version']) >= 7 && value['program'] !== null && !program) return null;
+  if (activeWorkout?.programStep && (!program || activeWorkout.programStep.programId !== program.id
+    || activeWorkout.programStep.position !== program.position || activeWorkout.routineId !== program.routineIds[program.position])) return null;
+  return { version: 7, profile, routines, history, schedule, weeklyPlan, weights, activeWorkout, favoriteExerciseIds: [...favorites].sort(), program };
 }
 
 export function serializeState(value: FitAppState): string {
@@ -344,13 +377,14 @@ export function buildWorkout(routine: Routine, id: string, startedAt = new Date(
   return {
     id, routineId: routine.id, routineName: routine.name, startedAt, finishedAt: null,
     sets: routine.exercises.flatMap((entry) => {
-      const previous = lastSetsFor(history, entry.exerciseId);
+      const previous = lastSetsFor(history, entry.exerciseId).filter(set => (set.durationSeconds === undefined) === (entry.durationSeconds === undefined));
       return Array.from({ length: entry.sets }, (_, index) => {
         const last = previous[index] ?? previous.at(-1);
         return {
           exerciseId: entry.exerciseId,
           exerciseName: seedExercises.find((exercise) => exercise.id === entry.exerciseId)?.name ?? entry.exerciseId,
           setNumber: index + 1, reps: last?.reps ?? entry.reps, weight: last?.weight ?? entry.weight, completed: false,
+          ...(entry.durationSeconds === undefined ? {} : { durationSeconds: last?.durationSeconds ?? entry.durationSeconds }),
         };
       });
     }),
@@ -374,8 +408,11 @@ export function substituteExercise(workout: Workout, fromId: string, toId: strin
   const sets = workout.sets.map((set): WorkoutSet => {
     if (set.exerciseId !== fromId) return set;
     if (set.completed) return { ...set, setNumber: ++kept };
-    const last = previous[replaced] ?? previous.at(-1);
-    return { exerciseId: to.id, exerciseName: to.name, setNumber: ++replaced, reps: last?.reps ?? set.reps, weight: last?.weight ?? 0, completed: false };
+    const timed = to.tracking === 'duration' || set.durationSeconds !== undefined;
+    const compatible = previous.filter(item => (item.durationSeconds !== undefined) === timed);
+    const last = compatible[replaced] ?? compatible.at(-1);
+    return { exerciseId: to.id, exerciseName: to.name, setNumber: ++replaced, reps: timed ? 0 : last?.reps ?? set.reps, weight: timed ? 0 : last?.weight ?? 0, completed: false,
+      ...(timed ? { durationSeconds: last?.durationSeconds ?? set.durationSeconds ?? 1200 } : {}) };
   });
   return { ...workout, sets };
 }
@@ -450,7 +487,7 @@ export interface PersonalRecord {
 export function personalRecords(workout: Workout, earlier: Workout[]): PersonalRecord[] {
   const records: PersonalRecord[] = [];
   for (const exerciseId of new Set(workout.sets.map((set) => set.exerciseId))) {
-    const best = workout.sets.filter((set) => set.exerciseId === exerciseId && set.completed && set.weight > 0)
+    const best = workout.sets.filter((set) => set.exerciseId === exerciseId && set.completed && set.durationSeconds === undefined && set.weight > 0)
       .reduce<WorkoutSet | null>((top, set) => !top || set.weight > top.weight || (set.weight === top.weight && set.reps > top.reps) ? set : top, null);
     if (!best) continue;
     const previous = earlier.flatMap((w) => w.sets).filter((set) => set.exerciseId === exerciseId && set.completed)
@@ -469,6 +506,7 @@ export function workoutSummaryText(workout: Workout, records: PersonalRecord[], 
   const lines = [
     `Terminé "${workout.routineName}" en ${appName}`,
     `${workoutDurationMinutes(workout)} min · ${workout.sets.length} ${workout.sets.length === 1 ? 'serie' : 'series'}${volume > 0 ? ` · ${format(volume)} kg levantados` : ''}`,
+    ...(workoutTimedSeconds(workout) ? [`Tiempo registrado en ejercicios: ${formatDuration(workoutTimedSeconds(workout))}`] : []),
     ...records.map((record) => `Récord en ${record.exerciseName}: ${format(record.weight)} kg × ${record.reps} (antes ${format(record.previous)} kg)`),
   ];
   return lines.join('\n');
@@ -518,7 +556,7 @@ export interface ProgressionSuggestion {
  * → add load (or a rep for bodyweight); otherwise keep the load. No history → no suggestion.
  */
 export function suggestProgression(lastSets: WorkoutSet[], targetReps: number, equipment: string): ProgressionSuggestion | null {
-  if (!lastSets.length || !Number.isInteger(targetReps) || targetReps < 1) return null;
+  if (!lastSets.length || lastSets.some(set => set.durationSeconds !== undefined) || !Number.isInteger(targetReps) || targetReps < 1) return null;
   const allReached = lastSets.every((set) => set.reps >= targetReps);
   const load = Math.max(...lastSets.map((set) => set.weight));
   if (load <= 0) {

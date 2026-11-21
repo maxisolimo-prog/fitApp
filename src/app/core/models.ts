@@ -12,7 +12,7 @@ export type MovementId =
   | 'press-pecho' | 'apertura-pecho' | 'remo' | 'traccion-vertical' | 'press-hombros' | 'elevacion-lateral'
   | 'hombro-posterior' | 'curl-biceps' | 'extension-triceps' | 'sentadilla' | 'zancada' | 'bisagra-cadera'
   | 'extension-cadera' | 'abduccion-cadera' | 'extension-rodilla' | 'flexion-rodilla' | 'gemelos' | 'flexion-tronco'
-  | 'estabilidad-tronco';
+  | 'estabilidad-tronco' | 'cardio';
 
 export interface Exercise {
   id: string;
@@ -28,6 +28,8 @@ export interface Exercise {
   secondaryMuscles: MuscleId[];
   instructions: string[];
   image?: string;
+  /** Cardio se registra siempre por tiempo. Otros ejercicios permiten elegir en el editor. */
+  tracking?: 'duration';
 }
 
 export interface RoutineExercise {
@@ -37,6 +39,8 @@ export interface RoutineExercise {
   /** Kilograms; 0 means bodyweight or no external load. */
   weight: number;
   restSeconds: number;
+  /** Tiempo por serie en segundos. Si está presente, reps y weight son 0. */
+  durationSeconds?: number;
 }
 
 export interface Routine {
@@ -58,6 +62,8 @@ export interface WorkoutSet {
   reps: number;
   weight: number;
   completed: boolean;
+  /** Duración realizada; ausente en series por repeticiones, incluso en datos antiguos. */
+  durationSeconds?: number;
   /**
    * Momento en que se marcó como completada (ISO 8601, v4). Falta en las series pendientes y en las registradas
    * antes de la versión 4: no se inventa.
@@ -77,6 +83,18 @@ export interface Workout {
   finishedAt: string | null;
   sets: WorkoutSet[];
   notes?: string;
+  /** Solo las sesiones iniciadas desde el programa hacen avanzar su secuencia. */
+  programStep?: { programId: string; position: number };
+}
+
+export interface TrainingProgram {
+  id: string;
+  name: string;
+  /** Orden explícito. Una rutina puede repetirse en distintos pasos. */
+  routineIds: string[];
+  /** Próxima sesión; length significa programa completado. */
+  position: number;
+  paused: boolean;
 }
 
 export type TrainingFocus = 'fuerza' | 'musculo' | 'grasa' | 'salud';

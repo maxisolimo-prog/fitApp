@@ -8,9 +8,9 @@ import { focusSide, thumbView } from '../src/app/features/muscle-focus';
 import { loadAction, loadHint } from '../src/app/load-hint';
 import { BODY_BACK, BODY_FRONT, BODY_OUTLINE, BODY_VIEWBOX } from '../src/app/features/muscle-map.data';
 
-test('el catálogo tiene 43 ejercicios con identificador propio', () => {
-  assert.equal(seedExercises.length, 43);
-  assert.equal(new Set(seedExercises.map((exercise) => exercise.id)).size, 43);
+test('el catálogo tiene 48 ejercicios con identificador propio', () => {
+  assert.equal(seedExercises.length, 48);
+  assert.equal(new Set(seedExercises.map((exercise) => exercise.id)).size, 48);
 });
 
 test('cada ejercicio declara músculos de la lista cerrada, sin repetir ni cruzar principales y secundarios', () => {
@@ -81,7 +81,7 @@ test('los reemplazos proponen primero el mismo movimiento y después el mismo gr
   const ids = (list: { id: string }[]) => list.map((exercise) => exercise.id);
   const bench = substitutesFor(byId('bench-press'), seedExercises);
   assert.deepEqual(ids(bench.sameMovement), ['incline-press', 'push-up', 'chest-press-machine']);
-  assert.deepEqual(ids(bench.sameGroup), ['dumbbell-fly', 'cable-crossover']);
+  assert.deepEqual(ids(bench.sameGroup), ['dumbbell-fly', 'cable-crossover', 'seated-cable-fly']);
   // Un ejercicio sin par de movimiento igual ofrece los de su grupo muscular.
   const lateral = substitutesFor(byId('lateral-raise'), seedExercises);
   assert.deepEqual(ids(lateral.sameMovement), []);
@@ -102,7 +102,7 @@ test('la aclaración de la carga está decidida para cada equipo del catálogo',
     Barra: ['con la barra incluida', 'Anotá el total, con la barra incluida.'],
     Mancuernas: ['por mancuerna', 'Anotá el peso de una mancuerna.'],
     Mancuerna: ['por mancuerna', 'Anotá el peso de la mancuerna.'],
-    Polea: ['', ''], 'Máquina': ['', ''], 'Peso corporal': ['', ''], Banco: ['', ''],
+    Polea: ['', ''], 'Máquina': ['', ''], 'Peso corporal': ['', ''], Banco: ['', ''], Paralelas: ['', ''],
   };
   for (const exercise of seedExercises) {
     assert.ok(Object.hasOwn(expected, exercise.equipment), `${exercise.id}: falta decidir la aclaración para «${exercise.equipment}»`);

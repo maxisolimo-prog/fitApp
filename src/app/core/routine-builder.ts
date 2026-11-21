@@ -81,15 +81,16 @@ const PLANS: Readonly<Record<RoutineTarget, TargetPlan>> = {
  * final, en el orden del catálogo.
  */
 const STARTER_ORDER: Readonly<Record<MovementId, readonly string[]>> = {
+  cardio: ['treadmill', 'stair-climber'],
   'press-pecho': ['incline-press', 'chest-press-machine', 'push-up', 'bench-press'],
-  'apertura-pecho': ['cable-crossover', 'dumbbell-fly'],
+  'apertura-pecho': ['cable-crossover', 'dumbbell-fly', 'seated-cable-fly'],
   remo: ['seated-row', 'one-arm-row', 'barbell-row'],
-  'traccion-vertical': ['lat-pulldown', 'assisted-pull-up', 'pull-up'],
+  'traccion-vertical': ['lat-pulldown', 'assisted-pull-up', 'pull-up', 'close-grip-lat-pulldown'],
   'press-hombros': ['shoulder-press', 'overhead-press'],
   'elevacion-lateral': ['lateral-raise'],
   'hombro-posterior': ['face-pull', 'rear-delt-fly'],
   'curl-biceps': ['biceps-curl', 'hammer-curl', 'barbell-curl'],
-  'extension-triceps': ['triceps-pushdown', 'overhead-triceps', 'bench-dip'],
+  'extension-triceps': ['triceps-pushdown', 'overhead-triceps', 'bench-dip', 'parallel-bar-dip'],
   sentadilla: ['goblet-squat', 'leg-press', 'back-squat'],
   zancada: ['reverse-lunge', 'bulgarian-split-squat'],
   'bisagra-cadera': ['romanian-deadlift', 'back-extension', 'deadlift'],
@@ -140,6 +141,7 @@ type MovementKind = 'multiarticular' | 'accesorio' | 'tronco';
 
 /** Multiarticular: mueve varias articulaciones y más peso. Accesorio: una sola articulación. */
 const MOVEMENT_KIND: Readonly<Record<MovementId, MovementKind>> = {
+  cardio: 'multiarticular',
   'press-pecho': 'multiarticular',
   remo: 'multiarticular',
   'traccion-vertical': 'multiarticular',
@@ -187,7 +189,8 @@ const SETS_BY_LEVEL: Readonly<Record<FitnessLevel, Readonly<Record<MovementKind,
  * Series, repeticiones y descanso con los que entra un ejercicio a una rutina, según el objetivo y el nivel.
  * Es lo que usa la propuesta y también el valor inicial cuando la persona agrega un ejercicio a mano.
  */
-export function defaultPrescription(exercise: Pick<Exercise, 'movement'>, focus: TrainingFocus, level: FitnessLevel): Pick<RoutineExercise, 'sets' | 'reps' | 'restSeconds'> {
+export function defaultPrescription(exercise: Pick<Exercise, 'movement' | 'tracking'>, focus: TrainingFocus, level: FitnessLevel): Pick<RoutineExercise, 'sets' | 'reps' | 'restSeconds' | 'durationSeconds'> {
+  if (exercise.tracking === 'duration') return { sets: 1, reps: 0, restSeconds: 0, durationSeconds: 1200 };
   const kind = MOVEMENT_KIND[exercise.movement];
   const dose = kind === 'tronco'
     ? TRUNK_DOSE[exercise.movement as keyof typeof TRUNK_DOSE]

@@ -114,3 +114,37 @@ en la ficha. Los ítems `B-nn` están en [BACKLOG.md](BACKLOG.md).
 - Gimnasios Argentina: [Mis Actividades](https://www.misactividades.com/), [gestión administrativa](https://www.misactividades.com/soluciones/gestion-administrativa/), [Mercado Fitness](https://mercadofitness.com/mis-actividades-presenta-su-software-para-gimnasios-en-mercado-fitness-pais/), [GymAr](https://www.comparasoftware.com/gymar), [AgendaPro](https://agendapro.com/ar/gimnasio/software-para-gimnasio)
 - Precios de entrenamiento online en Argentina: [El Laburante](https://ellaburante.com/blog/personal-trainer-precios-2026)
 - Fitness Online: capturas del usuario en `docs/competencia/` (17 de noviembre de 2026) y [ficha de App Store](https://apps.apple.com/MX/app/id1114387800)
+
+## Cómo enseñan los ejercicios
+
+Revisión del 20 de noviembre de 2026 a partir de la documentación de los productos y las capturas de Strong y Fitness Online aportadas por el usuario.
+
+| App | Experiencia de técnica | Qué aporta a FitApp |
+| --- | --- | --- |
+| Strong | El nombre del ejercicio abre la ficha desde la sesión. La primera solapa muestra video o imágenes y pasos escritos. | La animación debe quedar a la vista al abrir la ficha. [Ficha de ejercicio de Strong](https://help.strongapp.io/article/237-about-exercise-detail) |
+| Hevy | Ofrece animaciones, instrucciones e historial en más de 400 ejercicios, con filtros por equipo y músculo. | Mantener juntos el movimiento, la variante exacta y el historial del ejercicio. [Biblioteca de Hevy](https://help.hevyapp.com/hc/en-us/articles/35688251991575-Hevy-Exercise-Library-400-Exercises-and-Custom-Exercises) |
+| Fitness Online | En las capturas, la demostración ocupa el centro de la sesión y la ficha detalla los músculos. El producto anuncia más de 850 ejercicios en 3D. | Usar una figura anatómica legible en el celular y mostrar el músculo principal en el propio movimiento. [Demostración oficial de Fitness Online](https://www.youtube.com/watch?v=9030sji2-j0) |
+| JEFIT | Ofrece más de 1.400 demostraciones. Desde la sesión, la reproducción se abre en el menú del ejercicio. | Hacer visible «Cómo hacerlo» en la fila para que cualquiera encuentre la técnica. [Biblioteca de JEFIT](https://www.jefit.com/features/exercise-library) |
+| Fitbod | Al tocar un ejercicio en la sesión, el video aparece al inicio de la ficha. La ayuda indica que los clips vistos pueden quedar en caché. | Guardar de antemano las demostraciones de la rutina, para que funcionen desde la primera consulta sin señal. [Ficha de Fitbod](https://help.fitbod.me/hc/en-us/articles/30721437384215-How-to-Navigate-the-Exercise-Details-Screen), [uso sin conexión](https://help.fitbod.me/hc/en-us/articles/360006572594-Can-I-use-Fitbod-without-an-internet-connection) |
+| MuscleWiki | Su biblioteca documenta vistas frontal y lateral. | Elegir una vista principal y sumar otra cuando resuelva una duda concreta de técnica. [Documentación de MuscleWiki](https://api.musclewiki.com/documentation) |
+
+### Opciones para los 43 ejercicios
+
+1. **Una repetición fluida por ejercicio.** Usar un modelo anatómico articulado para conservar la figura, el equipo y el encuadre durante todo el recorrido. Revisar técnica y variante con un entrenador antes de extender el estilo. Empezar por los 14 ejercicios distintos de las cuatro rutinas iniciales y completar los 29 restantes por equipo.
+2. **Repaso entre series.** Al tocar la fila, mostrar el clip y tres claves breves de preparación, recorrido y final. Poner pausa y velocidad ½× debajo de la imagen para que los controles dejen ver los apoyos. Mantener visible el descanso y devolver el foco a la fila al cerrar. Usar una segunda vista solo si explica un punto oculto. En press de banca, una vista lateral muestra el recorrido de la barra y una oblicua el agarre.
+3. **Técnica al elegir un reemplazo.** Mostrar una miniatura y permitir ver la repetición de la alternativa antes de cambiar el ejercicio. Aprovechar la agrupación por movimiento existente para explicar por qué se ofrece cada opción. Conservar las series completadas y aplicar el cambio a las pendientes.
+4. **Primera consulta sin señal.** Ofrecer una descarga por rutina con confirmación de que terminó. Probar en modo avión desde un ejercicio de esa rutina que nunca se haya abierto. El ejemplo actual ocupa alrededor de 89 kB contando el video y su imagen inicial.
+
+### Formato recomendado
+
+El ejemplo de press de banca usa cuatro poses ilustradas en un bucle de tres segundos. El archivo WebM de la ficha pesa 69 kB a 704 × 504. La exportación GIF de la misma secuencia pesa 345 kB a 496 × 355. Para FitApp conviene el video por el peso medido y porque permite agregar pausa, velocidad y selección de fase. El GIF queda como muestra para compartir.
+
+## Capturas de Fitness Online para revisar
+
+Compartidas el 20 de noviembre de 2026 y archivadas en PNG.
+
+| Captura | Tema para retomar en FitApp |
+| --- | --- |
+| [08 · Mapa muscular por período](competencia/fitness-online-08-mapa-muscular-periodo.png) | Mapa en Mi progreso con filtros de sesión, semana y mes, y detalle de series al tocar una zona. Corresponde a B-15. |
+| [09 · Peso y distribución muscular](competencia/fitness-online-09-peso-y-distribucion-muscular.png) | Gráfico de peso corporal y desglose por grupo muscular a partir de los registros. |
+| [10 · Previa del plan de entrenamiento](competencia/fitness-online-10-previa-plan-entrenamiento.png) | Vista previa con duración, miniaturas, series o tiempo por ejercicio y avance de la sesión. |

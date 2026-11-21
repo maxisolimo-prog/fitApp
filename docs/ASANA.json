@@ -1,0 +1,218 @@
+{
+  "project": {
+    "id": "1220742089470114",
+    "name": "FitApp",
+    "url": "https://app.asana.com/1/1218158297074103/project/1220742089470114"
+  },
+  "updated": "2026-11-20",
+  "sections": [
+    {
+      "id": "1220742017653973",
+      "name": "En curso",
+      "tasks": []
+    },
+    {
+      "id": "1220741645316615",
+      "name": "Próximas mejoras",
+      "tasks": [
+        {
+          "id": "1220741926473272",
+          "backlogId": "B-30",
+          "name": "B-30 · Revisión profesional de ejercicios y demostraciones",
+          "completed": false
+        }
+      ]
+    },
+    {
+      "id": "1220742089491526",
+      "name": "Pendiente de decisión o recurso externo",
+      "tasks": [
+        {
+          "id": "1220741858585574",
+          "backlogId": "B-21",
+          "name": "B-21 · Una dirección por marca al desplegar",
+          "completed": false
+        },
+        {
+          "id": "1220741858606333",
+          "backlogId": "B-20",
+          "name": "B-20 · Tipografía Graphik para Qivox",
+          "completed": false
+        }
+      ]
+    },
+    {
+      "id": "1220742017476889",
+      "name": "Hecho",
+      "tasks": [
+        {
+          "id": "1220741863700825",
+          "backlogId": "B-10",
+          "name": "B-10 · Guardar hora de cada serie",
+          "completed": true
+        },
+        {
+          "id": "1220741863709439",
+          "backlogId": "B-22",
+          "name": "B-22 · Propuesta de rutina por reglas: Armámela",
+          "completed": true
+        },
+        {
+          "id": "1220741926501485",
+          "backlogId": "B-19",
+          "name": "B-19 · Logo, ícono y nombre de app por marca",
+          "completed": true
+        },
+        {
+          "id": "1220742017679517",
+          "backlogId": "B-04",
+          "name": "B-04 · Miniaturas en listas de ejercicios",
+          "completed": true
+        },
+        {
+          "id": "1220741500919972",
+          "backlogId": "B-08",
+          "name": "B-08 · Avance de sesión en Inicio",
+          "completed": true
+        },
+        {
+          "id": "1220742089505280",
+          "backlogId": "B-11",
+          "name": "B-11 · Comentario por serie",
+          "completed": true
+        },
+        {
+          "id": "1220742017331738",
+          "backlogId": "B-24",
+          "name": "B-24 · Resumen y mapa muscular de rutina",
+          "completed": true
+        },
+        {
+          "id": "1220741925878673",
+          "backlogId": "B-06",
+          "name": "B-06 · Sustituir ejercicios durante la sesión",
+          "completed": true
+        },
+        {
+          "id": "1220741858035813",
+          "backlogId": "B-02",
+          "name": "B-02 · Mapa muscular y solapa Músculos",
+          "completed": true
+        },
+        {
+          "id": "1220742089735724",
+          "backlogId": "B-23",
+          "name": "B-23 · Editor con ejercicios primero",
+          "completed": true
+        },
+        {
+          "id": "1220741731014339",
+          "backlogId": "B-25",
+          "name": "B-25 · Selector filtrado por equipo disponible",
+          "completed": true
+        },
+        {
+          "id": "1220741730954918",
+          "backlogId": "B-01",
+          "name": "B-01 · Músculos principales y secundarios del catálogo",
+          "completed": true
+        },
+        {
+          "id": "1220742017463237",
+          "backlogId": "B-09",
+          "name": "B-09 · Aclarar carga total o por mancuerna",
+          "completed": true
+        },
+        {
+          "id": "1220741863745832",
+          "backlogId": "B-18",
+          "name": "B-18 · Tres marcas sobre un mismo código",
+          "completed": true
+        },
+        {
+          "id": "1220742089735820",
+          "backlogId": "B-05",
+          "name": "B-05 · Abrir la ficha desde sesión y rutina",
+          "completed": true
+        },
+        {
+          "id": "1220741864052327",
+          "backlogId": "B-07",
+          "name": "B-07 · Duración estimada y Empezar fijo en la previa",
+          "completed": true
+        },
+        {
+          "id": "1220742017526003",
+          "backlogId": "B-15",
+          "name": "B-15 · Mapa muscular semanal en Progreso",
+          "completed": true
+        },
+        {
+          "id": "1220742089708695",
+          "backlogId": "B-29",
+          "name": "B-29 · Proteger salida del editor con cambios",
+          "completed": true
+        },
+        {
+          "id": "1220741863936356",
+          "backlogId": "B-13",
+          "name": "B-13 · Registrar ejercicios por tiempo",
+          "completed": true
+        },
+        {
+          "id": "1220742089543776",
+          "backlogId": "B-28",
+          "name": "B-28 · Integrar las seis animaciones en el sitio",
+          "completed": true
+        },
+        {
+          "id": "1220742089444676",
+          "backlogId": "B-14",
+          "name": "B-14 · Favoritos en la Biblioteca",
+          "completed": true
+        },
+        {
+          "id": "1220742089505388",
+          "backlogId": "B-27",
+          "name": "B-27 · Cambiar ejercicio desde el editor",
+          "completed": true
+        },
+        {
+          "id": "1220742017644195",
+          "backlogId": "B-03",
+          "name": "B-03 · Completar imágenes y animaciones del catálogo",
+          "completed": true
+        },
+        {
+          "id": "1220741864028281",
+          "backlogId": "B-17",
+          "name": "B-17 · Evaluar animaciones anatómicas con licencia",
+          "completed": true
+        },
+        {
+          "id": "1220741500587543",
+          "backlogId": "B-12",
+          "name": "B-12 · Vista enfocada de un ejercicio",
+          "completed": true
+        },
+        {
+          "id": "1220742089639650",
+          "backlogId": "B-26",
+          "name": "B-26 · Coach con IA para crear rutinas",
+          "completed": true
+        },
+        {
+          "id": "1220741858478581",
+          "backlogId": "B-16",
+          "name": "B-16 · Programa de entrenamientos en secuencia",
+          "completed": true
+        }
+      ]
+    }
+  ],
+  "counts": {
+    "total": 30,
+    "completed": 27,
+    "pending": 3
+  }
+}

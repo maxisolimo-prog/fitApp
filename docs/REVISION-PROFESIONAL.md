@@ -48,7 +48,7 @@ Si un criterio te parece mal, decínoslo: cambia muchos ejercicios a la vez.
 10. **Ejercicios sin reemplazo del mismo movimiento:** elevaciones laterales, extensión de cuádriceps, curl femoral, elevación de talones y abducción de cadera en máquina.
     ¿Les falta alguno obvio dentro de los 43 que tiene la app?
 
-## Los 43 ejercicios
+## Catálogo original: 43 ejercicios
 
 ### Pecho
 
@@ -935,3 +935,159 @@ Quien recién empieza nunca baja de 8 repeticiones, aunque su objetivo sea ganar
 
 Armado el 19 de noviembre de 2026 con los datos que la app muestra ese día. "La rutina que la app propone" se
 agregó el 20 de noviembre de 2026.
+
+
+## Cinco variantes añadidas el 20 de noviembre de 2026
+
+El catálogo pasa a 48 ejercicios. Estas cinco variantes y el press inclinado tienen demostraciones originales por poses, además del press de banca anterior. Revisar también los GIF/WebM en `public/exercise-demos/`. El vuelo sentado se interpretó como aperturas de pecho; la cinta muestra caminata.
+
+La cinta y la escaladora se agregan con 20 minutos como valor editable tomado de la referencia del usuario. No es una prescripción individual. Los demás ejercicios permiten registrar por repeticiones o tiempo; al cambiar a tiempo se ofrecen 30 segundos editables. Los datos anteriores no se convierten.
+
+### Cinta de correr (caminata)
+
+- Identificador: `treadmill`
+- Equipo: Máquina.
+- Principales: Cuádriceps y gemelos.
+- Acompañan: Glúteos e isquiotibiales.
+- Movimiento para sustituciones: cardio.
+
+1. Con la cinta detenida, ubicá el botón de parada y colocá el clip de seguridad.
+2. Empezá a baja velocidad y caminá con pasos naturales, mirando al frente.
+3. Ajustá el ritmo de a poco. Reducí la velocidad hasta detener la cinta antes de bajar.
+
+- [ ] Texto y músculos revisados
+- [ ] Animación revisada
+- [ ] Reemplazos revisados
+- Correcciones: ____________________________________________
+
+### Jalón al pecho con agarre cerrado
+
+- Identificador: `close-grip-lat-pulldown`
+- Equipo: Polea.
+- Principales: Dorsales.
+- Acompañan: Bíceps y antebrazos.
+- Movimiento para sustituciones: traccion-vertical.
+
+1. Ajustá el apoyo de los muslos y tomá el agarre cerrado con las palmas enfrentadas.
+2. Llevá el agarre hacia la parte alta del pecho, con los codos cerca del cuerpo y sin balancearte.
+3. Volvé extendiendo los brazos con control, sin dejar caer el peso.
+
+- [ ] Texto y músculos revisados
+- [ ] Animación revisada
+- [ ] Reemplazos revisados
+- Correcciones: ____________________________________________
+
+### Vuelo sentado con polea
+
+- Identificador: `seated-cable-fly`
+- Equipo: Polea.
+- Principales: Pecho.
+- Acompañan: Deltoides.
+- Movimiento para sustituciones: apertura-pecho.
+
+1. Sentate entre las poleas con los pies apoyados y los agarres a los lados del pecho.
+2. Con los codos ligeramente flexionados, acercá las manos frente al pecho sin cambiar el ángulo de los brazos.
+3. Abrí despacio hasta un recorrido cómodo, manteniendo el torso estable.
+
+- [ ] Texto y músculos revisados
+- [ ] Animación revisada
+- [ ] Reemplazos revisados
+- Correcciones: ____________________________________________
+
+### Fondos de tríceps en paralelas
+
+- Identificador: `parallel-bar-dip`
+- Equipo: Paralelas.
+- Principales: Tríceps.
+- Acompañan: Deltoides y pecho.
+- Movimiento para sustituciones: extension-triceps.
+
+1. Tomá las barras y sostené el cuerpo con los hombros estables. Usá asistencia si la necesitás.
+2. Flexioná los codos y bajá solo hasta donde puedas mantener el control sin molestias.
+3. Empujá las barras para subir, sin rebotes ni balanceos.
+
+- [ ] Texto y músculos revisados
+- [ ] Animación revisada
+- [ ] Reemplazos revisados
+- Correcciones: ____________________________________________
+
+### Escaladora
+
+- Identificador: `stair-climber`
+- Equipo: Máquina.
+- Principales: Glúteos y cuádriceps.
+- Acompañan: Isquiotibiales y gemelos.
+- Movimiento para sustituciones: cardio.
+
+1. Subí con la máquina detenida y ubicá el control de parada.
+2. Empezá despacio, alternando los pies y apoyándolos de forma estable en cada escalón.
+3. Mantené el torso erguido y usá los apoyos para equilibrarte. Detené la máquina antes de bajar.
+
+- [ ] Texto y músculos revisados
+- [ ] Animación revisada
+- [ ] Reemplazos revisados
+- Correcciones: ____________________________________________
+
+## Revisión de las 41 demostraciones restantes
+
+Incorporadas el 20 de noviembre de 2026. El catálogo completo tiene ahora 48 demostraciones; esta ampliación añade las 41 que faltaban. Las secuencias se revisaron visualmente para exportación, pero **no tienen aprobación técnica profesional**. Revisar postura, recorrido, variante, continuidad anatómica y correspondencia con texto y músculos de cada ficha. Anotar las correcciones por identificador. Las indicaciones de alternar lados siguen siendo relevantes aunque el bucle muestre un solo lado.
+
+| Ejercicio | Archivos | Revisión profesional |
+| --- | --- | --- |
+| Remo en polea | [GIF](../public/exercise-demos/seated-row.gif) · [Video](../public/exercise-demos/seated-row.webm) | Pendiente |
+| Jalón al pecho | [GIF](../public/exercise-demos/lat-pulldown.gif) · [Video](../public/exercise-demos/lat-pulldown.webm) | Pendiente |
+| Press de hombros | [GIF](../public/exercise-demos/shoulder-press.gif) · [Video](../public/exercise-demos/shoulder-press.webm) | Pendiente |
+| Elevaciones laterales | [GIF](../public/exercise-demos/lateral-raise.gif) · [Video](../public/exercise-demos/lateral-raise.webm) | Pendiente |
+| Curl de bíceps | [GIF](../public/exercise-demos/biceps-curl.gif) · [Video](../public/exercise-demos/biceps-curl.webm) | Pendiente |
+| Extensión de tríceps | [GIF](../public/exercise-demos/triceps-pushdown.gif) · [Video](../public/exercise-demos/triceps-pushdown.webm) | Pendiente |
+| Sentadilla goblet | [GIF](../public/exercise-demos/goblet-squat.gif) · [Video](../public/exercise-demos/goblet-squat.webm) | Pendiente |
+| Prensa de piernas | [GIF](../public/exercise-demos/leg-press.gif) · [Video](../public/exercise-demos/leg-press.webm) | Pendiente |
+| Peso muerto rumano | [GIF](../public/exercise-demos/romanian-deadlift.gif) · [Video](../public/exercise-demos/romanian-deadlift.webm) | Pendiente |
+| Zancada hacia atrás | [GIF](../public/exercise-demos/reverse-lunge.gif) · [Video](../public/exercise-demos/reverse-lunge.webm) | Pendiente |
+| Puente de glúteos | [GIF](../public/exercise-demos/glute-bridge.gif) · [Video](../public/exercise-demos/glute-bridge.webm) | Pendiente |
+| Flexiones de brazos | [GIF](../public/exercise-demos/push-up.gif) · [Video](../public/exercise-demos/push-up.webm) | Pendiente |
+| Bird dog | [GIF](../public/exercise-demos/bird-dog.gif) · [Video](../public/exercise-demos/bird-dog.webm) | Pendiente |
+| Dead bug | [GIF](../public/exercise-demos/dead-bug.gif) · [Video](../public/exercise-demos/dead-bug.webm) | Pendiente |
+| Aperturas con mancuernas | [GIF](../public/exercise-demos/dumbbell-fly.gif) · [Video](../public/exercise-demos/dumbbell-fly.webm) | Pendiente |
+| Press de pecho en máquina | [GIF](../public/exercise-demos/chest-press-machine.gif) · [Video](../public/exercise-demos/chest-press-machine.webm) | Pendiente |
+| Cruce de poleas | [GIF](../public/exercise-demos/cable-crossover.gif) · [Video](../public/exercise-demos/cable-crossover.webm) | Pendiente |
+| Remo con barra | [GIF](../public/exercise-demos/barbell-row.gif) · [Video](../public/exercise-demos/barbell-row.webm) | Pendiente |
+| Remo con mancuerna a una mano | [GIF](../public/exercise-demos/one-arm-row.gif) · [Video](../public/exercise-demos/one-arm-row.webm) | Pendiente |
+| Dominadas asistidas | [GIF](../public/exercise-demos/assisted-pull-up.gif) · [Video](../public/exercise-demos/assisted-pull-up.webm) | Pendiente |
+| Dominadas | [GIF](../public/exercise-demos/pull-up.gif) · [Video](../public/exercise-demos/pull-up.webm) | Pendiente |
+| Press militar con barra | [GIF](../public/exercise-demos/overhead-press.gif) · [Video](../public/exercise-demos/overhead-press.webm) | Pendiente |
+| Vuelos posteriores | [GIF](../public/exercise-demos/rear-delt-fly.gif) · [Video](../public/exercise-demos/rear-delt-fly.webm) | Pendiente |
+| Face pull | [GIF](../public/exercise-demos/face-pull.gif) · [Video](../public/exercise-demos/face-pull.webm) | Pendiente |
+| Curl con barra | [GIF](../public/exercise-demos/barbell-curl.gif) · [Video](../public/exercise-demos/barbell-curl.webm) | Pendiente |
+| Curl martillo | [GIF](../public/exercise-demos/hammer-curl.gif) · [Video](../public/exercise-demos/hammer-curl.webm) | Pendiente |
+| Extensión de tríceps sobre la cabeza | [GIF](../public/exercise-demos/overhead-triceps.gif) · [Video](../public/exercise-demos/overhead-triceps.webm) | Pendiente |
+| Fondos en banco | [GIF](../public/exercise-demos/bench-dip.gif) · [Video](../public/exercise-demos/bench-dip.webm) | Pendiente |
+| Sentadilla con barra | [GIF](../public/exercise-demos/back-squat.gif) · [Video](../public/exercise-demos/back-squat.webm) | Pendiente |
+| Extensión de cuádriceps | [GIF](../public/exercise-demos/leg-extension.gif) · [Video](../public/exercise-demos/leg-extension.webm) | Pendiente |
+| Curl femoral | [GIF](../public/exercise-demos/leg-curl.gif) · [Video](../public/exercise-demos/leg-curl.webm) | Pendiente |
+| Elevación de talones | [GIF](../public/exercise-demos/calf-raise.gif) · [Video](../public/exercise-demos/calf-raise.webm) | Pendiente |
+| Sentadilla búlgara | [GIF](../public/exercise-demos/bulgarian-split-squat.gif) · [Video](../public/exercise-demos/bulgarian-split-squat.webm) | Pendiente |
+| Hip thrust | [GIF](../public/exercise-demos/hip-thrust.gif) · [Video](../public/exercise-demos/hip-thrust.webm) | Pendiente |
+| Patada de glúteo en polea | [GIF](../public/exercise-demos/cable-kickback.gif) · [Video](../public/exercise-demos/cable-kickback.webm) | Pendiente |
+| Abducción de cadera en máquina | [GIF](../public/exercise-demos/hip-abduction.gif) · [Video](../public/exercise-demos/hip-abduction.webm) | Pendiente |
+| Peso muerto con barra | [GIF](../public/exercise-demos/deadlift.gif) · [Video](../public/exercise-demos/deadlift.webm) | Pendiente |
+| Hiperextensiones | [GIF](../public/exercise-demos/back-extension.gif) · [Video](../public/exercise-demos/back-extension.webm) | Pendiente |
+| Abdominales crunch | [GIF](../public/exercise-demos/crunch.gif) · [Video](../public/exercise-demos/crunch.webm) | Pendiente |
+| Elevación de piernas | [GIF](../public/exercise-demos/leg-raise.gif) · [Video](../public/exercise-demos/leg-raise.webm) | Pendiente |
+| Pallof press | [GIF](../public/exercise-demos/pallof-press.gif) · [Video](../public/exercise-demos/pallof-press.webm) | Pendiente |
+
+Profesional: ____________________  Fecha: ____________________
+
+Correcciones y aprobación por ejercicio: ____________________
+
+
+## Programa y propuesta con IA: revisión pendiente
+
+La implementación de B-16 permite encadenar rutinas existentes. No incorpora una periodización prescrita ni crea un programa clínico. Revisar con un profesional la secuencia que el alumno decida usar y la conveniencia de guardar sesiones parcialmente completadas. La herramienta avanza con al menos una serie realizada, y lo explica en pantalla.
+
+El coach B-26 está conectado a Gemini con cuenta y límite mensual. Hay pruebas de contrato simuladas y una propuesta general real validada por software. Revisar con un profesional una muestra de resultados reales por nivel, lugar, objetivo y tiempo, comprobar correspondencia de variantes, volumen, descanso y rechazo de pedidos clínicos.
+
+- [ ] Secuencias y criterio de avance revisados.
+- [ ] Proveedor/modelo activo identificado y resultados reales revisados.
+- [ ] Limitaciones de la propuesta general y pedidos clínicos revisados.
+- Profesional, fecha y correcciones: ____________________.

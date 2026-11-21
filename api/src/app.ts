@@ -7,6 +7,7 @@ import {
 } from './auth.ts';
 import { config } from './config.ts';
 import { loadState, saveState } from './state-repo.ts';
+import { coachConfig, coachEnabled, generateCoachRoutine, hasClinicalRequest, parseCoachRequest, reserveCoachRequest, type CoachConfig } from './ai-coach.ts';
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -26,6 +27,8 @@ function credentials(req: Request): { email: string; password: string } | null {
 const handle = (fn: (req: AuthedRequest, res: Response) => Promise<void>) => (req: Request, res: Response, next: NextFunction) => fn(req as AuthedRequest, res).catch(next);
 
 export interface AppOptions {
+  coach?: CoachConfig;
+  coachFetch?: typeof fetch;
   /** Multiplies every rate limit; tests that create many accounts raise it. */
   limitScale?: number;
 }
@@ -60,6 +63,21 @@ export function createApp(pool: Pool, options: AppOptions = {}) {
   // A real session pushes at most every 1.5 s of inactivity; this only stops loops.
   const stateLimit = rateLimit(120 * scale, 10 * 60_000, byUser);
   const accountLimit = rateLimit(5 * scale, 15 * 60_000, byUser);
+  const coachLimit = rateLimit(10 * scale, 24 * 60 * 60_000, byUser);
+  const ai = options.coach ?? coachConfig();
+
+  app.get('/api/coach/status', (req,res) => {
+    res.json({enabled:coachEnabled(ai,String(req.query['brand']??'')),requiresAccount:true});
+  });
+  app.post('/api/coach/routine', auth, coachLimit, handle(async (req,res) => {
+    const input=parseCoachRequest(req.body);
+    if(!input){res.status(400).json({error:'Contanos qué querés entrenar y elegí un tiempo de 20 a 90 minutos.'});return;}
+    if(!coachEnabled(ai,input.brand)){res.status(503).json({error:'La propuesta con IA todavía no está disponible. Podés usar la propuesta guiada.'});return;}
+    if(hasClinicalRequest(input.prompt)){res.status(422).json({error:'Las molestias o lesiones necesitan una evaluación profesional. Esta función arma propuestas generales.'});return;}
+    if(!await reserveCoachRequest(pool,ai.monthlyLimit)){res.status(429).json({error:'Se alcanzó el límite de propuestas con IA. Podés seguir con la propuesta guiada.'});return;}
+    try{res.json({routine:await generateCoachRoutine(input,ai,options.coachFetch)});}
+    catch{res.status(502).json({error:'No pudimos obtener una propuesta válida. Tu borrador sigue intacto; podés usar la propuesta guiada.'});}
+  }));
 
   app.get('/api/health', handle(async (_req, res) => {
     await pool.query('SELECT 1');

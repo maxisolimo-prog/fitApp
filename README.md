@@ -23,10 +23,12 @@ Los dos servidores usan el puerto 4200: detener uno antes de iniciar el otro. El
 
 ## Funciones implementadas
 
-- Cuatro plantillas iniciales y 43 ejercicios en 9 grupos musculares, con indicaciones en español (a validar con un profesional).
+- Cuatro plantillas iniciales y 48 ejercicios en 9 grupos musculares, con indicaciones en español (a validar con un profesional).
 - Crear, personalizar y eliminar rutinas propias.
 - Calendario semanal con una rutina por fecha.
-- Sesión activa con registro de series, carga, repeticiones, temporizador de descanso y recuperación tras recargar.
+- Sesión activa con registro por repeticiones o tiempo, carga, descanso, recuperación tras recargar y vista opcional de un ejercicio a la vez.
+- Programa de sesiones en orden, con avance al guardar, pausa y reanudación, independiente del calendario.
+- Favoritos, reemplazos y mapa muscular semanal.
 - Historial y estadísticas calculadas a partir de series marcadas como completas.
 - Fichas de ejercicios con Resumen, Historial y Cómo hacerlo.
 - Registro de peso corporal y objetivo semanal.
@@ -37,9 +39,9 @@ No hay entrenamientos ni pesos personales inventados. Las cargas iniciales son c
 
 ## Alcance de esta versión
 
-La app funciona sin cuenta, con los datos en el navegador. Desde Perfil se puede crear una cuenta (email y contraseña) para guardar los datos en el servidor y usarlos en otros dispositivos: ver `docs/API.md` para la API Express + MySQL. No incluye Google Login, recuperación de contraseña, IA, cobros ni portales de entrenador o administrador. Sin cuenta, borrar los datos del navegador los elimina: se puede descargar una copia desde Perfil.
+La app funciona sin cuenta, con los datos en el navegador. Desde Perfil se puede crear una cuenta (email y contraseña) para guardar los datos en el servidor y usarlos en otros dispositivos: ver `docs/API.md` para la API Express + MySQL. No incluye Google Login, recuperación de contraseña, cobros ni portales de entrenador o administrador. El coach opcional usa Gemini, con cuenta y límites, cuando se configura en el servidor; ver `docs/COACH-IA.md`. Sin cuenta, borrar los datos del navegador los elimina: se puede descargar una copia desde Perfil.
 
-Las animaciones anatómicas de la referencia son contenido licenciado. La ficha de press de banca enlaza la muestra pública del proveedor; el proyecto no contiene ni redistribuye sus GIF. Para incorporarlas dentro de FitApp hay que aportar archivos con permiso de uso. Las fotografías y sus fuentes están en `docs/ASSETS.md`.
+Los 48 ejercicios tienen demostraciones originales locales y poster; 47 ofrecen GIF descargable. Se pueden ver en Biblioteca, rutinas, sesión y `/exercise-demos/index.html`. Son bucles de poses ilustradas, con revisión técnica profesional pendiente. Fuentes y prompts en `docs/ASSETS.md`.
 
 ## Estructura
 

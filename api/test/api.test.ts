@@ -14,7 +14,10 @@ let server: Server;
 let base = '';
 
 before(async () => {
-  pool = createPool(dbConfig(true));
+  const testConfig = dbConfig(true);
+  assert.notEqual(testConfig.database, dbConfig(false).database, 'La base de pruebas debe ser distinta de la principal.');
+  assert.match(testConfig.database, /_test$/i, 'Solo se limpia una base terminada en _test.');
+  pool = createPool(testConfig);
   // Clean slate in the test database only.
   const [tables] = await pool.query('SHOW TABLES');
   await pool.query('SET FOREIGN_KEY_CHECKS = 0');
@@ -55,6 +58,8 @@ function sampleState() {
   state.profile.weight = 68.5;
   state.profile.focus = 'grasa';
   state.profile.place = 'casa-pesas';
+  state.favoriteExerciseIds = ['bench-press', 'treadmill'];
+  state.program={id:'program-test',name:'Mi secuencia',routineIds:[state.routines[0].id,state.routines[1].id,state.routines[0].id],position:1,paused:false};
   const done = buildWorkout(state.routines[0], 'workout-done', '2026-11-15T12:00:00.000Z');
   done.sets[0].completed = true;
   done.sets[0].weight = 22.5;
@@ -64,12 +69,17 @@ function sampleState() {
   done.sets[1].completed = true;
   state.history = [completeWorkout(done, '2026-11-15T12:40:00.000Z')!];
   state.activeWorkout = buildWorkout(state.routines[1], 'workout-active', '2026-11-16T13:00:00.000Z');
+  state.activeWorkout.programStep={programId:'program-test',position:1};
   state.activeWorkout.sets[1].completed = true;
   state.activeWorkout.sets[1].completedAt = '2026-11-16T13:04:00.000Z';
   state.schedule = [{ id: 'plan-1', date: '2026-11-17', routineId: 'lower-body' }];
   state.weeklyPlan = ['upper-body', null, 'lower-body', null, 'full-body', null, null];
   state.weights = [{ id: 'weight-1', date: '2026-11-16', weight: 68.5 }];
   state.routines.push({ ...state.routines[0], id: 'custom-1', name: 'Mi rutina', custom: true, exercises: state.routines[0].exercises.map((e) => ({ ...e, weight: 12.5 })) });
+  // v5: cardio por tiempo, mezclado con fuerza, conserva precisión de segundos al ir y volver de SQL.
+  state.routines[0].exercises.push({ exerciseId: 'treadmill', sets: 1, reps: 0, weight: 0, restSeconds: 0, durationSeconds: 1225 });
+  state.history[0].sets.push({ exerciseId: 'treadmill', exerciseName: 'Cinta de correr (caminata)', setNumber: 1, reps: 0, weight: 0, completed: true, durationSeconds: 1225 });
+  state.activeWorkout.sets.push({ exerciseId: 'stair-climber', exerciseName: 'Escaladora', setNumber: 1, reps: 0, weight: 0, completed: false, durationSeconds: 600 });
   return state;
 }
 
@@ -106,6 +116,28 @@ test('state requires a session and non-JSON writes are refused', async () => {
   assert.equal(response.status, 415);
 });
 
+test('coach exige cuenta, respeta marca, valida respuestas y conserva el límite mensual ante fallas',async()=>{
+  const client=new Client();await client.call('POST','/api/auth/register',{email:email(),password:'una-clave-larga'});
+  let providerCalls=0;
+  const aiServer=createApp(pool,{coach:{apiKey:'fake-key',model:'test',endpoint:'https://example.invalid/ai',monthlyLimit:2,brands:['fitapp']},coachFetch:async()=>{
+    providerCalls++;
+    return new Response(JSON.stringify({choices:[{finish_reason:'stop',message:{content:providerCalls===1?JSON.stringify({name:'Borrador',description:'General',category:'Fuerza',exercises:[{exerciseId:'goblet-squat',sets:2,reps:10,weight:0,restSeconds:60,durationSeconds:null}]}):'{}'}}]}));
+  }}).listen(0,'127.0.0.1');
+  await new Promise(resolve=>aiServer.once('listening',resolve));
+  const origin=`http://127.0.0.1:${(aiServer.address() as AddressInfo).port}`;
+  const payload={prompt:'Quiero entrenar las piernas',level:'Principiante',place:'gimnasio',minutes:30,brand:'fitapp'};
+  const call=(data:unknown,cookie=client.cookie)=>fetch(origin+'/api/coach/routine',{method:'POST',headers:{'Content-Type':'application/json',Cookie:cookie},body:JSON.stringify(data)});
+  try{
+    assert.equal((await call(payload,'')).status,401);
+    assert.equal((await call({...payload,brand:'qivox'})).status,503);
+    assert.equal((await call({...payload,prompt:'Me molesta la rodilla'})).status,422);
+    assert.equal((await call({...payload,minutes:0})).status,400);assert.equal(providerCalls,0);
+    assert.equal((await call(payload)).status,200);assert.equal((await call(payload)).status,502);
+    assert.equal((await call(payload)).status,429);assert.equal(providerCalls,2);
+  }finally{await new Promise(resolve=>aiServer.close(resolve));}
+});
+
+
 test('a full state round trips through the relational tables exactly', async () => {
   const client = new Client();
   await client.call('POST', '/api/auth/register', { email: email(), password: 'una-clave-larga' });
@@ -117,6 +149,9 @@ test('a full state round trips through the relational tables exactly', async () 
   const loaded = await client.call('GET', '/api/state');
   assert.equal(loaded.data.revision, 1);
   assert.deepEqual(loaded.data.state, state);
+  state.favoriteExerciseIds = [];
+  assert.equal((await client.call('PUT', '/api/state', { baseRevision: 1, state })).status, 200);
+  assert.deepEqual((await client.call('GET', '/api/state')).data.state, state, 'quitar favoritos también se guarda');
 });
 
 test('stale revisions get 409 with the current server data; invalid states get 422 and change nothing', async () => {

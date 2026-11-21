@@ -50,5 +50,5 @@ export const fitnessgroup: Brand = {
     radiusBtn: '999px',
     radiusField: '14px',
   },
-  features: { account: true, install: true },
+  features: { account: true, install: true, aiCoach: true },
 };

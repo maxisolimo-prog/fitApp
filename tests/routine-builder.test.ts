@@ -37,7 +37,7 @@ test('todo ejercicio del catálogo figura en la preferencia de su movimiento', (
 });
 
 test('el equipo del catálogo es el que la propuesta sabe ubicar en cada lugar', () => {
-  const known = ['Barra', 'Mancuernas', 'Mancuerna', 'Polea', 'Máquina', 'Peso corporal', 'Banco'];
+  const known = ['Barra', 'Mancuernas', 'Mancuerna', 'Polea', 'Máquina', 'Peso corporal', 'Banco', 'Paralelas'];
   for (const exercise of seedExercises) assert.ok(known.includes(exercise.equipment), `${exercise.id}: equipo «${exercise.equipment}» sin lugar asignado`);
 });
 
@@ -132,7 +132,11 @@ test('series, repeticiones y descanso salen del objetivo y del nivel', () => {
   assert.deepEqual(defaultPrescription(curl, 'grasa', 'Intermedio'), { sets: 2, reps: 15, restSeconds: 45 });
   for (const focus of focuses) assert.deepEqual(defaultPrescription(core, focus, 'Principiante'), { sets: 2, reps: 8, restSeconds: 45 });
   for (const exercise of seedExercises) for (const focus of focuses as TrainingFocus[]) for (const level of levels) {
-    const { sets, reps, restSeconds } = defaultPrescription(exercise, focus, level);
+    const { sets, reps, restSeconds, durationSeconds } = defaultPrescription(exercise, focus, level);
+    if (exercise.tracking === 'duration') {
+      assert.deepEqual({ sets, reps, restSeconds, durationSeconds }, { sets: 1, reps: 0, restSeconds: 0, durationSeconds: 1200 });
+      continue;
+    }
     assert.ok(Number.isInteger(sets) && sets >= 1 && sets <= 5, `${exercise.id}: series`);
     assert.ok(Number.isInteger(reps) && reps >= 6 && reps <= 15, `${exercise.id}: repeticiones`);
     assert.ok(Number.isInteger(restSeconds) && restSeconds >= 45 && restSeconds <= 120, `${exercise.id}: descanso`);

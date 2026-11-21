@@ -87,6 +87,48 @@ Los músculos de cada ejercicio (`primaryMuscles`, `secondaryMuscles` en `seed.t
 
 ## Fuentes evaluadas para imágenes de ejercicios
 
-Todavía no se incorporó ninguna. El usuario eligió que las imágenes de los ejercicios las cree GPT (17 de noviembre de 2026); las alternativas con licencia verificada (Everkinetic, CC BY-SA 4.0, como reserva; react-native-body-highlighter, MIT, para el mapa muscular) y las descartadas están en la tabla "Fuentes de imágenes evaluadas" de `docs/BACKLOG.md`. Al incorporar cualquiera, registrar acá cada archivo y su origen: para las de GPT, modelo, fecha y prompt; para las de terceros, la atribución que exige su licencia.
+El usuario eligió crear imágenes originales con GPT el 17 de noviembre de 2026. Las alternativas evaluadas están en la tabla "Fuentes de imágenes evaluadas" de `docs/BACKLOG.md`. Registrar acá cada archivo y su origen: para las imágenes generadas, modelo, fecha y prompt. Para las de terceros, incluir la atribución que exige la licencia.
 
 Las animaciones anatómicas de referencia están en [Press de banca de Gym Visual](https://gymvisual.com/animated-gifs/1519-barbell-bench-press.html) y [Remo con mancuerna y apoyo de Gym Visual](https://gymvisual.com/animated-gifs/2683-dumbbell-one-arm-row-rack-support.html). No se descargaron ni incorporaron: para distribuirlas dentro de FitApp hace falta obtener la licencia correspondiente. Ver [condiciones del proveedor](https://gymvisual.com/content/3-terms-and-conditions-of-use). La disponibilidad pública de las muestras no se trata como autorización de uso en producción.
+
+## Demostración original de press de banca
+
+| Archivo | Uso | Tamaño |
+| --- | --- | --- |
+| `public/exercise-demos/bench-press.webm` | Una repetición sin audio, 3 segundos, 704 × 504 | 68.636 bytes |
+| `public/exercise-demos/bench-press.webp` | Fotograma inicial y alternativa si falla el video | 20.434 bytes |
+
+Se generó una ilustración original de cuatro poses con ImageGen integrado en Codex, el 20 de noviembre de 2026. Las poses se montaron en un bucle de descenso y subida.
+
+## Seis demostraciones priorizadas por el usuario
+
+Generadas el 20 de noviembre de 2026 con ImageGen integrado en Codex, siguiendo la selección de la captura de Fitness Online y el estilo anatómico aprobado. Cada ejercicio tiene un GIF animado, un video WebM y un fotograma JPEG de 512 × 512 en `public/exercise-demos/`. La galería `/exercise-demos/` permite revisarlos y descargarlos, individualmente o en ZIP.
+
+| Ejercicio | Nombre de archivo | Duración | Poses originales |
+| --- | --- | --- | --- |
+| Cinta de correr, caminata | `treadmill` | 1,8 s | 6 |
+| Press inclinado con mancuernas a 45° | `incline-press` | 3,6 s | 6 |
+| Jalón al pecho con agarre cerrado | `close-grip-lat-pulldown` | 3,6 s | 6 |
+| Aperturas de pecho sentado en poleas | `seated-cable-fly` | 3,6 s | 6 |
+| Fondos de tríceps en paralelas | `parallel-bar-dip` | 3,6 s | 6 |
+| Escaladora | `stair-climber` | 1,8 s | 4 |
+
+Los bucles de fuerza reproducen las poses de ida y vuelta. Los de caminata y escaladora recorren un ciclo alternado. Se verificaron los fotogramas, las demoras y la repetición indefinida al decodificar los GIF. La revisión técnica profesional sigue pendiente.
+
+Se interpretó «vuelo sentado con polea» como aperturas de pecho sentado, y la cinta muestra caminata. Los seis se incorporaron al catálogo y a sus fichas en Biblioteca, rutinas y sesión. Se agregaron cinco variantes exactas (48 ejercicios en total). Los posters se usan en las listas. La galería sigue disponible como vista de revisión y descarga; la navegación principal ya no depende de ella.
+
+Los prompts completos, la corrección del press inclinado y los identificadores de los originales generados están en [exercise-demo-prompts.json](exercise-demo-prompts.json).
+
+## Catálogo completo: las 41 demostraciones restantes
+
+Se completaron el 20 de noviembre de 2026 con ImageGen integrado en Codex. Cada ejercicio tiene su propia secuencia original de seis poses, poster JPEG, GIF animado y video WebM de 512 × 512. Los bucles nuevos duran 3,6 segundos: diez cuadros al recorrer seis poses de ida y vuelta, o seis cuadros cuando la lámina ya contiene el ciclo completo. El video repite esas poses a 20 fps; no agrega movimiento intermedio ni constituye un render 3D continuo.
+
+Los identificadores de archivos, nombres de ejercicios, prompts íntegros, originales y correcciones están en [exercise-demo-prompts-completion.json](exercise-demo-prompts-completion.json). Las correcciones incluyeron el recorrido del press de hombros, jalón por delante de la cabeza, banco plano en aperturas y extremidades/encuadre en dead bug. Cada secuencia se revisó visualmente; la revisión técnica profesional sigue abierta en B-30.
+
+Resultado total: **48 videos y posters, 47 GIF**. El press de banca original conserva WebM y WebP. Los archivos están en `public/exercise-demos/`; la galería `index.html` muestra los 48 y `catalogo-gif.zip` reúne los 47 GIF. El ZIP anterior de seis ejercicios se conserva. Ningún recurso se extrajo de capturas de la competencia.
+
+El mapa de integración es `src/app/core/exercise-media.ts` y el índice descargable es `public/exercise-demos/catalog.json`. Las fichas de Biblioteca, rutinas y sesión usan el mismo mapa. Los scripts de exportación y sus instrucciones están en [scripts/media](../scripts/media/README.md). Las pruebas de medios comprueban correspondencia con el catálogo, existencia de archivos, múltiples cuadros, demoras y repetición indefinida.
+
+## Prompt original de press de banca
+
+> Use case: scientific-educational. Create an ORIGINAL raster sprite sheet for FitApp demonstrating the flat barbell bench press with realistic human anatomy, in the visual language of a contemporary physical-training anatomy atlas. Single landscape image divided into exactly 4 equal rectangular frames, a precise 2-by-2 grid. Background perfectly uniform pure white across the whole image, NO borders, NO dividers, NO text, NO arrows, NO logos. Each quadrant contains one individual isolated frame of the SAME complete scene at the SAME zoom and exact fixed camera. Each illustration centered within its quadrant with 8% whitespace margins so no subject enters another quadrant. Adult anatomically accurate graphite-and-silver athletic human figure, face understated, wearing opaque charcoal athletic shorts and dark trainers, with carefully modeled distinct muscle shapes, subtle fibers and soft shading. Both pectorals highlighted with muted terracotta red, deltoids and triceps subtly outlined in muted rose. Flat black padded bench, simple gray steel bench supports, a single straight level steel Olympic bar with two charcoal plates (one at each end). Use a fixed three-quarters side view, slightly elevated, head on the left and feet on the right. Entire figure, both plates and bench in view in each quadrant. Head, upper back and hips stay supported on the same bench. Knees naturally bent, both shoes visibly planted flat on the floor. Both hands grasp horizontally on that same single bar just outside shoulder width. No rack uprights blocking the figure and no additional objects. The only things that change between quadrants are the bar's position and the arm positions required to hold it: TOP LEFT at the top of the repetition, arms almost fully extended above the chest; TOP RIGHT bar lowered roughly one-third of the way, elbow flexion visible; BOTTOM LEFT bar lowered two-thirds of the way, elbows noticeably below the bar; BOTTOM RIGHT bar hovering just above lower chest, elbows flexed naturally around 90 degrees, wrists stacked above elbows. Maintain exact anatomical proportions and image registration so frames remain stationary when played in succession. Aim for a sophisticated, proportionally realistic clinical illustration, neither robotics nor a low-poly mannequin. Independently composed original asset for a workout app.

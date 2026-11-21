@@ -1,12 +1,20 @@
-import { Component, EventEmitter, Output, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, EventEmitter, Output, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import type { Exercise, WorkoutSet } from '../core/models';
 import { muscleSentence } from '../core/muscles';
 import { loadHint } from '../load-hint';
 import { WorkoutStore } from '../core/workout-store';
 import { MuscleMapComponent } from './muscle-map.component';
+import { ExerciseFavoriteComponent } from './exercise-favorite.component';
+import { ExerciseDemonstrationComponent } from './exercise-demonstration.component';
+
+import { EXERCISE_MEDIA } from '../core/exercise-media';
+import { formatDuration, workoutVolume } from '../core/workout-utils';
 
 type DetailTab = 'overview' | 'muscles' | 'history' | 'instructions';
-type Metric = 'weight' | 'volume' | 'reps';
+type Metric = 'weight' | 'volume' | 'reps' | 'duration';
+
+const demonstrations = EXERCISE_MEDIA;
 
 interface ExerciseSession {
   id: string;
@@ -16,12 +24,13 @@ interface ExerciseSession {
   weight: number;
   volume: number;
   reps: number;
+  duration: number;
 }
 
 @Component({
   selector: 'app-exercise-detail',
   standalone: true,
-  imports: [MuscleMapComponent],
+  imports: [MuscleMapComponent, ExerciseDemonstrationComponent, ExerciseFavoriteComponent, NgTemplateOutlet],
   template: `
     <article class="exercise-detail" [attr.aria-labelledby]="prefix() + '-title'">
       <header class="detail-header">
@@ -35,6 +44,7 @@ interface ExerciseSession {
           <h2 [id]="prefix() + '-title'">{{ exercise().name }}</h2>
           <p>{{ exercise().muscle }} <span aria-hidden="true">·</span> {{ exercise().equipment }}</p>
         </div>
+        <app-exercise-favorite [exerciseId]="exercise().id" [exerciseName]="exercise().name" [dark]="true" />
       </header>
 
       <div class="detail-tabs" role="tablist" aria-label="Información del ejercicio">
@@ -47,19 +57,18 @@ interface ExerciseSession {
         }
       </div>
 
+      <ng-template #demonstrationPanel>
+        @if (demonstration(); as media) {
+          <app-exercise-demonstration [media]="media" [captionId]="prefix() + '-demo-caption'" />
+        }
+      </ng-template>
       <section class="tab-panel" role="tabpanel" [id]="prefix() + '-panel-overview'"
         [attr.aria-labelledby]="prefix() + '-tab-overview'" [hidden]="activeTab() !== 'overview'" tabindex="0">
-        @if (exercise().id === 'bench-press') {
-          <div class="reference-panel">
-            <div class="reference-top"><span class="section-kicker">REFERENCIA DEL MOVIMIENTO</span><span class="reference-type">ANATOMÍA</span></div>
-            <a class="animation-link" href="https://gymvisual.com/animated-gifs/1519-barbell-bench-press.html"
-              target="_blank" rel="noopener noreferrer" aria-describedby="animation-note">
-              <span class="play-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="m9 5 11 7-11 7z"/></svg></span>
-              <span><strong>Ver animación anatómica</strong><span>Press de banca con barra</span></span>
-              <svg class="external-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M10 5H5v14h14v-5"/></svg>
-            </a>
-            <p id="animation-note">Vista previa en Gym Visual · abre otra pestaña</p>
-          </div>
+        @if (demonstration()) {
+          @if (activeTab() === 'overview') {
+            <h3 class="demonstration-heading">Demostración</h3>
+            <ng-container [ngTemplateOutlet]="demonstrationPanel" />
+          }
         } @else {
           <div class="movement-panel">
             <span class="section-kicker">CONOCÉ EL MOVIMIENTO</span>
@@ -73,7 +82,8 @@ interface ExerciseSession {
           <label class="metric-field">
             <span class="sr-only">Métrica del gráfico</span>
             <select [value]="metric()" (change)="setMetric($event)">
-              <option value="weight">Mayor peso</option><option value="volume">Volumen</option><option value="reps">Repeticiones</option>
+              @if (exercise().tracking !== 'duration') { <option value="weight">Mayor peso</option><option value="volume">Volumen</option><option value="reps">Repeticiones</option> }
+              <option value="duration">Tiempo</option>
             </select>
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg>
           </label>
@@ -137,13 +147,13 @@ interface ExerciseSession {
             @for (session of newestSessions(); track session.id; let first = $first) {
               <details class="history-session" [open]="first">
                 <summary><span><strong>{{ dateLabel(session.date) }}</strong><span>{{ session.routineName }}</span></span><span class="history-summary">{{ session.sets.length }} {{ session.sets.length === 1 ? 'serie' : 'series' }} <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg></span></summary>
-                <table><caption class="sr-only">Series de {{ exercise().name }}, {{ dateLabel(session.date) }}</caption><thead><tr><th scope="col">Serie</th><th scope="col">Repeticiones</th><th scope="col">Peso</th></tr></thead><tbody>
+                <table><caption class="sr-only">Series de {{ exercise().name }}, {{ dateLabel(session.date) }}</caption><thead><tr><th scope="col">Serie</th><th scope="col">Reps / tiempo</th><th scope="col">Peso</th></tr></thead><tbody>
                   @for (set of session.sets; track $index) {
-                    <tr [class.has-note]="!!set.note"><th scope="row"><span class="completed-dot" aria-label="Completada"></span>{{ set.setNumber }}</th><td>{{ set.reps }}</td><td>{{ formatNumber(set.weight) }} kg</td></tr>
+                    <tr [class.has-note]="!!set.note"><th scope="row"><span class="completed-dot" aria-label="Completada"></span>{{ set.setNumber }}</th><td>{{ set.durationSeconds === undefined ? set.reps : durationLabel(set.durationSeconds) }}</td><td>{{ set.durationSeconds === undefined ? formatNumber(set.weight) + ' kg' : '—' }}</td></tr>
                     @if (set.note) { <tr class="set-note"><td colspan="3"><span class="sr-only">Comentario: </span>{{ set.note }}</td></tr> }
                   }
                 </tbody></table>
-                <div class="history-total"><span>Volumen de la sesión</span><strong>{{ formatNumber(session.volume) }} kg</strong></div>
+                <div class="history-total"><span>{{ session.duration ? 'Tiempo registrado' : 'Volumen de la sesión' }}</span><strong>{{ session.duration ? durationLabel(session.duration * 60) : formatNumber(session.volume) + ' kg' }}</strong></div>
               </details>
             }
           </div>
@@ -154,11 +164,15 @@ interface ExerciseSession {
 
       <section class="tab-panel instructions-panel" role="tabpanel" [id]="prefix() + '-panel-instructions'"
         [attr.aria-labelledby]="prefix() + '-tab-instructions'" [hidden]="activeTab() !== 'instructions'" tabindex="0">
-        <div class="panel-heading"><span class="section-kicker">EL MOVIMIENTO, PASO A PASO</span><h3>Cómo hacerlo</h3><p>Controlá el recorrido y elegí una carga que puedas manejar.</p></div>
-        <ol class="instruction-list">@for (instruction of exercise().instructions; track $index) { <li><span class="step-number" aria-hidden="true">{{ ($index + 1).toString().padStart(2, '0') }}</span><p>{{ instruction }}</p></li> }</ol>
-        @if (exercise().id === 'bench-press') {
-          <a class="source-link" href="https://gymvisual.com/animated-gifs/1519-barbell-bench-press.html" target="_blank" rel="noopener noreferrer"><span class="source-symbol" aria-hidden="true">↗</span><span><strong>Referencia anatómica · Gym Visual</strong><span>Ver el movimiento en otra pestaña</span></span></a>
+        @if (demonstration()) {
+          <h3 class="demonstration-heading">Cómo hacerlo</h3>
+        } @else {
+          <div class="panel-heading"><span class="section-kicker">EL MOVIMIENTO, PASO A PASO</span><h3>Cómo hacerlo</h3><p>Controlá el recorrido y elegí una carga que puedas manejar.</p></div>
         }
+        @if (activeTab() === 'instructions') {
+          <ng-container [ngTemplateOutlet]="demonstrationPanel" />
+        }
+        <ol class="instruction-list">@for (instruction of exercise().instructions; track $index) { <li><span class="step-number" aria-hidden="true">{{ ($index + 1).toString().padStart(2, '0') }}</span><p>{{ instruction }}</p></li> }</ol>
         <p class="technique-note">Movete dentro de un recorrido cómodo. Detené la serie si sentís dolor.</p>
       </section>
     </article>
@@ -177,7 +191,7 @@ interface ExerciseSession {
     .back-button{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;margin-top:5px;border:1px solid var(--detail-line);border-radius:50%;color:var(--detail-text);background:transparent}
     .back-button:hover{background:var(--detail-surface);border-color:var(--detail-muted)}
     .back-button svg{width:22px;height:22px}
-    .heading-copy{min-width:0}.eyebrow,.section-kicker{font-size:10px;font-weight:650;letter-spacing:.13em;line-height:1.6;color:var(--detail-muted)}
+    .heading-copy{min-width:0;flex:1}.eyebrow,.section-kicker{font-size:10px;font-weight:650;letter-spacing:.13em;line-height:1.6;color:var(--detail-muted)}
     .heading-copy h2{margin:7px 0 7px;font-family:var(--font-display);font-size:26px;font-weight:var(--display-weight,630);letter-spacing:var(--display-tracking,-.035em);text-transform:var(--display-transform,none);line-height:1.2;overflow-wrap:anywhere}
     .heading-copy p{display:flex;flex-wrap:wrap;gap:8px;margin:0;color:var(--detail-muted);font-size:13px;line-height:1.5}
     .detail-tabs{display:flex;padding:0 30px;border-bottom:1px solid var(--detail-line);gap:27px}
@@ -185,12 +199,7 @@ interface ExerciseSession {
     .detail-tabs button:hover{color:var(--detail-text)}.detail-tabs button.is-active{color:var(--detail-accent)}
     .detail-tabs button.is-active::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--detail-accent)}
     .tab-panel{padding:26px 30px 0}.tab-panel[hidden]{display:none}
-    .reference-panel{background:var(--detail-deep);border:1px solid var(--detail-line);border-radius:12px;padding:18px 20px 17px}
-    .reference-top{display:flex;align-items:center;justify-content:space-between;gap:12px}.reference-type{font-size:9px;letter-spacing:.12em;border:1px solid var(--detail-line);padding:3px 6px;border-radius:4px;color:var(--detail-muted)}
-    .animation-link{display:flex;align-items:center;gap:17px;min-height:110px;color:var(--detail-text);text-decoration:none;border-radius:8px}
-    .animation-link:hover{color:var(--detail-accent)}.animation-link>span:nth-child(2){flex:1}.animation-link strong{display:block;font-weight:600;font-size:17px;line-height:1.35;letter-spacing:-.02em}.animation-link>span>span{display:block;color:var(--detail-muted);font-size:12px;margin-top:6px}
-    .play-icon{display:grid;place-items:center;flex-shrink:0;width:54px;height:54px;border:1px solid var(--detail-accent);border-radius:50%;color:var(--detail-accent);background:color-mix(in srgb, var(--accent) 4%, transparent)}.play-icon svg{width:23px;height:23px;margin-left:-3px}
-    .external-icon{flex-shrink:0;width:18px;height:18px;color:var(--detail-muted)}.reference-panel>p{margin:0;color:var(--detail-muted);font-size:11px;line-height:1.5}
+    .tab-panel .demonstration-heading{margin:0 0 12px}
     .movement-panel{background:var(--detail-deep);border-radius:12px;padding:22px}.movement-panel>p{margin:12px 0 14px;font-size:15px;line-height:1.65;max-width:50ch}
     .inline-action{display:inline-flex;align-items:center;gap:16px;background:none;border:0;padding:10px 0;color:var(--detail-accent);font-size:13px;font-weight:600;text-decoration:none}.inline-action:hover{color:var(--detail-text)}.inline-action>span{font-size:18px}
     .progress-header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:32px;margin-bottom:22px}h3{font-size:20px;letter-spacing:-.025em;font-weight:600;margin:3px 0 0;line-height:1.3}
@@ -207,20 +216,23 @@ interface ExerciseSession {
     .history-list{border-top:1px solid var(--detail-line)}.history-session{border-bottom:1px solid var(--detail-line)}.history-session>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:20px 0;cursor:pointer}.history-session>summary::-webkit-details-marker{display:none}.history-session>summary>span:first-child{display:flex;flex-direction:column;gap:6px}.history-session>summary strong{font-size:14px;font-weight:550}.history-session>summary>span>span{color:var(--detail-muted);font-size:11px}.history-summary{display:flex;gap:14px;align-items:center;flex-shrink:0;color:var(--detail-muted);font-size:11px}.history-summary svg{width:15px;height:15px;transition:transform 160ms ease-out}.history-session[open] .history-summary svg{transform:rotate(180deg)}
     table{border-collapse:collapse;width:100%;font-size:12px;font-variant-numeric:tabular-nums}th,td{padding:11px 10px;text-align:right;border-bottom:1px solid var(--detail-line)}th:first-child,td:first-child{text-align:left;padding-left:0}th:last-child,td:last-child{padding-right:0}thead th{font-weight:500;color:var(--detail-muted);font-size:10px}tbody th{font-weight:500}.completed-dot{display:inline-block;width:5px;height:5px;vertical-align:middle;border-radius:50%;background:var(--detail-accent);margin-right:12px}tr.has-note>*{border-bottom:0}.set-note td{padding:0 0 11px;text-align:left;color:var(--detail-muted);font-size:12px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}.history-total{display:flex;justify-content:space-between;gap:18px;padding:16px 0 20px;font-size:11px;color:var(--detail-muted)}.history-total strong{font-size:12px;color:var(--detail-text);font-weight:500}.history-empty{margin-top:3px;padding-top:28px}.empty-mark{font-size:39px;font-weight:400;letter-spacing:-.06em;color:var(--detail-accent);margin-bottom:18px;line-height:1}.history-empty .inline-action{margin-top:14px}
     .instruction-list{list-style:none;padding:0;margin:0}.instruction-list li{display:flex;align-items:flex-start;gap:20px;padding:22px 0;border-top:1px solid var(--detail-line)}.step-number{color:var(--detail-accent);font-size:14px;font-variant-numeric:tabular-nums;font-weight:500;line-height:1.75;padding-top:1px;min-width:22px}.instruction-list p{margin:0;color:var(--detail-text);font-size:14px;line-height:1.75;max-width:56ch}
-    .source-link{display:flex;align-items:center;gap:16px;text-decoration:none;color:var(--detail-text);border:1px solid var(--detail-line);border-radius:9px;padding:17px 18px;margin-top:14px}.source-link:hover{border-color:var(--detail-accent);background:var(--detail-surface)}.source-symbol{font-size:24px;color:var(--detail-accent)}.source-link>span:last-child{display:flex;flex-direction:column;gap:6px}.source-link strong{font-weight:550;font-size:12px}.source-link>span>span{font-size:11px;color:var(--detail-muted)}.technique-note{color:var(--detail-muted);font-size:11px;line-height:1.7;margin:24px 0 0;max-width:58ch}
+    .technique-note{color:var(--detail-muted);font-size:11px;line-height:1.7;margin:24px 0 0;max-width:58ch}
     .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-    @media(max-width:540px){.exercise-detail{border-radius:16px}.detail-header{padding:22px 20px 20px;gap:12px}.back-button{flex-basis:36px;width:36px;height:36px}.heading-copy h2{font-size:23px}.eyebrow{font-size:9px}.detail-tabs{padding:0 20px;gap:18px}.detail-tabs button{font-size:12px}.tab-panel{padding:22px 20px 0}.history-panel,.instructions-panel,.muscles-panel{padding-bottom:24px}.muscle-lists{gap:14px}.muscle-lists dd{font-size:13px}.reference-panel{padding:16px}.reference-type{font-size:8px}.section-kicker{font-size:9px}.animation-link{gap:12px;min-height:112px}.animation-link strong{font-size:15px}.play-icon{width:44px;height:44px}.animation-link>span>span{font-size:11px}.external-icon{width:16px;height:16px}.reference-panel>p{font-size:10px}.progress-header{margin-top:28px;gap:10px}h3{font-size:18px}.metric-field select{padding-left:10px;font-size:11px}.record-line p strong{font-size:32px}.session-count{max-width:100px}.chart-footer{font-size:9px}.empty-progress{padding:24px 14px}.empty-progress h4{font-size:15px}.empty-progress p{font-size:12px}.instruction-list li{gap:15px}.instruction-list p{font-size:13px}.source-link{padding:15px 13px}.source-link strong{font-size:11px}}
+    @media(max-width:540px){.exercise-detail{border-radius:16px}.detail-header{padding:22px 20px 20px;gap:12px}.back-button{flex-basis:36px;width:36px;height:36px}.heading-copy h2{font-size:23px}.eyebrow,.section-kicker{font-size:9px}.detail-tabs{padding:0 20px;gap:18px}.detail-tabs button{font-size:12px}.tab-panel{padding:22px 20px 0}.history-panel,.instructions-panel,.muscles-panel{padding-bottom:24px}.muscle-lists{gap:14px}.muscle-lists dd{font-size:13px}.progress-header{margin-top:28px;gap:10px}h3{font-size:18px}.metric-field select{padding-left:10px;font-size:11px}.record-line p strong{font-size:32px}.session-count{max-width:100px}.chart-footer{font-size:9px}.empty-progress{padding:24px 14px}.empty-progress h4{font-size:15px}.empty-progress p{font-size:12px}.instruction-list li{gap:15px}.instruction-list p{font-size:13px}}
     @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;scroll-behavior:auto!important}}
   `,
 })
 export class ExerciseDetailComponent {
   readonly exercise = input.required<Exercise>();
-  /** Dentro de una hoja que ya trae su propio botón para volver (la ficha abierta desde la sesión). */
+  /** Dentro de una hoja que ya trae su propio botón para volver. */
   readonly embedded = input(false);
+  readonly initialTab = input<DetailTab>('overview');
   @Output() readonly closed = new EventEmitter<void>();
   readonly store = inject(WorkoutStore);
-  readonly activeTab = signal<DetailTab>('overview');
-  readonly metric = signal<Metric>('weight');
+  readonly activeTab = linkedSignal(() => this.initialTab());
+  readonly demonstration = computed(() => demonstrations[this.exercise().id]);
+  readonly metric = linkedSignal<Metric>(() => this.exercise().tracking === 'duration' ? 'duration' : 'weight');
+  readonly durationLabel = formatDuration;
   readonly tabs: { id: DetailTab; label: string }[] = [
     { id: 'overview', label: 'Resumen' },
     { id: 'muscles', label: 'Músculos' },
@@ -240,7 +252,8 @@ export class ExerciseDetailComponent {
       return {
         id: workout.id, date: workout.finishedAt ?? workout.startedAt, routineName: workout.routineName, sets,
         weight: sets.reduce((highest, set) => Math.max(highest, set.weight), 0),
-        volume: sets.reduce((total, set) => total + set.weight * set.reps, 0),
+        volume: workoutVolume({ sets }),
+        duration: sets.reduce((total, set) => total + (set.durationSeconds ?? 0), 0) / 60,
         reps: sets.reduce((total, set) => total + set.reps, 0),
       };
     })
@@ -248,10 +261,10 @@ export class ExerciseDetailComponent {
     .sort((a, b) => Date.parse(a.date) - Date.parse(b.date)));
   readonly newestSessions = computed(() => [...this.sessions()].reverse());
   readonly recentSessions = computed(() => this.sessions().slice(-12));
-  readonly metricLabel = computed(() => ({ weight: 'Mayor peso', volume: 'Volumen', reps: 'Repeticiones' })[this.metric()]);
-  readonly bestLabel = computed(() => ({ weight: 'Mayor peso registrado', volume: 'Mayor volumen en una sesión', reps: 'Más repeticiones en una sesión' })[this.metric()]);
-  readonly unit = computed(() => this.metric() === 'reps' ? 'reps' : 'kg');
-  readonly metricExplanation = computed(() => ({ weight: 'Carga máxima por sesión', volume: 'Peso × repeticiones completadas', reps: 'Total de repeticiones completadas' })[this.metric()]);
+  readonly metricLabel = computed(() => ({ weight: 'Mayor peso', volume: 'Volumen', reps: 'Repeticiones', duration: 'Tiempo' })[this.metric()]);
+  readonly bestLabel = computed(() => ({ weight: 'Mayor peso registrado', volume: 'Mayor volumen en una sesión', reps: 'Más repeticiones en una sesión', duration: 'Mayor tiempo registrado en una sesión' })[this.metric()]);
+  readonly unit = computed(() => this.metric() === 'duration' ? 'min' : this.metric() === 'reps' ? 'reps' : 'kg');
+  readonly metricExplanation = computed(() => ({ weight: 'Carga máxima por sesión', volume: 'Peso × repeticiones completadas', reps: 'Total de repeticiones completadas', duration: 'Duración registrada, no tiempo entre series' })[this.metric()]);
   readonly bestValue = computed(() => this.sessions().reduce((best, session) => Math.max(best, session[this.metric()]), 0));
   readonly chartMaximum = computed(() => {
     const maximum = this.recentSessions().reduce((best, session) => Math.max(best, session[this.metric()]), 0);
@@ -279,7 +292,7 @@ export class ExerciseDetailComponent {
 
   setMetric(event: Event): void {
     const value = (event.target as HTMLSelectElement).value;
-    if (value === 'weight' || value === 'volume' || value === 'reps') this.metric.set(value);
+    if (value === 'weight' || value === 'volume' || value === 'reps' || value === 'duration') this.metric.set(value);
   }
 
   selectTab(tab: DetailTab): void {

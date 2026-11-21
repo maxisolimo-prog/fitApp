@@ -1,0 +1,19 @@
+[Unit]
+Description=FitApp API
+After=network.target mysql.service
+
+[Service]
+Type=simple
+User=fitapp
+WorkingDirectory=/srv/fitapp/api
+EnvironmentFile=/etc/fitapp/api.env
+ExecStart=/usr/bin/node --import tsx src/server.ts
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target
