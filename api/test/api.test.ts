@@ -21,10 +21,17 @@ before(async () => {
   assert.match(testConfig.database, /_test$/i, 'Solo se limpia una base terminada en _test.');
   pool = createPool(testConfig);
   // Clean slate in the test database only.
-  const [tables] = await pool.query('SHOW TABLES');
-  await pool.query('SET FOREIGN_KEY_CHECKS = 0');
-  for (const row of tables as Record<string, string>[]) await pool.query(`DROP TABLE \`${Object.values(row)[0]}\``);
-  await pool.query('SET FOREIGN_KEY_CHECKS = 1');
+  const setup = await pool.getConnection();
+  try {
+    const [tables] = await setup.query('SHOW TABLES');
+    await setup.query('SET FOREIGN_KEY_CHECKS = 0');
+    for (const row of tables as Record<string, string>[]) await setup.query('DROP TABLE ??',[Object.values(row)[0]]);
+    // Reproduce una instalación nueva cuyo default difiere de las claves VARCHAR de FitApp.
+    await setup.query('ALTER DATABASE ?? CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci',[testConfig.database]);
+  } finally {
+    await setup.query('SET FOREIGN_KEY_CHECKS = 1');
+    setup.release();
+  }
   await migrate(pool);
   server = createApp(pool, { limitScale: 100 }).listen(0, '127.0.0.1');
   await new Promise((resolve) => server.once('listening', resolve));

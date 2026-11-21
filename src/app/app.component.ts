@@ -20,6 +20,7 @@ import { EXERCISE_MEDIA } from './core/exercise-media';
 import { loadAction, loadHint } from './load-hint';
 import { TrainingProgramComponent } from './features/training-program.component';
 import { ExerciseDemonstrationComponent } from './features/exercise-demonstration.component';
+import { copyRoutineDraft, filterRoutineLibrary } from './core/routine-library';
 
 type View = 'home'|'routines'|'calendar'|'progress'|'library'|'profile'|'workout'|'editor';
 @Component({
@@ -155,7 +156,8 @@ export class AppComponent implements OnDestroy {
   setSessionView(mode:'list'|'focus'){this.sessionView.set(mode);try{localStorage.setItem('fitapp-session-view',mode);}catch{}}
   savedSessionView():'list'|'focus'{try{return localStorage.getItem('fitapp-session-view')==='focus'?'focus':'list';}catch{return 'list';}}
   focusExercise(index:number){const group=this.workoutGroups()[index];if(!group)return;this.focusedExercise.set(group.id);this.noteEditing.set(null);setTimeout(()=>document.querySelector<HTMLElement>('.focus-nav')?.focus());}
-  search=''; muscle='Todos'; routineFilter='Todas';
+  search=''; muscle='Todos'; routineFilter='Todas'; routineSearch='';
+  copySourceName:string|null=null;
   calendarDate=this.today; calendarRoutine='full-body'; calendarForm=false;
   profileDraft: Profile={...this.store.profile()}; profileError='';
   weightValue: number|null=null; weightDate=this.today; weightError='';
@@ -416,7 +418,7 @@ export class AppComponent implements OnDestroy {
   exercise(id:string){return this.store.exercises().find(e=>e.id===id)!;}
   routine(id:string){return this.store.routines().find(r=>r.id===id);}
   imageFor(id:string){return id==='at-home'?'images/home-workout.jpg':id==='lower-body'?'images/mobility.jpg':'images/strength.jpg';}
-  get filteredRoutines(){return this.store.routines().filter(r => this.routineFilter==='Todas'||(this.routineFilter==='Mis creaciones'?r.custom:r.level===this.routineFilter));}
+  get filteredRoutines(){return filterRoutineLibrary(this.store.routines(),this.store.exercises(),this.routineSearch,this.routineFilter);}
   get filteredExercises(){const q=this.search.toLocaleLowerCase('es');return this.store.exercises().filter(e=>(!this.onlyAnimated || !!EXERCISE_MEDIA[e.id])&&(!this.onlyFavorites || this.store.isFavorite(e.id))&&(this.muscle==='Todos'||e.muscle===this.muscle)&&`${e.name} ${e.muscle} ${e.equipment}`.toLocaleLowerCase('es').includes(q));}
   get muscles(){return ['Todos',...new Set(this.store.exercises().map(e=>e.muscle))];}
   dateLabel(date:string,options:Intl.DateTimeFormatOptions={day:'numeric',month:'short'}){return new Intl.DateTimeFormat('es-AR',options).format(new Date(date+'T12:00:00'));}
@@ -436,7 +438,8 @@ export class AppComponent implements OnDestroy {
   clock(seconds:number){const mins=Math.floor(seconds/60);return `${mins.toString().padStart(2,'0')}:${(seconds%60).toString().padStart(2,'0')}`;}
   finish(){const workout=this.store.finishWorkout();if(workout){this.skipRest();this.clearSwaps();this.navigate('progress');this.selectedHistory.set(workout);this.notify('¡Sesión guardada! Cada entrenamiento cuenta.');}else this.notify(this.store.actionError()??'Marcá al menos una serie completada.');}
   confirmAction(){const action=this.confirmation();if(action==='discard'){this.store.discardWorkout();this.skipRest();this.clearSwaps();this.navigate('home');this.notify('Sesión descartada.');}if(action==='delete'&&this.selectedRoutine()){if(this.store.deleteRoutine(this.selectedRoutine()!.id)){this.selectedRoutine.set(null);this.notify('Rutina eliminada. Tu historial se conserva.');}else this.notify(this.store.actionError()??'No se puede eliminar.');}if(action==='import'){if(this.store.importJson(this.pendingImport)){this.profileDraft={...this.store.profile()};this.notify('Copia de seguridad importada.');}else this.notify(this.store.actionError()??'El archivo no es una copia válida.');this.pendingImport='';}this.confirmation.set(null);}
-  editRoutine(r:Routine|null=null){this.editingRoutine=r;this.navigate('editor');}
+  editRoutine(r:Routine|null=null){this.copySourceName=null;this.editingRoutine=r;this.navigate('editor');}
+  duplicateRoutine(r:Routine){this.copySourceName=r.name;this.editingRoutine=copyRoutineDraft(r,this.store.routines(),'custom-'+crypto.randomUUID());this.navigate('editor');}
   routineSaved(){this.navigate('routines');this.notify('Rutina guardada.');}
   saveProfile(){this.profileError='';if(this.store.updateProfile(this.profileDraft)){this.notify('Perfil actualizado.');}else this.profileError=this.store.actionError()??'Revisá los datos del perfil.';}
   addWeight(){this.weightError='';if(this.weightValue!==null&&this.store.addWeight(Number(this.weightValue),this.weightDate)){this.weightValue=null;this.notify('Medición guardada.');}else this.weightError=this.store.actionError()??'Ingresá un peso válido.';}

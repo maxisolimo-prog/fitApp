@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import '@angular/compiler';
 import { WorkoutStore } from '../src/app/core/workout-store';
+import { copyRoutineDraft } from '../src/app/core/routine-library';
 import {
   buildWorkout, cleanSetNote, completeWorkout, createInitialState, deserializeState, isFactoryState, lastSetsFor, localDate, personalRecords, plannedRoutineId, suggestProgression, suggestWeeklyPlan, workoutSummaryText,
   parseLocalDate, parseSessionSwaps, recordSwap, removeRoutine, serializeState, setPauses, startOfWeek, substituteExercise, swapOrigin, validateState,
@@ -744,6 +745,28 @@ test('session swaps point a substitute at the routine exercise it replaced and r
     '{"workoutId":"w1","swaps":{"__proto__":"push-up"}}', '{"workoutId":"w1","swaps":{"push-up":7}}']) {
     assert.equal(parseSessionSwaps(raw), null, String(raw));
   }
+});
+
+test('guardar una variante conserva el programa, calendario, sesión activa e historial del original al recargar', () => {
+  withStorage(() => {
+    const store = new WorkoutStore(), sourceId = store.routines()[0].id;
+    assert.ok(store.saveProgram('Mi programa', [sourceId, sourceId]));
+    assert.ok(store.startProgramWorkout());store.toggleSet(0);assert.ok(store.finishWorkout());
+    assert.ok(store.startProgramWorkout());store.toggleSet(0);
+    store.scheduleRoutine('2026-11-23', sourceId);
+    const before = store.snapshot(), source = before.routines.find(r => r.id === sourceId)!;
+    const draft = copyRoutineDraft(source, before.routines, 'custom-copy');
+    draft.exercises[0].weight = 17.5;
+    assert.deepEqual(store.snapshot(), before, 'el borrador todavía no modifica ningún dato');
+    assert.ok(store.saveRoutine(draft));
+    const after = new WorkoutStore().snapshot();
+    assert.equal(after.routines.length, before.routines.length + 1);
+    assert.deepEqual(after.routines.find(r => r.id === sourceId), source);
+    assert.equal(after.routines.find(r => r.id === draft.id)!.exercises[0].weight, 17.5);
+    for (const key of ['program', 'schedule', 'weeklyPlan', 'activeWorkout', 'history'] as const) assert.deepEqual(after[key], before[key], key);
+    const exerciseId = draft.exercises[0].exerciseId;
+    assert.ok(lastSetsFor(after.history, exerciseId).length, 'la variante consulta el historial del mismo ejercicio');
+  });
 });
 
 test('routines are not capped at 12 exercises; the catalog ids are unique', () => {

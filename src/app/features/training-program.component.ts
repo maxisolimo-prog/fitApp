@@ -11,7 +11,7 @@ import { ExerciseThumbComponent } from './exercise-thumb.component';
   selector:'app-training-program',standalone:true,imports:[FormsModule,ExerciseThumbComponent],
   template:`
     <section class="program" aria-labelledby="program-title" [inert]="leaveAsk()">
-      <header><div><p class="eyebrow">A tu ritmo</p><h2 id="program-title">{{ store.program()?.name ?? 'Tu próximo entrenamiento, en orden' }}</h2></div>
+      <header><div>@if(editing() || store.program()){<p class="eyebrow">A tu ritmo</p>}<h2 id="program-title">{{ store.program()?.name ?? 'Entrená en secuencia' }}</h2></div>
         @if (!editing()) { <button type="button" class="btn btn-secondary" id="program-edit" (click)="edit()" [disabled]="!!store.activeWorkout()?.programStep">{{ store.program() ? 'Editar programa' : 'Crear programa' }}</button> }
       </header>
       @if (editing()) {
@@ -58,8 +58,8 @@ import { ExerciseThumbComponent } from './exercise-thumb.component';
         <div class="actions"><button type="button" class="btn btn-secondary" (click)="store.pauseProgram(!p.paused)">{{p.paused?'Retomar programa':'Pausar programa'}}</button><button type="button" class="btn btn-secondary" (click)="removing=true" [disabled]="!!store.activeWorkout()?.programStep">Quitar programa</button></div>
         @if(removing){<div role="group" aria-label="Confirmar quitar programa"><p>Se quita la secuencia y su avance. Tus rutinas y entrenamientos quedan guardados.</p><button type="button" class="btn btn-secondary" (click)="clear()">Confirmar quitar programa</button><button type="button" class="btn btn-secondary" (click)="removing=false">Conservar programa</button></div>}
         <details><summary>Ver la secuencia completa</summary><ol>@for(id of p.routineIds;track $index){<li [attr.aria-current]="$index===p.position?'step':null">{{routineName(id)}}{{ $index < p.position ? ' · Completada' : '' }}</li>}</ol></details>
-      } @else {<p>Encadená tus rutinas y avanzá al guardar cada sesión. El calendario y la semana tipo se mantienen: el programa empieza cuando elegís «Empezar siguiente sesión».</p>}
-      <p class="program-help">El programa avanza solo al guardar una sesión iniciada desde acá con al menos una serie completada. Descartarla o entrenar por fuera conserva el orden.</p>
+      } @else {<p>Elegí el orden de tus rutinas y retomá desde la próxima sesión.</p>}
+      @if(editing() || store.program()){<p class="program-help">El programa avanza solo al guardar una sesión iniciada desde acá con al menos una serie completada. Descartarla o entrenar por fuera conserva el orden. El calendario y la semana tipo se mantienen.</p>}
       @if(error){<p role="alert">{{error}}</p>@if(editing()){<button type="button" class="btn btn-secondary" (click)="edit()">Cargar versión actual</button>}}
     </section>
     @if(leaveAsk()){

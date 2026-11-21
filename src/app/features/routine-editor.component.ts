@@ -400,6 +400,7 @@ export class RoutineEditorComponent implements OnChanges, OnInit, OnDestroy {
   @Output() accountRequested = new EventEmitter<void>();
   readonly brand=inject(BRAND);
   @Input() routine: Routine | null = null;
+  @Input() copySourceName: string | null = null;
   @Output() readonly saved = new EventEmitter<void>();
   @Output() readonly cancelled = new EventEmitter<void>();
   readonly store = inject(WorkoutStore);
@@ -596,10 +597,12 @@ export class RoutineEditorComponent implements OnChanges, OnInit, OnDestroy {
   }
 
   get title(): string {
+    if(this.copySourceName)return 'Creá una variante';
     return !this.routine ? 'Creá tu rutina' : this.routine.custom ? 'Editar rutina' : 'Personalizar rutina';
   }
 
   get intro(): string {
+    if(this.copySourceName)return `Partís de «${this.copySourceName}». Guardá una copia con tus cambios: el original y el historial de ejercicios se conservan.`;
     return this.routine
       ? 'Elegí los ejercicios que quieras y ajustá series, repeticiones y descanso.'
       : 'Te armamos una propuesta o elegís vos los ejercicios. Después cambiás lo que quieras.';
@@ -644,6 +647,7 @@ export class RoutineEditorComponent implements OnChanges, OnInit, OnDestroy {
   }
 
   get eyebrow(): string {
+    if(this.copySourceName)return 'COPIA EDITABLE';
     return !this.routine ? 'RUTINA NUEVA' : this.routine.custom ? 'MI CREACIÓN' : 'PLANTILLA INICIAL';
   }
 

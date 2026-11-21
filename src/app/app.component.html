@@ -187,6 +187,7 @@
                   <button type="button" class="btn btn-primary detail-start" (click)="start(routine)"><app-icon name="play" />{{ store.activeWorkout() ? 'Ir a la sesión' : 'Empezar' }}</button>
                   <button type="button" class="btn btn-secondary" (click)="planRoutine(routine)"><app-icon name="calendar" />Agendar</button>
                   <button type="button" class="btn btn-secondary" (click)="editRoutine(routine)"><app-icon name="edit" />{{ routine.custom ? 'Editar' : 'Personalizar' }}</button>
+                  <button type="button" class="btn btn-secondary" (click)="duplicateRoutine(routine)"><app-icon name="plus" />Crear copia</button>
                 </div>
               </div>
             </article>
@@ -229,11 +230,16 @@
               <button type="button" class="btn btn-primary" (click)="editRoutine(null)"><app-icon name="plus" />Crear rutina</button>
             </header>
             <app-training-program (started)="navigate('workout')" (exerciseRequested)="openExerciseSheet($event.exercise,'program',$event.trigger)" />
+            <div class="routine-search">
+              <label for="routine-search">Buscá una rutina</label>
+              <div class="search"><app-icon name="search" /><input id="routine-search" type="search" [(ngModel)]="routineSearch" maxlength="100" placeholder="Nombre, ejercicio o equipo" autocomplete="off"></div>
+            </div>
             <div class="chips" role="group" aria-label="Filtrar rutinas">
               @for (filter of routineFilters; track filter) {
                 <button type="button" class="chip" [class.is-active]="routineFilter === filter" [attr.aria-pressed]="routineFilter === filter" (click)="routineFilter = filter">{{ filter }}</button>
               }
             </div>
+            <p class="routine-results" role="status">{{filteredRoutines.length}} de {{store.routines().length}} rutinas</p>
             <div class="routine-grid">
               @for (routine of filteredRoutines; track routine.id) {
                 <button type="button" class="routine-card" (click)="openRoutine(routine)">
@@ -247,8 +253,9 @@
               } @empty {
                 <div class="empty card">
                   <app-icon name="dumbbell" />
-                  <p class="strong">{{ routineFilter === 'Mis creaciones' ? 'Todavía no creaste rutinas.' : 'No hay rutinas con ese filtro.' }}</p>
-                  @if (routineFilter === 'Mis creaciones') { <button type="button" class="btn btn-primary" (click)="editRoutine(null)">Crear mi primera rutina</button> }
+                  <p class="strong">{{ routineSearch.trim() ? 'No encontramos rutinas con esa búsqueda.' : routineFilter === 'Mis creaciones' ? 'Todavía no creaste rutinas.' : 'No hay rutinas con ese filtro.' }}</p>
+                  @if(routineSearch.trim() || routineFilter !== 'Todas'){<button type="button" class="btn btn-secondary" (click)="routineSearch='';routineFilter='Todas'">Limpiar filtros</button>}
+                  @if (routineFilter === 'Mis creaciones' && !routineSearch.trim()) { <button type="button" class="btn btn-primary" (click)="editRoutine(null)">Crear mi primera rutina</button> }
                 </div>
               }
             </div>
@@ -258,7 +265,7 @@
 
       @case ('editor') {
         <section class="page">
-          <app-routine-editor [routine]="editingRoutine" (saved)="routineSaved()" (cancelled)="navigate('routines')" (accountRequested)="navigate('profile')" />
+          <app-routine-editor [routine]="editingRoutine" [copySourceName]="copySourceName" (saved)="routineSaved()" (cancelled)="navigate('routines')" (accountRequested)="navigate('profile')" />
         </section>
       }
 
