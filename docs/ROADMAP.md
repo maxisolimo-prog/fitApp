@@ -164,29 +164,13 @@ transcribe en esta PC: el procesamiento local exige CPU alta y la cuelga.
 
 ## Próximos incrementos
 
-Los tres primeros salen del análisis de Fitness Online del 17 de noviembre de 2026 (`docs/COMPETENCIA.md`). Cada
-ítem, con su esfuerzo, sus dependencias y las decisiones que faltan, está en [BACKLOG.md](BACKLOG.md).
+1. **Revisión profesional (B-30).** Validar catálogo, indicaciones, demostraciones, reglas y propuestas con el material preparado. No está realizada por las pruebas de software.
+2. **Piloto con alumnos y gimnasios.** Probar registro, programa y coach durante entrenamientos reales; recoger tiempos, errores y dudas. Confirmar con dos o tres profes cómo arman y asignan rutinas antes de construir su panel.
+3. **Publicación (B-21).** Elegir dominios y hosting, obtener conformidad de las marcas y verificar HTTPS, datos y PWA. La configuración técnica ya está preparada en deploy/ y docs/PUBLICACION.md.
+4. **Graphik de Qivox (B-20).** Recibir webfonts y licencia. La alternativa actual Inter 800 sigue disponible.
+5. **Acceso a cuentas.** Recuperación de contraseña y Google Login requieren elegir servicios y configurar sus credenciales. No se presentan como disponibles.
+6. **Sincronización por entidad.** Evaluarla si el piloto muestra conflictos frecuentes o historiales grandes. Hoy se sincroniza una foto completa con revisión y resolución explícita de conflictos.
+7. **Módulo para gimnasios y profes.** Tras validar el piloto: organizaciones, roles, vinculación de socios y asignación con permisos reales. La identidad visual y el programa personal existentes son su base, sin simular roles.
+8. **Salud, pagos y adaptación posterior.** Requieren validar producto, precio, límites e integraciones. No se habilitan como parte de esta revisión.
 
-1. **Que el ejercicio se vea** (B-01 a B-05). Imagen de cada ejercicio, mapa muscular propio con músculos
-   principales y secundarios, miniaturas en todas las listas y la ficha del ejercicio a un toque desde la sesión.
-   No cambia el esquema ni exige comprar licencias. El usuario decidió que las imágenes las cree GPT; el dibujo de
-   línea de licencia abierta queda como reserva. Falta generar una imagen de prueba y que apruebe el estilo: la
-   cuenta de ChatGPT quedó sin cupo hasta el 20 de noviembre de 2026. **Hecho** (quinta entrega): músculos, mapa
-   muscular, miniaturas y ficha desde la sesión. Faltan las imágenes (B-03): van en grises, un solo juego para
-   las tres marcas, y el prompt para pedirlas está en [PROMPT-IMAGENES.md](PROMPT-IMAGENES.md).
-2. **La sesión en el gimnasio** (B-06 a B-12). Sustituir un ejercicio cuando la máquina está ocupada, duración
-   estimada calculada, avance de la sesión en curso, aclarar si la carga es total o por mancuerna, hora y comentario
-   por serie (FitAppState v4). La vista de un ejercicio por pantalla se decide después de probar lo anterior.
-   **Hecho** (quinta entrega) todo menos B-12: el usuario decidió esperar a usar la sesión unos días en el gimnasio.
-3. **Animaciones anatómicas con licencia comercial** (B-17). Solo si las imágenes del punto 1 no alcanzan o se
-   quiere movimiento. Validar su correspondencia con ejercicios y técnica con un profesional.
-   **Requiere comprar la licencia.**
-4. Recuperación de contraseña por email (requiere un servicio de envío de correo) y Google Login (requiere un client ID de Google Cloud).
-5. Despliegue: hosting de la API y la base (AWS u otro), HTTPS con `COOKIE_SECURE=true`, copias de seguridad de la base. Hoy corre en esta PC.
-6. Sincronización por entidad en lugar de foto completa, si los historiales crecen o se usa en varios dispositivos a la vez.
-7. Módulo para gimnasios y profes (ver "Segmento: personas y gimnasios"): validar primero, después multi-organización, vinculación, panel del profe y marca. Nunca mediante un selector de roles sin autorización. Ahí entran los mensajes entre profe y socio y el programa asignado en secuencia.
-8. Suscripciones y pagos solamente tras validar producto y precio. IA y ajustes automáticos después de definir límites y supervisión.
-
-B-13 a B-16 están implementados: tiempo, favoritos, mapa semanal y programa en secuencia.
-
-El MVP no envía mensajes, no contrata servicios y no procesa pagos. Tampoco inventa recomendaciones personalizadas a partir del perfil: la semana sugerida, la rutina propuesta y la progresión salen de reglas generales, se presentan como propuestas y la persona las confirma.
+Las mejoras B-31 a B-34 y sus comprobaciones están en [PLAN-2026-11-21.md](PLAN-2026-11-21.md). El MVP no envía mensajes ni procesa pagos. Rutinas, progresiones y propuestas se revisan antes de aplicar; las animaciones y recomendaciones generales conservan pendiente la revisión profesional.

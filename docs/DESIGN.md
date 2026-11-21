@@ -51,7 +51,7 @@ Reglas:
 - **Qué marca se ve:** `?marca=qivox` o `?marca=fitnessgroup` en la dirección (queda guardado en el dispositivo; `?marca=fitapp` vuelve a la original), o el subdominio (`qivox.…`) cuando se despliegue. Un mismo build sirve a todas.
 - **Sumar una marca:** un archivo nuevo en `src/app/brands/`, registrarlo en `index.ts` y agregar su identificador a `BrandId`. TypeScript exige todos los tokens y funciones.
 
-Cada marca tiene su `manifest` (`manifest.qivox.webmanifest`, `manifest.fitnessgroup.webmanifest`): la app instalada lleva su nombre y su ícono y abre con su marca; la pestaña usa su ícono. Pendiente: las imágenes de ejercicios, que no pueden llevar los colores de una sola marca.
+Cada marca tiene su `manifest` (`manifest.qivox.webmanifest`, `manifest.fitnessgroup.webmanifest`): la app instalada lleva su nombre y su ícono y abre con su marca; la pestaña usa su ícono. Las demostraciones originales usan un juego compartido, con figura gris y músculos resaltados sobre fondo claro.
 
 ## Tipografía
 

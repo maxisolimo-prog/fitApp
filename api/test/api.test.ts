@@ -29,12 +29,15 @@ before(async () => {
   server = createApp(pool, { limitScale: 100 }).listen(0, '127.0.0.1');
   await new Promise((resolve) => server.once('listening', resolve));
   base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-});
+}, { timeout: 30_000 });
 
 after(async () => {
-  await new Promise((resolve) => server.close(resolve));
-  await pool.end();
-});
+  try {
+    if (server) await new Promise<void>((resolve,reject) => server.close(error=>error?reject(error):resolve()));
+  } finally {
+    if (pool) await pool.end();
+  }
+}, { timeout: 10_000 });
 
 class Client {
   cookie = '';
